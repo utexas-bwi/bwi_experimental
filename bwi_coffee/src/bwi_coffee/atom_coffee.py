@@ -7,13 +7,13 @@ class AtomCoffee(Atom):
     ACTION_NAMES = ["askploc", "greet", "gothrough", "opendoor",
                     "approach", "order", "load", "unloadto"]
     FLUENT_NAMES = ["inside", "knowinside", "open", "visiting", "closeto",
-                    "facing", "beside", "loc"]
+                    "facing", "beside", "loc", "waiting", "loaded", "served"]
     TERM_NAMES = ["hasdoor", "acc", "knows"]
 
     def __init__(self, name, value=None, time=None, negated=False):
         super(AtomCoffee, self).__init__(name, value, time, negated)
 
-        if self.type == Atom.ACTION or self.type == Atom.FLUENT: 
+        if self.type == None: 
             if self.name in AtomCoffee.ACTION_NAMES:
                 self.type = Atom.ACTION
                 return
@@ -22,8 +22,6 @@ class AtomCoffee(Atom):
                 return
         else:
             return
-
-        raise ValueError("Malformed atom - Unknown action/fluent: %s"%str(name))
 
     def conflicts_with(self, other):
         """

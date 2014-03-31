@@ -14,19 +14,25 @@ person(P), I=0..n.
 inside(P,R,I):- knowinside(P,R,I), person(P), room(R), I=0..n.
 
 facing(D,I+1) :- approach(D,I), door(D), I=0..n-1.
+-waiting(O,I+1) :- approach(D,I), door(D), item(O), I=0..n-1.
+-closeto(P,I+1) :- approach(D,I), door(D), person(P), I=0..n-1.
+-visiting(P,I+1) :- approach(D,I), door(D), person(P), I=0..n-1.
 :- approach(D,I), at(R,I), -hasdoor(R,D),door(D), room(R), I=0..n.
 :- approach(D,I), facing(D,I), door(D), I=0..n.
 
 at(R,I+1) :- gothrough(D,I), acc(R1,D,R), at(R1,I), R1!=R, room(R), door(D),
 room(R1), I=0..n-1.
--facing(R,I+1) :- gothrough(R,I), room(R), I=0..n.
+-facing(D,I+1) :- gothrough(D,I), door(D), I=0..n.
+-waiting(O,I+1) :- gothrough(D,I), door(D), item(O), I=0..n-1.
+-closeto(P,I+1) :- gothrough(D,I), door(D), person(P), I=0..n-1.
+-visiting(P,I+1) :- gothrough(D,I), door(D), person(P), I=0..n-1.
 :- gothrough(D,I), -facing(D,I), door(D), I=0..n.
 :- gothrough(D,I), -open(D,I), door(D), I=0..n.
 :- gothrough(D,I), at(R,I), -hasdoor(R,D), door(D), room(R), I=0..n.
 
-open(D,I+1) :- callforopen(D,I), door(D), I=0..n-1.
-:- callforopen(D,I), -facing(D,I), door(D), I=0..n.
-:- callforopen(D,I), open(D,I), door(D), I=0..n.
+open(D,I+1) :- opendoor(D,I), door(D), I=0..n-1.
+:- opendoor(D,I), -facing(D,I), door(D), I=0..n.
+:- opendoor(D,I), open(D,I), door(D), I=0..n.
 
 visiting(P,I+1) :- greet(P,I), person(P), I=0..n-1.
 closeto(P,I+1) :- greet(P,I), person(P), I=0..n-1.
@@ -44,6 +50,7 @@ waiting(O,I+1) :- order(O,I), item(O), I=0..n-1.
 :- order(O,I), item(O), -at(o3_502,I), I=0..n-1.
 
 loaded(O,I+1) :- load(O,I), item(O), I=0..n-1. 
+-waiting(O,I+1) :- load(O,I), item(O), I=0..n-1. 
 :- load(O,I), -waiting(O,I), item(O), I=0..n-1. 
 :- load(O,I), loaded(O1,I), item(O), item(O1), I=0..n-1. 
 
@@ -85,13 +92,16 @@ loaded(O,I+1) :- loaded(O,I), not -loaded(O,I+1), I=0..n.
 closeto(P,I+1) :- closeto(P,I), not -closeto(P,I+1), I=0..n. 
 -closeto(P,I+1) :- -closeto(P,I), not closeto(P,I+1), I=0..n. 
 
+visiting(P,I+1) :- visiting(P,I), not -visiting(P,I+1), I=0..n. 
+-visiting(P,I+1) :- -visiting(P,I), not visiting(P,I+1), I=0..n. 
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % exogenous rules
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 {approach(D,I)} :- door(D), I=0..n-1.
 {gothrough(D,I)} :- door(D), I=0..n-1.
-{callforopen(D,I)} :- door(D), I=0..n-1.
+{opendoor(D,I)} :- door(D), I=0..n-1.
 {greet(P,I)} :- person(P), I=0..n-1.
 {askploc(P1,P2,I)} :- person(P1), person(P2), I=0..n-1.
 {order(O,I)} :- item(O), I=0..n-1. 
@@ -106,37 +116,37 @@ closeto(P,I+1) :- closeto(P,I), not -closeto(P,I+1), I=0..n.
 :- order(O,I), unloadto(O1,P,I).
 :- order(O,I), approach(D,I). 
 :- order(O,I), gothrough(D,I).
-:- order(O,I), callforopen(D,I). 
+:- order(O,I), opendoor(D,I). 
 :- order(O,I), greet(P,I). 
 :- order(O,I), askploc(P1,P2,I).
 :- load(O,I), unloadto(O1,P,I).
 :- load(O,I), approach(D,I).
 :- load(O,I), gothrough(D,I).
-:- load(O,I), callforopen(D,I).
+:- load(O,I), opendoor(D,I).
 :- load(O,I), greet(P,I).
 :- load(O,I), askploc(P1,P2,I).
 :- unloadto(O,P,I), approach(D,I).
 :- unloadto(O,P,I), gothrough(D,I).
-:- unloadto(O,P,I), callforopen(D,I).
+:- unloadto(O,P,I), opendoor(D,I).
 :- unloadto(O,P,I), greet(P,I).
 :- unloadto(O,P,I), askploc(P1,P2,I).
 :- approach(D1,I), gothrough(D2,I).
-:- approach(D1,I), callforopen(D2,I).
+:- approach(D1,I), opendoor(D2,I).
 :- approach(D,I), greet(P,I).
 :- approach(D,I), askploc(P1,P2,I).
-:- gothrough(D,I), callforopen(D1,I).
+:- gothrough(D,I), opendoor(D1,I).
 :- gothrough(D,I), greet(P,I).
 :- gothrough(D,I), askploc(P1,P2,I).
-:- callforopen(D,I), greet(P,I).
-:- callforopen(D,I), askploc(P1,P2,I).
+:- opendoor(D,I), greet(P,I).
+:- opendoor(D,I), askploc(P1,P2,I).
 :- greet(P,I), askploc(P1,P2,I).
 
 :- order(O1,I), order(O2,I), O1!=O2.
 :- load(O1,I), load(O2,I), O1!=O2. 
 :- unloadto(O1,P,I), unloadto(O2,P,I), O1!=O2. 
 :- unloadto(O,P1,I), unloadto(O,P2,I), P1!=P2. 
-:- callforopen(D1,I), callforopen(D2,I), D1!=D2.
-:- greet(P1,I), goto(P2,I), P1!=P2.
+:- opendoor(D1,I), opendoor(D2,I), D1!=D2.
+:- greet(P1,I), greet(P2,I), P1!=P2.
 :- askploc(P1,P,I), askploc(P2,P,I), P1!=P2.
 :- askploc(P,P1,I), askploc(P,P2,I), P1!=P2.
 
@@ -168,18 +178,33 @@ closeto(P,I+1) :- closeto(P,I), not -closeto(P,I+1), I=0..n.
 :- not loaded(O,I), not -loaded(O,I), item(O), I=0..n. 
 
 #hide.
-#show knowinside(dan,_,_).
-#show inside(dan,_,_).
+#show knowinside/3.
+#show -knowinside/3.
 #show inside/3.
+#show -inside/3.
 #show beside/2.
+#show -beside/2.
 #show facing/2.
+#show -facing/2.
 #show served/2.
+#show -served/2.
 #show at/2.
-#show task_serve/2.
+#show -at/2.
 #show visiting/2.
+#show -visiting/2.
+#show closeto/2.
+#show -closeto/2.
+#show served/3.
+#show -served/3.
+#show loaded/2.
+#show -loaded/2.
+#show waiting/2.
+#show -waiting/2.
+
+#show approach/2.
 #show approach/2.
 #show gothrough/2.
-#show callforopen/2.
+#show opendoor/2.
 #show greet/2.
 #show askploc/3.
 #show load/2.

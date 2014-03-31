@@ -1,0 +1,25 @@
+<launch>
+
+  <arg name="costs_file" default="/tmp/distances.lua" />
+  <arg name="enable_artificial_delays" default="false" />
+  <arg name="artificial_delay_file" 
+    default="$(find bwi_planning)/config/kitchen_delay.yaml" />
+  <arg name="query_file" default="$(find bwi_planning)/experiment/query" />
+  <arg name="clingo_timeout" default="60" />
+
+  <!-- launch the gui -->
+  <node name="segbot_gui" pkg="segbot_gui" type="question_dialog_plugin" />
+
+  <!-- launch the planner -->
+  <include file="$(find bwi_planning)/launch/planner_krr2014.launch">
+    <arg name="use_cost_optimization" value="true" />
+    <arg name="costs_file" value="$(arg costs_file)" />
+    <arg name="enable_learning" value="true" />
+    <arg name="query_file" value="$(arg query_file)" />
+    <arg name="clingo_timeout" value="$(arg clingo_timeout)" />
+    <arg name="enable_artificial_delays" 
+      value="$(arg enable_artificial_delays)" />
+    <arg name="artificial_delay_file" value="$(arg artificial_delay_file)" />
+  </include>
+
+</launch>

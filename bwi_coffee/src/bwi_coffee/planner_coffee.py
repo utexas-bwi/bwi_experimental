@@ -6,5 +6,5 @@ from .action_executor_coffee import ActionExecutorCoffee
 
 class PlannerCoffee(Planner):
 
-    def __init__(self, dry_run=False, initial_file=None):
-        super(Planner, self).__init__(AtomCoffee, ActionExecutorCoffee)
+    def __init__(self):
+        super(PlannerCoffee, self).__init__(AtomCoffee, ActionExecutorCoffee)

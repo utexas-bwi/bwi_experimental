@@ -2,6 +2,8 @@
 
 from bwi_planning import ActionExecutor
 from segbot_gui.srv import QuestionDialogRequest
+
+import rospy
 import time
 
 from .atom_coffee import AtomCoffee
@@ -22,9 +24,12 @@ class ActionExecutorCoffee(ActionExecutor):
                                                                      next_step)
 
             if action.name == "greet":
-                observations.append(AtomCoffee("closeto",str(action.value)))
+                observations.append(AtomCoffee("closeto",str(action.value),time=next_step))
+                rospy.loginfo("Adding closeto to visiting observation")
 
             return success, observations
+
+        rospy.loginfo("Executing action: " + str(action))
 
         observations = []
         if action.name == "order":
@@ -32,7 +37,7 @@ class ActionExecutorCoffee(ActionExecutor):
                      "Could I get an order of " + str(action.value) + "?",
                      [], 0.0)
             time.sleep(10.0)
-            observations.append(AtomCoffee("waiting",str(action.value)))
+            observations.append(AtomCoffee("waiting",str(action.value),time=next_step))
             success = True
 
         if action.name == "load":
@@ -40,16 +45,17 @@ class ActionExecutorCoffee(ActionExecutor):
                                 "Please let me know once " + str(action.value) + " has been loaded!",
                                 ["Done!"], 0.0)
             if response.index == 0: # The Done! button was hit
-                observations.append(AtomCoffee("loaded",str(action.value)))
+                observations.append(AtomCoffee("loaded",str(action.value),time=next_step))
                 success = True
 
         if action.name == "unloadto":
             response = self.gui(QuestionDialogRequest.DISPLAY,
-                                "Here is your " + str(action.value[0]) + 
+                                "Here is your " + str(action.value.value[0]) + 
                                 "! Please let me know once you have removed it.", 
                                 ["Done!"], 0.0)
             if response.index == 0: # The Done! button was hit
-                observations.append(AtomCoffee("served",str(action.value[1])+","+str(action.value[0])))
+                observations.append(AtomCoffee("served",str(action.value.value[1])+","+str(action.value.value[0]),time=next_step))
                 success = True
 
+        rospy.loginfo("  Observations: " + str(observations))
         return success, observations
