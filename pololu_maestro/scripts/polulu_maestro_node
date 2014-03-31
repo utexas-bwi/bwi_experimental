@@ -380,7 +380,7 @@ class Servo(object):
 
 class PololuDriver(object):
 
-    def __init__(self, port='/dev/polulu_servo_serial', baud=9600):
+    def __init__(self, port='/dev/pololu_servo_serial', baud=9600):
 
         rospy.init_node('pololu_driver')
         rospy.on_shutdown(self.shutdown)
