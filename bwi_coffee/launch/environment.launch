@@ -1,6 +1,6 @@
 <launch>
 
-  <arg name="dir_path" default="$(find bwi_planning)/config/simulation" />
+  <arg name="dir_path" default="$(find bwi_coffee)/config/simulation" />
   <arg name="map_file" default="$(find utexas_gdc)/maps/3ne.yaml" />
   <arg name="location_file" default="$(arg dir_path)/locations.yaml" />
   <arg name="door_file" default="$(arg dir_path)/doors.yaml" />

@@ -198,6 +198,8 @@ visiting(P,I+1) :- visiting(P,I), not -visiting(P,I+1), I=0..n.
 #show -served/3.
 #show loaded/2.
 #show -loaded/2.
+#show open/2.
+#show -open/2.
 #show waiting/2.
 #show -waiting/2.
 
@@ -210,3 +212,13 @@ visiting(P,I+1) :- visiting(P,I), not -visiting(P,I+1), I=0..n.
 #show load/2.
 #show unloadto/3.
 #show order/2.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Initial values
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+-visiting(P,0) :- person(P).
+-served(P,O,0) :- person(P), item(O).
+-waiting(O,0) :- item(O). 
+-loaded(O,0) :- item(O). 
+-closeto(P,0) :- person(P). 

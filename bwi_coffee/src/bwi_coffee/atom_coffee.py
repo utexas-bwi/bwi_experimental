@@ -7,7 +7,8 @@ class AtomCoffee(Atom):
     ACTION_NAMES = ["askploc", "greet", "gothrough", "opendoor",
                     "approach", "order", "load", "unloadto"]
     FLUENT_NAMES = ["inside", "knowinside", "open", "visiting", "closeto",
-                    "facing", "beside", "loc", "waiting", "loaded", "served"]
+                    "facing", "beside", "loc", "waiting", "loaded", "served",
+                    "at"]
     TERM_NAMES = ["hasdoor", "acc", "knows"]
 
     def __init__(self, name, value=None, time=None, negated=False):

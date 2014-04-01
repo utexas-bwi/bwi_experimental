@@ -41,7 +41,7 @@ class ActionExecutorCoffee(ActionExecutor):
             success = True
 
         if action.name == "load":
-            response = self.gui(QuestionDialogRequest.DISPLAY,
+            response = self.gui(QuestionDialogRequest.CHOICE_QUESTION,
                                 "Please let me know once " + str(action.value) + " has been loaded!",
                                 ["Done!"], 0.0)
             if response.index == 0: # The Done! button was hit
@@ -49,7 +49,7 @@ class ActionExecutorCoffee(ActionExecutor):
                 success = True
 
         if action.name == "unloadto":
-            response = self.gui(QuestionDialogRequest.DISPLAY,
+            response = self.gui(QuestionDialogRequest.CHOICE_QUESTION,
                                 "Here is your " + str(action.value.value[0]) + 
                                 "! Please let me know once you have removed it.", 
                                 ["Done!"], 0.0)
