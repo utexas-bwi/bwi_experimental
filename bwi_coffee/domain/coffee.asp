@@ -53,8 +53,9 @@ room(R), I=0..n-1.
 :- askploc(P1,P,I), knowinside(P,R,I), I=0..n.
 
 waiting(O,I+1) :- order(O,I), item(O), I=0..n-1.
-:- order(O,I), item(O), at(R,I), shop(R), -closeto(SC), shopcounter(SC), I=0..n-1.
-:- order(O,I), item(O), -at(R,I), shop(R), I=0..n-1.
+:- order(O,I), item(O), at(R,I), -shop(R), I=0..n-1.
+:- order(O,I), item(O), at(R,I), shop(R), {closeto(T,I):thing(T)}0, I=0..n-1.
+:- order(O,I), item(O), at(R,I), shop(R), closeto(SC,I), -shopcounter(SC), I=0..n-1.
 
 loaded(O,I+1) :- load(O,I), item(O), I=0..n-1. 
 -waiting(O,I+1) :- load(O,I), item(O), I=0..n-1. 

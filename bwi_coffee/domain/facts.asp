@@ -71,4 +71,4 @@ knows(alice, dan).
 -acc(R1,R2) :- not acc(R1,R2), room(R1), room(R2). 
 -knows(P1,P2) :- not knows(P1,P2), person(P1), person(P2).
 -shop(R) :- not shop(R), room(R). 
--shopcounter(SC) :- not shopcounter(SC), object(SC). 
+-shopcounter(SC) :- not shopcounter(SC), thing(SC). 
