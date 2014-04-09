@@ -1,10 +1,10 @@
-- name: d3_502
-  approach:
-    - from: f3_cor4,f3_cor5,f3_410,f3_504
-      point: [-4.3, 8.15, -1.5708]
-    - from: o3_502
-      point: [-4.3, 6.35, 1.24905]
-  width: 0.9
+# - name: d3_502
+#   approach:
+#     - from: f3_cor4,f3_cor5,f3_410,f3_504
+#       point: [-4.3, 8.15, -1.5708]
+#     - from: o3_502
+#       point: [-4.3, 6.35, 1.24905]
+#   width: 0.9
 - name: d3_508
   approach:
     - from: f3_cor4,f3_cor5,f3_410,f3_504
