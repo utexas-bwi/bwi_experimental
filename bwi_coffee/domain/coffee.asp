@@ -14,9 +14,10 @@ thing(P), I=0..n.
 inside(P,R,I):- knowinside(P,R,I), thing(P), room(R), I=0..n.
 
 facing(D,I+1) :- approach(D,I), door(D), I=0..n-1.
+at(R2,I+1) :- approach(D,I), at(R1,I), hasdoor(R2,D), acc(R1,R2), door(D), 
+room(R), I=0..n-1. 
 -waiting(O,I+1) :- approach(D,I), door(D), item(O), I=0..n-1.
 -closeto(P,I+1) :- approach(D,I), door(D), thing(P), I=0..n-1.
-:- approach(D,I), at(R,I), -hasdoor(R,D),door(D), room(R), I=0..n.
 :- approach(D,I), facing(D,I), door(D), I=0..n.
 
 at(R,I+1) :- gothrough(D,I), dooracc(R1,D,R), at(R1,I), R1!=R, room(R), door(D),
@@ -41,6 +42,10 @@ open(D,I+1) :- opendoor(D,I), door(D), I=0..n-1.
 closeto(P,I+1) :- greet(P,I), person(P), I=0..n-1.
 closeto(O,I+1) :- goto(O,I), object(O), I=0..n-1.
 at(R,I+1) :- goto(O,I), knowinside(O,R,I), object(O), room(R), I=0..n-1.
+-facing(D,I+1) :- greet(P,I), person(P), door(D), I=0..n-1.
+-waiting(IT,I+1) :- greet(P,I), person(P), item(IT), I=0..n-1.
+-facing(D,I+1) :- goto(O,I), object(O), door(D), I=0..n-1.
+-waiting(IT,I+1) :- goto(O,I), object(O), item(IT), I=0..n-1.
 -closeto(T1,I) :- closeto(T2,I), thing(T1), thing(T2), T1!=T2, I=0..n.
 :- greet(P,I), at(R,I), -knowinside(P,R,I), person(P), room(R), I=0..n.
 :- greet(P,I), -at(R,I), knowinside(P,R,I), person(P), room(R), I=0..n.
@@ -59,7 +64,7 @@ waiting(O,I+1) :- order(O,I), item(O), I=0..n-1.
 :- order(O,I), item(O), at(R,I), shop(R), closeto(SC,I), -shopcounter(SC), I=0..n-1.
 
 loaded(O,I+1) :- load(O,I), item(O), I=0..n-1. 
--waiting(O,I+1) :- load(O,I), item(O), I=0..n-1. 
+-waiting(O1,I+1) :- load(O,I), item(O1), I=0..n-1. 
 :- load(O,I), -waiting(O,I), item(O), I=0..n-1. 
 :- load(O,I), loaded(O1,I), item(O), item(O1), I=0..n-1. 
 
