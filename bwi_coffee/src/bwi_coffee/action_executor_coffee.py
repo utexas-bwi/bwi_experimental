@@ -17,15 +17,11 @@ class ActionExecutorCoffee(ActionExecutor):
     def execute_action(self, action, next_state, next_step):
 
         success = False
-        if action.name not in ["order", "load", "unloadto"]:
+        if action.name not in ["order", "load", "unloadto", "greet"]:
             success, observations = \
                     super(ActionExecutorCoffee, self).execute_action(action,
                                                                      next_state,
                                                                      next_step)
-
-            if action.name == "greet":
-                observations.append(AtomCoffee("closeto",str(action.value),time=next_step))
-                rospy.loginfo("Adding closeto to visiting observation")
 
             return success, observations
 
@@ -36,7 +32,7 @@ class ActionExecutorCoffee(ActionExecutor):
             self.gui(QuestionDialogRequest.DISPLAY,
                      "Could I get an order of " + str(action.value) + "?",
                      [], 0.0)
-            time.sleep(10.0)
+            time.sleep(5.0)
             observations.append(AtomCoffee("waiting",str(action.value),time=next_step))
             success = True
 
@@ -56,6 +52,14 @@ class ActionExecutorCoffee(ActionExecutor):
             if response.index == 0: # The Done! button was hit
                 observations.append(AtomCoffee("served",str(action.value.value[1])+","+str(action.value.value[0]),time=next_step))
                 success = True
+
+        if action.name == "greet":
+            self.gui(QuestionDialogRequest.DISPLAY,
+                     "Hello " + str(action.value) + "!!",
+                     [], 0.0)
+            time.sleep(5.0)
+            observations.append(AtomCoffee("closeto",str(action.value),time=next_step))
+            success = True
 
         rospy.loginfo("  Observations: " + str(observations))
         return success, observations

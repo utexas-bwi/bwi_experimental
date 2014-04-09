@@ -45,6 +45,7 @@ at(R,I+1) :- goto(O,I), knowinside(O,R,I), object(O), room(R), I=0..n-1.
 -facing(D,I+1) :- greet(P,I), person(P), door(D), I=0..n-1.
 -waiting(IT,I+1) :- greet(P,I), person(P), item(IT), I=0..n-1.
 -facing(D,I+1) :- goto(O,I), object(O), door(D), I=0..n-1.
+-beside(D,I+1) :- goto(O,I), object(O), door(D), I=0..n-1.
 -waiting(IT,I+1) :- goto(O,I), object(O), item(IT), I=0..n-1.
 -closeto(T1,I) :- closeto(T2,I), thing(T1), thing(T2), T1!=T2, I=0..n.
 :- greet(P,I), at(R,I), -knowinside(P,R,I), person(P), room(R), I=0..n.
