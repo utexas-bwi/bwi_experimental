@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="shortcut icon" href="ico/favicon.ico">
+
+    <title>BWI Web Tool</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css" />
+
+    <!-- Custom styles for this style -->
+    <link href="css/dashboard.css" rel="stylesheet">
+
+    <script type="text/javascript" src="http://cdn.robotwebtools.org/EaselJS/current/easeljs.min.js"></script>
+    <script src="js/eventemitter2.js"></script>
+    <script src="js/roslib.js"></script>
+   <script type="text/javascript" src="http://cdn.robotwebtools.org/ros2djs/current/ros2d.min.js"></script>
+   <script type="text/javascript" src="http://cdn.robotwebtools.org/nav2djs/current/nav2d.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.23/jquery-ui.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="http://cdn.robotwebtools.org/mjpegcanvasjs/current/mjpegcanvas.min.js"></script>
+    <!-- <script type="text/javascript" src="http://cdn.robotwebtools.org/keyboardteleopjs/current/keyboardteleop.min.js"></script> -->
+    <script type="text/javascript" src="js/CustomKeyboardTeleop.js"></script>
+    <script src="js/docs.min.js"></script>
+    <script src="js/config.js"></script>
+
+    <script>
+
+  var ros;
+  function initializeROS()
+  {
+     // var ros = new ROSLIB.Ros();
+
+     // // If there is an error on the backend, an 'error' emit will be emitted.
+     // ros.on('error', function(error) {
+     //   console.log(error);
+     // });
+
+     // // Find out exactly when we made a connection.
+     // ros.on('connection', function() {
+     //   console.log('Connection made!');
+     //   rosLibIsConnected = true;
+     // });
+
+     // // Create a connection to the rosbridge WebSocket server.
+     // ros.connect(rosBridgeAddress);
+     ros = new ROSLIB.Ros({
+         url : rosBridgeAddress
+     });
+  }
+
+
+  //SUBSCRIBE TO TOPICS
+  var sensorListeners = [];
+  function createListener(topicname, messagetype, subtopicnames)
+  {
+     // Create a Topic object with details of the topic's name and message type.
+     sensorListeners[topicname] = new ROSLIB.Topic({
+       ros : ros,
+       name : topicname,
+       messageType : messagetype
+     });
+
+     var JSONsubtopicnames = createJSONSubTopicArray(subtopicnames.slice(0));
+
+     // Then we add a callback to be called every time a message is published on this topic.
+     sensorListeners[topicname].subscribe(function(message) {
+
+      // var updateMessage = printObject(message, '');
+       document.getElementById('trUpdated' + topicname).innerHTML = formatNowTimestamp();
+       document.getElementById('trValue' + topicname).innerHTML = '<div style="min-width:500px;" class="jsondiv">' + processListenerJSON(message, JSONsubtopicnames) + '</div>';
+
+     });
+
+  }
+
+  function processListenerJSON(jsonmessage, subtopicnames)
+  {
+    if(subtopicnames.length==0)
+    {
+      return JSON.stringify(jsonmessage, null, 2);
+    }
+    else
+    {
+      return JSON.stringify(getSimplifiedJSON(jsonmessage, subtopicnames.slice(0)), null, 2);
+    }
+  }
+
+  //simplify JSON for sensor by getting rid of subtopics that aren't included in subtopicnames
+  function getSimplifiedJSON(jsonmessage, subtopicnames)
+  {
+    if(subtopicnames.length==0)
+    {
+      return jsonmessage;
+    }
+    else
+    {
+      for(var attrname in jsonmessage)
+      {
+        var attrExists = false;
+
+        for(var i=0; i<subtopicnames.length; i++)
+        {
+          if(subtopicnames[i][0]==attrname)
+          {
+            attrExists=true;
+            break;
+          }
+        }
+
+        if(!attrExists)
+        {
+          delete jsonmessage[attrname];
+        }
+      }
+
+      var subtopicnamesshifted = shiftJSONSubTopicArray(subtopicnames.slice(0));
+      for(var attrname in jsonmessage)
+      {
+        var attrFinal = false;
+        for(var i=0; i<subtopicnames.length; i++)
+        {
+          if(subtopicnames[i][0]==attrname && subtopicnames[i].length==1)
+          {
+            attrFinal=true;
+            break;
+          }
+        }
+        if(!attrFinal)
+        {
+           jsonmessage[attrname] = getSimplifiedJSON(jsonmessage[attrname], subtopicnamesshifted.slice(0));
+        }
+      }
+
+      return jsonmessage;
+    }
+  }
+
+  //Adjust the subtopic arrays to point to the next node
+  function shiftJSONSubTopicArray(subtopicnames)
+  {
+    for(var i = subtopicnames.length-1; i>=0; i--)
+    {
+      if(subtopicnames[i].length>1)
+      {
+        subtopicnames[i] = subtopicnames[i].slice(1);
+      }
+      else
+      {
+        subtopicnames.splice(i,1);
+      }
+    }
+    return subtopicnames;
+  }
+
+  //create subtopic array that converts 'node1/node2/node3' to [node1,node2,node3]
+  function createJSONSubTopicArray(subtopicnames)
+  {
+    for(var i=0; i<subtopicnames.length; i++)
+    {
+      subtopicnames[i] = subtopicnames[i].split("/");
+    }
+    return subtopicnames;
+  }
+
+
+  function printObject(object, spacing)
+  {
+    for (property in message) {
+        updateMessage += property + ':' + message[property]+'; ';
+      }
+  }
+
+  function initializeSensorTable()
+  {
+    var tbodySubscr = document.getElementById('tbodyTableSubscriptions');
+      if (tableSubscriptions.length>0)
+      {
+         tableSubscriptions.forEach(function(subscr) {
+
+            var trSubscr = document.createElement('tr');
+            trSubscr.id = 'trSubscr' + subscr.TopicName;
+
+            var tdTopic = document.createElement('td');
+            tdTopic.innerHTML = subscr.TopicName;
+
+            var tdType = document.createElement('td');
+            tdType.innerHTML = subscr.MessageType;
+            tdType.className = 'hidden-xs hidden-sm';
+
+            var tdUpdated = document.createElement('td');
+            tdUpdated.id = 'trUpdated' + subscr.TopicName;
+
+            var tdValue = document.createElement('td');
+            tdValue.id = 'trValue' + subscr.TopicName;
+
+
+            trSubscr.appendChild(tdTopic);
+            trSubscr.appendChild(tdType);
+            trSubscr.appendChild(tdUpdated);
+            trSubscr.appendChild(tdValue);
+            tbodySubscr.appendChild(trSubscr);
+            
+         });
+      }
+      else
+      {
+         var trSubscr = document.createElement('tr');
+         trSubscr.id = 'trSubscrEMPTY';
+         var tdEmpty = document.createElement('td');
+         tdEmpty.colSpan = 4;
+         tdEmpty.innerHTML = '<center>NO SUBSCRIPTONS</center>';
+         trSubscr.appendChild(tdEmpty);
+         tbodySubscr.appendChild(trSubscr);
+      }
+  }
+
+  function formatNowTimestamp() {
+      //Get the current timestamp
+      // if (!Date.now) {
+      //   Date.now = function() { return new Date().getTime(); };
+      // }
+      var dt = new Date();
+
+      var hours = dt.getHours();
+      var minutes = dt.getMinutes();
+      var seconds = dt.getSeconds();
+
+      if (hours < 10) 
+       hours = '0' + hours;
+
+      if (minutes < 10) 
+       minutes = '0' + minutes;
+
+      if (seconds < 10) 
+       seconds = '0' + seconds;
+
+      return hours + ":" + minutes + ":" + seconds;
+  }  
+
+  // function formatNowTimestamp() {
+  //   // Create a date object with the current time
+  //     var now = new Date();
+     
+  //   // Create an array with the current month, day and time
+  //     // var date = [ now.getMonth() + 1, now.getDate(), now.getFullYear() ];
+     
+  //   // Create an array with the current hour, minute and second
+  //     var time = [ now.getHours(), now.getMinutes(), now.getSeconds() ];
+     
+  //   // Determine AM or PM suffix based on the hour
+  //     var suffix = ( time[0] < 12 ) ? "AM" : "PM";
+     
+  //   // Convert hour from military time
+  //     time[0] = ( time[0] < 12 ) ? time[0] : time[0] - 12;
+     
+  //   // If hour is 0, set it to 12
+  //     time[0] = time[0] || 12;
+     
+  //   // If seconds and minutes are less than 10, add a zero
+  //     for ( var i = 1; i < 3; i++ ) {
+  //       if ( time[i] < 10 ) {
+  //         time[i] = "0" + time[i];
+  //       }
+  //     }
+     
+  //   // Return the formatted string
+  //     // return date.join("/") + " " + time.join(":") + " " + suffix;
+  //     return time.join(":") + " " + suffix;
+
+  //   }
+
+  function createSensorSubscribers()
+  {
+     tableSubscriptions.forEach(function(subscr) {
+        createListener(subscr.TopicName, subscr.MessageType, subscr.SubTopicNames);
+     });
+  }
+
+  function deleteSensorSubscribers()
+  {
+     tableSubscriptions.forEach(function(subscr) {
+        sensorListeners[subscr.TopicName].unsubscribe();
+        sensorListeners[subscr.TopicName] = null;
+     });
+  }
+
+  var mjpegVideoViewer;
+  function createVideoSubscribers()
+  {
+
+      var realVideoWidth;
+      var realVideoHeight;
+
+      //Current size of window
+      var windowWidth = "innerWidth" in window 
+                  ? window.innerWidth
+                  : document.documentElement.offsetWidth; 
+      var windowHeight = "innerHeight" in window 
+               ? window.innerHeight
+               : document.documentElement.offsetHeight; 
+
+      //How big of a video can we fit for our width and height?
+      var minVideoWidth = Math.min(rosMjpegServerInfo.Width,  windowWidth);
+      var minVideoHeight = Math.min(rosMjpegServerInfo.Height, windowHeight);
+
+      //If we resize our video according to the resolution we chose in config, 
+      //what will we have to shift our videoWidth and videoHeight to respectively
+      var shiftedVideoWidth = (minVideoHeight/rosMjpegServerInfo.Height) * rosMjpegServerInfo.Width;
+      var shiftedVideoHeight = (minVideoWidth/rosMjpegServerInfo.Width) * rosMjpegServerInfo.Height;
+
+      //check to see if Height takes priority over Width
+      if(shiftedVideoWidth < minVideoWidth)
+      {
+         realVideoWidth = shiftedVideoWidth;
+         realVideoHeight = minVideoHeight;
+      }
+      else
+      {
+         realVideoWidth = minVideoWidth;
+         realVideoHeight = shiftedVideoHeight;
+      }
+
+    // Create the main viewer.
+    mjpegVideoViewer = new MJPEGCANVAS.MultiStreamViewer({
+      divID : 'mjpegVideoScreen',
+      host : rosMjpegServerInfo.Host,
+      port : rosMjpegServerInfo.Port,
+      quality : rosMjpegServerInfo.Quality,
+      width : realVideoWidth,
+      height : realVideoHeight,
+      topics : rosMjpegServerInfo.Topics,
+      labels : rosMjpegServerInfo.Labels
+    });
+  }
+
+  function deleteVideoSubscribers()
+  {
+      document.getElementById('mjpegVideoScreen').innerHTML = "";
+      mjpegVideoViewer = null;
+  }
+
+
+  var navWindowViewer;
+  var navWindowClient;
+  function createNavSubscribers()
+  {
+      // Create the main viewer.
+       navWindowViewer = new ROS2D.Viewer({
+         divID : 'navWindow',
+         width : 750,
+         height : 800
+       });
+
+       // Setup the nav client.
+       navWindowClient = NAV2D.OccupancyGridClientNav({
+         ros : ros,
+         rootObject : navWindowViewer.scene,
+         viewer : navWindowViewer,
+         serverName : navWindowServerName
+       });
+
+       // Scale the canvas to fit to the map
+      // navWindowClient.on('change', function() {
+      //   navWindowViewier.scaleToDimensions(navWindowClient.currentGrid.width, navWindowClient.currentGrid.height);
+      //   navWindowViewier.shift(navWindowClient.currentGrid.pose.position.x, navWindowClient.currentGrid.pose.position.y);
+      // });
+  }
+
+  function deleteNavSubscribers()
+  {
+      document.getElementById('navWindow').innerHTML = "";
+      navWindowViewer = null;
+  }
+
+  var teleopClient;
+  function createTeleopSubscribers()
+  {
+      teleopClient = new KEYBOARDTELEOP.Teleop({
+        ros : ros,
+        topic : teleopTopic
+      });
+
+      $('#teleopSpeedSlider').slider({
+        range : 'min',
+        min : 0,
+        max : 100,
+        value : 100,
+        slide : function(event, ui) {
+          // Change the speed label.
+          $('#teleopSpeedLabel').html('Speed: ' + ui.value + '%');
+          // Scale the speed.
+          teleopClient.scale = (ui.value / 100.0);
+        }
+      });
+
+      $('#teleopSpeedLabel').html('Speed: ' + ($('#teleopSpeedSlider').slider('value')) + '%');
+      teleopClient.scale = ($('#teleopSpeedSlider').slider('value') / 100.0);
+
+  }
+
+  function deleteTeleopSubscribers()
+  {
+      teleopClient.scale = 0;
+      teleopClient = null;
+  }
+
+
+  function navAction(action)
+  {
+    if(action=='left')
+    {
+      navWindowViewer.scene.x +=50;
+    }
+    else if(action=='right')
+    {
+      navWindowViewer.scene.x -=50;
+    }
+    else if(action=='down')
+    {
+      navWindowViewer.scene.y -=50;
+    }
+    else if(action=='up')
+    {
+      navWindowViewer.scene.y +=50;
+    }
+    else if(action=='zoomin')
+    {
+      navWindowViewer.scene.scaleX = 1 + navWindowViewer.scene.scaleX*1.5;
+      navWindowViewer.scene.scaleY = 1 + navWindowViewer.scene.scaleY*1.5;
+    }
+    else if(action=='zoomout')
+    {
+      navWindowViewer.scene.scaleX = navWindowViewer.scene.scaleX/1.5;
+      navWindowViewer.scene.scaleY = navWindowViewer.scene.scaleY/1.5;
+    }
+  }
+ 
+
+    
+    
+
+  
+
+  function initialize()
+  {
+    initializeROS();
+    initializeSensorTable();
+  }
+
+
+</script>
+
+  </head>
+
+  <body onload="initialize()">
+
+    <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">BWI Web Tool</a>
+        </div>
+        <div class="navbar-collapse collapse">
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="#">Dashboard</a></li>
+            <!-- <li><a href="#">Settings</a></li> -->
+            <!-- <li><a href="#">Profile</a></li> -->
+            <!-- <li><a href="#">Help</a></li> -->
+          </ul>
+        </div>
+      </div>
+    </div>
+
+
+    <div class="container-fluid">
+          <h1 class="page-header">Dashboard</h1>
+
+          <div class="panel-group" id="divVideo">
+            <div class="panel panel-default">
+
+              <div class="panel-heading">
+                <h4 class="panel-title">
+                  <a data-toggle="collapse" data-parent="#divVideo" href="#collapseVideo">
+                    Video
+                  </a>
+                </h4>
+              </div>
+
+              <div id="collapseVideo" class="panel-collapse collapse out">
+                <div class="panel-body">
+                  <center>
+                     <div id="mjpegVideoScreen">
+                     </div>
+                  </center>
+                </div>
+              </div>
+            </div>
+          </div>
+
+
+
+          <div class="panel-group" id="divTeleop">
+            <div class="panel panel-default">
+
+              <div class="panel-heading">
+                <h4 class="panel-title">
+                  <a data-toggle="collapse" data-parent="#divTeleop" href="#collapseTeleop">
+                    Teleoperation
+                  </a>
+                </h4>
+              </div>
+
+              <div id="collapseTeleop" class="panel-collapse collapse out">
+                <div class="panel-body">
+                  <center>
+                     <div id="teleopSpeedLabel"></div>
+                     <div id="teleopSpeedSlider"></div>
+                     <br/>
+                     <br/>
+                     <div>
+                        <button type="button" class="btn btn-default btn-xlarge" id="teleopLeftKey">
+                          <span class="glyphicon glyphicon-arrow-left"></span>
+                        </button>
+                        <button type="button" class="btn btn-default btn-xlarge" id="teleopUpKey">
+                          <span class="glyphicon glyphicon-arrow-up"></span>
+                        </button>
+                        <button type="button" class="btn btn-default btn-xlarge" id="teleopRightKey">
+                          <span class="glyphicon glyphicon-arrow-right"></span>
+                        </button>
+                        <br/>
+                        <!-- <button type="button" class="btn btn-default btn-xlarge" onclick="simulateKeyPress('')">
+                          <span class="glyphicon glyphicon-stop"></span>
+                        </button> -->
+                        <button type="button" class="btn btn-default btn-xlarge" id="teleopTurnLeftKey">
+                          <span class="glyphicon glyphicon-repeat icon-rotate icon-flipped"></span>
+                        </button>
+                        <button type="button" class="btn btn-default btn-xlarge" id="teleopDownKey">
+                          <span class="glyphicon glyphicon-arrow-down"></span>
+                        </button>
+                        <button type="button" class="btn btn-default btn-xlarge" id="teleopTurnRightKey">
+                          <span class="glyphicon glyphicon-repeat"></span>
+                        </button>
+                     </div>
+                  </center>
+                </div>
+              </div>
+            </div>
+          </div>
+
+
+          <div class="panel-group" id="divNav">
+            <div class="panel panel-default">
+
+              <div class="panel-heading">
+                <h4 class="panel-title">
+                  <a data-toggle="collapse" data-parent="#divNav" href="#collapseNav">
+                    Navigation
+                  </a>
+                </h4>
+              </div>
+
+              <div id="collapseNav" class="panel-collapse collapse out">
+                <div class="panel-body">
+                  <center>
+                     <div id="navWindow">
+                     </div>
+                     <button type="button" class="btn btn-default btn-xlarge" id="navLeftKey" onclick="navAction('left')">
+                        <span class="glyphicon glyphicon-arrow-left"></span>
+                     </button>
+                     <button type="button" class="btn btn-default btn-xlarge" id="navDownKey" onclick="navAction('down')">
+                        <span class="glyphicon glyphicon-arrow-down"></span>
+                     </button>
+                     <button type="button" class="btn btn-default btn-xlarge" id="navUpKey" onclick="navAction('up')">
+                        <span class="glyphicon glyphicon-arrow-up"></span>
+                     </button>
+                     <button type="button" class="btn btn-default btn-xlarge" id="navRightKey" onclick="navAction('right')">
+                        <span class="glyphicon glyphicon-arrow-right"></span>
+                     </button>
+                     <button type="button" class="btn btn-default btn-xlarge" id="navZoomOut" onclick="navAction('zoomout')">
+                         <span class="glyphicon glyphicon-zoom-out"></span>
+                     </button>
+                     <button type="button" class="btn btn-default btn-xlarge" id="navZoomIn" onclick="navAction('zoomin')">
+                         <span class="glyphicon glyphicon-zoom-in"></span>
+                     </button>
+                  </center>
+                </div>
+              </div>
+            </div>
+          </div>
+
+
+
+          <div class="panel-group" id="divSensors">
+            <div class="panel panel-default">
+
+              <div class="panel-heading">
+                <h4 class="panel-title">
+                  <a data-toggle="collapse" data-parent="#divSensors" href="#collapseSensors">
+                    Sensors
+                  </a>
+                </h4>
+              </div>
+
+              <div id="collapseSensors" class="panel-collapse collapse out">
+                <div class="panel-body">
+                  <div class="table-responsive">
+                   <table class="table table-striped" style="overflow: scroll;" >
+
+                     <thead>
+                       <tr>
+                         <th>Topic</th>
+                         <th class='hidden-xs hidden-sm'>Type</th>
+                         <th>Updated</th>
+                         <th>Value</th>
+                       </tr>
+                     </thead>
+
+                     <!-- tbodyTableSubscriptions is filled out with initializeSubscribers() -->
+                     <tbody id="tbodyTableSubscriptions">
+                     </tbody>
+
+                   </table>
+                 </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+
+          <!-- <div id="divSensors" >
+             <h2 class="sub-header">Sensors</h2>
+             <div class="table-responsive">
+               <table class="table table-striped">
+                 <thead>
+                   <tr>
+                     <th>Topic</th>
+                     <th class='hidden-xs hidden-sm'>Type</th>
+                     <th>Value</th>
+                     <th>Updated</th>
+                   </tr>
+                 </thead>
+                 <tbody id="tbodyTableSubscriptions">
+                 </tbody>
+               </table>
+             </div>
+          </div> -->
+
+
+    </div>
+
+
+    <!-- Placed at the end of the document so the pages load faster -->
+    
+
+    <script>
+      //When minimizing accordion for sensors, delete the subscribers so you're not wasting bandwith
+      $('#collapseSensors').on('hidden.bs.collapse', function (e) {
+          deleteSensorSubscribers();
+      })
+      //Since the subscribers were deleted upon collapsing accordion, recreate them when expanding
+      $('#collapseSensors').on('shown.bs.collapse', function (e) {
+          createSensorSubscribers();
+      })
+
+      //When minimizing accordion for videos, clear the screen so you're not wasting bandwith
+      $('#collapseVideo').on('hidden.bs.collapse', function (e) {
+           deleteVideoSubscribers();
+      })
+      //Since the subscribers were deleted upon collapsing accordion, recreate them when expanding
+      $('#collapseVideo').on('shown.bs.collapse', function (e) {
+          createVideoSubscribers();
+      })
+
+
+      //When minimizing accordion for navigation, clear the screen so you're not wasting bandwith
+      $('#collapseNav').on('hidden.bs.collapse', function (e) {
+           deleteNavSubscribers();
+      })
+      //Since the subscribers were deleted upon collapsing accordion, recreate them when expanding
+      $('#collapseNav').on('shown.bs.collapse', function (e) {
+          createNavSubscribers();
+      })
+
+      //When minimizing accordion for navigation, clear the screen so you're not wasting bandwith
+      $('#collapseTeleop').on('hidden.bs.collapse', function (e) {
+           deleteTeleopSubscribers();
+      })
+      //Since the subscribers were deleted upon collapsing accordion, recreate them when expanding
+      $('#collapseTeleop').on('shown.bs.collapse', function (e) {
+          createTeleopSubscribers();
+      })
+
+
+      // $(window).resize(resizeResponse);
+
+      // var resizedVideoWidth;
+      // var resizedVideoHeight;
+
+      // resizeResponse(); //initialize the width and height of video
+      
+      // function resizeResponse() {
+
+         
+
+
+      //   var videoCanvases = document.getElementById('mjpegVideoScreen').getElementsByTagName('canvas');
+
+      //   if(videoCanvases.length>0)
+      //   {
+      //      var videoCanvas = videoCanvases[0];
+
+      //      if(resizedVideoWidth!=videoCanvas.width || resizedVideoHeight!=videoCanvas.height)
+      //      {
+      //          //Need to resize 
+      //          videoCanvas.width = resizedVideoWidth;
+      //          videoCanvas.height = resizedVideoHeight;
+      //          videoCanvas.draw();
+      //      }
+
+      //   }
+
+
+
+      //  }
+
+
+    </script>
+
+  </body>
+</html>

@@ -1,0 +1,7 @@
+roslaunch segbot_gazebo segbot_navigation.launch robot_configuration:=`rospack find segbot_bringup`/launch/includes/auxiliary.segbot_kinect_scan.launch.xml
+
+roslaunch rosbridge_server rosbridge_websocket.launch
+
+rosrun mjpeg_server mjpeg_server
+
+rosrun robot_pose_publisher robot_pose_publisher
