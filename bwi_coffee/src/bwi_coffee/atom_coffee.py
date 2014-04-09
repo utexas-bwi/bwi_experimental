@@ -5,11 +5,11 @@ from bwi_planning import Atom
 class AtomCoffee(Atom):
 
     ACTION_NAMES = ["askploc", "greet", "gothrough", "opendoor",
-                    "approach", "order", "load", "unloadto"]
+                    "approach", "order", "load", "unloadto", "goto", "getin"]
     FLUENT_NAMES = ["inside", "knowinside", "open", "visiting", "closeto",
                     "facing", "beside", "loc", "waiting", "loaded", "served",
                     "at"]
-    TERM_NAMES = ["hasdoor", "acc", "knows"]
+    TERM_NAMES = ["hasdoor", "acc", "accdoor", "knows"]
 
     def __init__(self, name, value=None, time=None, negated=False):
         super(AtomCoffee, self).__init__(name, value, time, negated)
