@@ -40,11 +40,12 @@ open(D,I+1) :- opendoor(D,I), door(D), I=0..n-1.
 
 closeto(P,I+1) :- greet(P,I), person(P), I=0..n-1.
 closeto(O,I+1) :- goto(O,I), object(O), I=0..n-1.
+at(R,I+1) :- goto(O,I), knowinside(O,R,I), object(O), room(R), I=0..n-1.
 -closeto(T1,I) :- closeto(T2,I), thing(T1), thing(T2), T1!=T2, I=0..n.
 :- greet(P,I), at(R,I), -knowinside(P,R,I), person(P), room(R), I=0..n.
 :- greet(P,I), -at(R,I), knowinside(P,R,I), person(P), room(R), I=0..n.
-:- goto(O,I), at(R,I), -knowinside(O,R,I), object(O), room(R), I=0..n.
-:- goto(O,I), -at(R,I), knowinside(O,R,I), object(O), room(R), I=0..n.
+:- goto(O,I), -at(R,I), at(R2,I), -acc(R,R2), knowinside(O,R,I), object(O), room(R), room(R2), R!=R2, I=0..n.
+%:- goto(O,I), at(R,I), -knowinside(O,R,I), object(O), room(R), I=0..n.
 
 knowinside(P,R,I+1) :- askploc(P1,P,I), inside(P,R,I), person(P), person(P1),
 room(R), I=0..n-1.
