@@ -44,7 +44,7 @@ room(R) :- shop(R).
 
 door(d3_414a1).
 door(d3_414a2).
-door(d3_414j3).
+door(d3_414a3).
 door(d3_414b1).
 door(d3_414b2).
 door(d3_414b3).
