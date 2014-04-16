@@ -37,7 +37,7 @@ shop(l3_410).
 knowinside(alice,l3_414a,0).
 knowinside(bob,l3_414,0).
 knowinside(carol,l3_414b,0).
-knowinside(table1,l3_406,0). 
+knowinside(table1,l3_514,0). 
 knowinside(coffeecounter,l3_410,0). 
 %room(R) :- office(R).
 room(R) :- shop(R). 

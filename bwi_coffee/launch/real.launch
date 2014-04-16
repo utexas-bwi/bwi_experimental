@@ -7,7 +7,7 @@
   <arg name="object_file" default="$(arg dir_path)/objects.yaml" />
 
   <!-- launch real world robot with map file and navigation -->
-  <include file="$(find segbot_navigation)/launch/segbot_navigation.launch">
+  <include file="$(find segbot_navigation)/launch/navigation.launch">
     <arg name="map_file" value="$(arg map_file)" />
   </include>
 
@@ -19,9 +19,6 @@
     <param name="location_file" value="$(arg location_file)" />
     <param name="object_file" value="$(arg object_file)" />
   </node>
-
-  <!-- launch rviz for navigation visualization -->
-  <include file="$(find segbot_navigation)/launch/rviz.launch" />
 
   <!-- launch the gui -->
   <node name="segbot_gui" pkg="segbot_gui" type="question_dialog_plugin" />
