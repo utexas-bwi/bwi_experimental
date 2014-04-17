@@ -5,7 +5,7 @@ import sys
 
 os.system('touch combined.asp')
 os.system('rm combined.asp')
-os.system('cat coffee.asp facts.asp initial.asp query.asp > combined.asp')
+os.system('cat coffee.asp  query.asp  real_facts.asp real_initial.asp > combined.asp')
 for i in range(100):
   s = ''
   s = commands.getoutput(\
