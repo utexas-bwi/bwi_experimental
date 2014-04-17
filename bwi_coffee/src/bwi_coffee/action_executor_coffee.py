@@ -62,4 +62,5 @@ class ActionExecutorCoffee(ActionExecutor):
             success = True
 
         rospy.loginfo("  Observations: " + str(observations))
+        self.clear_gui()
         return success, observations
