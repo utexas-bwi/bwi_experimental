@@ -191,11 +191,11 @@ closeto(P,I+1) :- closeto(P,I), not -closeto(P,I+1), I=0..n.
 {beside(D,0)} :- door(D).
 {facing(D,0)} :- door(D).
 {knowinside(P,R,0)} :- thing(P), room(R).
-{served(P,O,0)} :- thing(P), item(O).
+%{served(P,O,0)} :- thing(P), item(O).
 {at(R,0)} :- room(R).
-{waiting(O,0)} :- item(O). 
-{loaded(O,0)} :- item(O). 
-{closeto(P,0)} :- thing(P).
+%{waiting(O,0)} :- item(O). 
+%{loaded(O,0)} :- item(O). 
+%{closeto(P,0)} :- thing(P).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % completeness
@@ -246,3 +246,12 @@ closeto(P,I+1) :- closeto(P,I), not -closeto(P,I+1), I=0..n.
 #show unloadto/3.
 #show order/2.
 #show getin/2.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% initial values (unless specified otherwise)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+-served(P,O,0) :- not served(P,O,0), thing(P), item(O).
+-waiting(O,0) :- not waiting(O,0), item(O).
+-loaded(O,0) :- not loaded(O,0), item(O).
+-closeto(P,0) :- not closeto(P,0), thing(P).
