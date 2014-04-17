@@ -33,7 +33,7 @@ class AtomCoffee(Atom):
             return True
 
         # Check for uniqueness constraints
-        if (self.name == "loc" and other.name == "loc" or \
+        if (self.name == "at" and other.name == "at" or \
             self.name == "facing" and other.name == "facing" or \
             self.name == "beside" and other.name == "beside") and \
            self.value != other.value and \

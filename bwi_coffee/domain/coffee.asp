@@ -246,12 +246,3 @@ closeto(P,I+1) :- closeto(P,I), not -closeto(P,I+1), I=0..n.
 #show unloadto/3.
 #show order/2.
 #show getin/2.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Initial values
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
--served(P,O,0) :- thing(P), item(O).
--waiting(O,0) :- item(O). 
--loaded(O,0) :- item(O). 
--closeto(P,0) :- thing(P). 
