@@ -9,6 +9,7 @@ object(SC) :- shopcounter(SC).
 person(peter).
 
 object(table1). 
+object(table2). 
 shopcounter(coffeecounter). 
 
 room(atrium).
@@ -22,6 +23,7 @@ shop(coffeeshop).
 
 knowinside(peter,elevator,0). 
 knowinside(table1,atrium,0). 
+knowinside(table2,atrium,0). 
 knowinside(coffeecounter,coffeeshop,0). 
 
 room(R) :- shop(R). 
