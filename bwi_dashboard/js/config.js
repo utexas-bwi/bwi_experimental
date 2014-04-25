@@ -11,7 +11,7 @@ var rosMjpegVideoAddress = 'localhost';
 var rosMjpegVideoPort = 8080;
 
 //The quality of the streamed video (from 1-100)
-var rosMjpegVideoQuality = 100;
+var rosMjpegVideoQuality = 10;
 
 //The topics that will be viewable from video window
 var rosMjpegVideoTopics = ['/nav_kinect/rgb/image_raw'];
@@ -73,3 +73,5 @@ function createSubscriptionObject(topicname, messagetype, subtopicnames)
 //Add variables to control which widgets are shown
 //.htaccess file to make use controlled
 //text window at top of screen to stream messages to user, like "You are logged onto X"
+//compressed image transport (__image_transport:=compressed)
+//Get parameters for topics etc from GET parameters

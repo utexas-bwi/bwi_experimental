@@ -2,6 +2,6 @@ roslaunch segbot_gazebo segbot_navigation.launch robot_configuration:=`rospack f
 
 roslaunch rosbridge_server rosbridge_websocket.launch
 
-rosrun mjpeg_server mjpeg_server
+rosrun mjpeg_server mjpeg_server __image_transport:=compressed
 
 rosrun robot_pose_publisher robot_pose_publisher
