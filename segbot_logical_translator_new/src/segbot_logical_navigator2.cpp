@@ -27,7 +27,7 @@ class SegbotLogicalNavigator2 :
     bool sense(bwi_planning_common::PlannerInterface::Request &req,
         bwi_planning_common::PlannerInterface::Response &res);
     void execute(
-        const bwi_planning_common_new::ActionInterfaceGoalConstPtr& goal);
+        const bwi_planning_common_new::ActionInterfaceGoalConstPtr &goal);
 
   protected:
 
@@ -77,7 +77,7 @@ SegbotLogicalNavigator2::SegbotLogicalNavigator2()
       nh1_, "execute_logical_goal", 
       boost::bind(&SegbotLogicalNavigator2::execute, this, _1), false) {
 
-  ROS_INFO("SegbotLogicalNavigator2: Advertising services!");
+  ROS_INFO("SegbotLogicalNavigator2: Advertising sensing services!");
 
   ros::param::param("~door_proximity_distance", door_proximity_distance_, 1.5);
 
@@ -103,6 +103,8 @@ SegbotLogicalNavigator2::SegbotLogicalNavigator2()
 void SegbotLogicalNavigator2::execute(
     const bwi_planning_common_new::ActionInterfaceGoalConstPtr& goal) {
   
+  ROS_INFO("SegbotLogicalNavigator2: Advertising action services!");
+
   if (goal->command.name == "approach") {
     result_.success = approachDoor(goal->command.value[0], result_.observations,
         feedback_.status, false);
