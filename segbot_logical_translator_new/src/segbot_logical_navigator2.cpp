@@ -77,12 +77,14 @@ SegbotLogicalNavigator2::SegbotLogicalNavigator2()
       nh1_, "execute_logical_goal", 
       boost::bind(&SegbotLogicalNavigator2::execute, this, _1), false) {
 
-  ROS_INFO("SegbotLogicalNavigator2: Advertising sensing services!");
+  ROS_INFO("SegbotLogicalNavigator2: Advertising action services!");
 
   ros::param::param("~door_proximity_distance", door_proximity_distance_, 1.5);
 
   service_ = nh_->advertiseService("sense_logical_state",
       &SegbotLogicalNavigator2::sense, this);
+
+  ROS_INFO("SegbotLogicalNavigator2: Advertising sensing services!");
 
   robot_controller_.reset(
       new actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction>(
@@ -102,8 +104,6 @@ SegbotLogicalNavigator2::SegbotLogicalNavigator2()
 
 void SegbotLogicalNavigator2::execute(
     const bwi_planning_common_new::ActionInterfaceGoalConstPtr& goal) {
-  
-  ROS_INFO("SegbotLogicalNavigator2: Advertising action services!");
 
   if (goal->command.name == "approach") {
     result_.success = approachDoor(goal->command.value[0], result_.observations,
