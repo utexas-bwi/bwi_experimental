@@ -32,8 +32,6 @@ catkin_package(
 
 include_directories(
   ${catkin_INCLUDE_DIRS}
-  bwi_planning_common
-  bwi_planning_common_new
 )
 
 add_executable(segbot_logical_navigator2 src/segbot_logical_navigator2.cpp)
