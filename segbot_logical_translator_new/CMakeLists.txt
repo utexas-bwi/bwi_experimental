@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   nav_msgs
   roscpp
   tf
+  segbot_logical_translator
 )
 
 catkin_package(
@@ -26,6 +27,7 @@ catkin_package(
     nav_msgs
     roscpp
     tf
+    segbot_logical_translator
 )
 
 include_directories(

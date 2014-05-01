@@ -20,6 +20,7 @@
   <build_depend>bwi_mapper</build_depend>
   <build_depend>bwi_planning_common</build_depend>
   <build_depend>bwi_planning_common_new</build_depend>
+  <build_depend>segbot_logical_translator</build_depend>
   <build_depend>message_filters</build_depend>
   <build_depend>move_base_msgs</build_depend>
   <build_depend>nav_msgs</build_depend>
@@ -30,6 +31,7 @@
   <run_depend>bwi_mapper</run_depend>
   <run_depend>bwi_planning_common</run_depend>
   <run_depend>bwi_planning_common_new</run_depend>
+  <run_depend>segbot_logical_translator</run_depend>
   <run_depend>message_filters</run_depend>
   <run_depend>move_base_msgs</run_depend>
   <run_depend>nav_msgs</run_depend>
