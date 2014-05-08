@@ -13,7 +13,7 @@ There are 3 main components that must be run in order for the application to wor
 - mjpeg_server
  - Used to stream video to the dashboard
  - Used in: Video
- - Run using: `rosrun mjpeg_server mjpeg_server`
+ - Run using: `rosrun mjpeg_server mjpeg_server __image_transport:=compressed`
 - robot_pose_publisher
  - Used to stream location of robot
  - Used in: Navigation
@@ -22,6 +22,6 @@ There are 3 main components that must be run in order for the application to wor
 
 ##How to use
 
-There is a file, `js/config.js`, that contains configuration information for the dashboard. The names should be self explanatory for what they represent. I am in the process of making this step easier and more straightforward to edit, but if you're running the browser on localhost, then the only things you should need to change are `tableSubscriptions` to hold the topics you are interested in streaming to Sensors and `rosMjpegServerInfo`'s `Topics` and `Labels` fields to hold the video topics you would like to stream to Video.
+There is a file, `js/config.js`, that contains default configurations that can be used with this program. However, you can also input connection and topic information on the configuration screen of the dashboard.
 
-Open the index.html page in a browser and open the panels that you need.
+Open the index.html page in a browser. First input the proper configuration information, then click connect. When the dashboard displays, open the panels that you need. Note: for Teleop, the Q,W,E,A,S,D keys can be used for control as well.
