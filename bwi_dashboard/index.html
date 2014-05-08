@@ -33,6 +33,8 @@
 
     <script>
 
+     
+
   var ros;
   function initializeROS()
   {
@@ -445,14 +447,28 @@
  
 
     
-    
+  function initializeConfigOptions()
+  {
+    for(var index in connectionConfig) {
+      $('#connectionSelect').append('<option value="' + index + '">' + index + '</option>');
+    }
+
+    for(var index in topicConfig) {
+      $('#subscriptionSelect').append('<option value="' + index + '">' + index + '</option>');
+    }
+
+    addVideoTopic('');
+    addSensorTopic('','',[]);
+
+  }
 
   
 
   function initialize()
   {
-    initializeROS();
-    initializeSensorTable();
+    initializeConfigOptions();
+    // initializeROS();
+    // initializeSensorTable();
   }
 
 
@@ -486,6 +502,73 @@
 
 
     <div class="container-fluid">
+
+      <div id="configurationcontainer">
+        <h1 class="page-header">Configuration</h1>
+
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h3 class="panel-title">Connection</h3>
+          </div>
+          <div class="panel-body">
+            <div class="input-group">
+              <span class="input-group-addon">Select Default</span>
+              <select class="form-control" id="connectionSelect">
+                <option value="CUSTOM">Custom</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <span class="input-group-addon">Host</span>
+              <input type="text" class="form-control" placeholder="example.csres.utexas.edu" id="inputHost">
+            </div>
+            <div class="input-group">
+              <span class="input-group-addon">Rosbridge Port</span>
+              <input type="text" class="form-control" placeholder="9090" id="inputRosbridgePort">
+            </div>
+            <div class="input-group">
+              <span class="input-group-addon">Mjpeg Server Port</span>
+              <input type="text" class="form-control" placeholder="8080" id="inputMjpegServerPort">
+            </div>
+          </div>
+        </div>
+
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h3 class="panel-title">Subscriptions</h3>
+          </div>
+          <div class="panel-body">
+            <div class="input-group">
+              <span class="input-group-addon">Select Default</span>
+              <select class="form-control" id="subscriptionSelect">
+                <option value="CUSTOM">Custom</option>
+              </select>
+            </div>
+
+            <h3 class="page-header">Video Topics</h2>
+            <div id="videotopics">
+            </div>
+            <button type="button" class="btn btn-default btn-md" style="width:100%;" id="addVideoTopic">
+              <span class="glyphicon glyphicon-plus"></span> Add More Topics
+            </button>
+
+            <h3 class="page-header">Sensor Topics</h2>
+            <div id="sensortopics">
+            </div>
+            <button type="button" class="btn btn-default btn-md" style="width:100%;" id="addSensorTopic">
+              <span class="glyphicon glyphicon-plus"></span> Add More Topics
+            </button>
+
+          </div>
+        </div>
+        
+
+        <button type="button" class="btn btn-success btn-lg" style="width:100%;" id="connectROS">
+          <span class="glyphicon glyphicon-off"></span> Connect
+        </button>
+
+      </div>
+
+      <div id="dashboardcontainer" style="display:none;">
           <h1 class="page-header">Dashboard</h1>
 
           <div class="panel-group" id="divVideo">
@@ -638,26 +721,7 @@
               </div>
             </div>
           </div>
-
-
-          <!-- <div id="divSensors" >
-             <h2 class="sub-header">Sensors</h2>
-             <div class="table-responsive">
-               <table class="table table-striped">
-                 <thead>
-                   <tr>
-                     <th>Topic</th>
-                     <th class='hidden-xs hidden-sm'>Type</th>
-                     <th>Value</th>
-                     <th>Updated</th>
-                   </tr>
-                 </thead>
-                 <tbody id="tbodyTableSubscriptions">
-                 </tbody>
-               </table>
-             </div>
-          </div> -->
-
+        </div>
 
     </div>
 
@@ -666,6 +730,146 @@
     
 
     <script>
+
+      
+
+      //Connect to ROS
+      $('#connectROS').click( function() {
+
+        //Get connection info
+        hostInfo = createConnectionConfig($('#inputHost').val(), $('#inputRosbridgePort').val(), $('#inputMjpegServerPort').val());
+        rosBridgeAddress = hostInfo.Host + ":" + hostInfo.RosbridgePort;
+        rosMjpegVideoAddress = hostInfo.Host;
+        rosMjpegVideoPort = hostInfo.MjpegServerPort;
+
+        //Get subscription info
+        //video info
+        rosMjpegVideoTopics = [];
+        $('#videotopics').find('input').each(function () {
+          if(this.value!="")
+          {
+            rosMjpegVideoTopics.push(this.value);
+          }
+        });
+
+        //sensor info
+        tableSubscriptions = [];
+        $('#sensortopics').children('div').each(function () {
+          // rosMjpegVideoTopics.push(this.value);
+          var tempTopicBuffer = [];
+          $(this).find('input').each(function(){
+            tempTopicBuffer.push(this.value);
+          });
+          if(tempTopicBuffer[0] != "")
+          {
+            var splitSubtopics = tempTopicBuffer[2].split(/[\s,]+/);
+            tableSubscriptions.push(createSubscriptionObject(tempTopicBuffer[0], tempTopicBuffer[1], splitSubtopics));
+          }
+        });
+
+        rosMjpegServerInfo = {
+                               Host : rosMjpegVideoAddress,
+                               Port : rosMjpegVideoPort,
+                               Quality : rosMjpegVideoQuality, //0-100
+                               Height : 480,
+                               Width : 640,
+                               Topics : rosMjpegVideoTopics,
+                               Labels : rosMjpegVideoTopics
+                              }
+
+
+
+
+
+        $('#configurationcontainer').css({ "display": 'none'});
+        $('#dashboardcontainer').css({ "display": ''});
+
+        initializeROS();
+        initializeSubscribers();
+      });
+
+
+      function addVideoTopic(topicname)
+      {
+        $("#videotopics").append('<div class="input-group"><span class="input-group-addon">Topic Name</span><input type="text" class="form-control" placeholder="/nav_kinect/rgb/image_raw" value="' + topicname + '"></div><br/>');
+      }
+
+      function addSensorTopic(topicname, messagetype, topicrestrictions)
+      {
+        var topicrestrictionsString = '';
+        for (var i = 0; i < topicrestrictions.length; i++) {
+            topicrestrictionsString = topicrestrictionsString + topicrestrictions[i];
+            if(i != topicrestrictions.length-1)
+            {
+              topicrestrictionsString = topicrestrictionsString + ', ';
+            }
+            //Do something
+        }
+        $("#sensortopics").append('<div><div class="input-group"><span class="input-group-addon">Topic Name</span><input type="text" class="form-control" placeholder="/odom" value="' + topicname + '"></div><div class="input-group"><span class="input-group-addon">Message Type</span><input type="text" class="form-control" placeholder="nav_msgs/Odometry" value="' + messagetype + '"></div><div class="input-group"><span class="input-group-addon">SubTopics</span><input type="text" class="form-control" placeholder="twist/twist/linear, twist/twist/angular" value="' + topicrestrictionsString + '"></div></div><br/>');
+      }
+
+      function clearVideoTopics()
+      {
+        $("#videotopics").empty();
+      }
+
+      function clearSensorTopics()
+      {
+        $("#sensortopics").empty();
+      }
+
+      $('#addSensorTopic').click( function() {
+        addSensorTopic('','',[]);
+      });
+
+      $('#addVideoTopic').click( function() {
+        addVideoTopic('');
+      });
+
+      $('#subscriptionSelect').change( function() {    
+        clearVideoTopics();
+        clearSensorTopics();
+        if($(this).val()=="CUSTOM")
+        {
+          addSensorTopic('','',[]);
+          addVideoTopic('');
+        }
+        else
+        {
+          //initialize content
+          var subscrVideo = topicConfig[$(this).val()].VideoTopics;
+          var subscrSensor = topicConfig[$(this).val()].SensorTopics;
+
+          for(var i=0; i<subscrVideo.length; i++)
+          {
+            addVideoTopic(subscrVideo[i]);
+          }
+
+          for(var i=0; i<subscrSensor.length; i++)
+          {
+            addSensorTopic(subscrSensor[i].TopicName, subscrSensor[i].MessageType, subscrSensor[i].SubTopicNames);
+          }
+
+        }
+
+      });
+
+       $('#connectionSelect').change( function() {    
+        if($(this).val()=="CUSTOM")
+        {
+          hostInfo = createConnectionConfig("","","");
+        }
+        else
+        {
+          hostInfo = connectionConfig[$(this).val()];
+        }
+
+        inputHost.value=hostInfo.Host;
+        inputRosbridgePort.value=hostInfo.RosbridgePort;
+        inputMjpegServerPort.value=hostInfo.MjpegServerPort;
+
+      });
+
       //When minimizing accordion for sensors, delete the subscribers so you're not wasting bandwith
       $('#collapseSensors').on('hidden.bs.collapse', function (e) {
           deleteSensorSubscribers();
