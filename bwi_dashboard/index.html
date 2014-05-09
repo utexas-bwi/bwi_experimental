@@ -354,11 +354,46 @@
   var navWindowClient;
   function createNavSubscribers()
   {
+      var desiredNavWidth = 650;
+      var desiredNavHeight = 800;
+
+      var realNavWidth;
+      var realNavHeight;
+
+      //Current size of window
+      var windowWidth = "innerWidth" in window 
+                  ? window.innerWidth
+                  : document.documentElement.offsetWidth; 
+      var windowHeight = "innerHeight" in window 
+               ? window.innerHeight
+               : document.documentElement.offsetHeight; 
+
+      //How big of a Nav can we fit for our width and height?
+      var minNavWidth = Math.min(desiredNavWidth, windowWidth);
+      var minNavHeight = Math.min(desiredNavHeight, windowHeight);
+
+      //If we resize our Nav according to the resolution we chose in config, 
+      //what will we have to shift our NavWidth and NavHeight to respectively
+      var shiftedNavWidth = (minNavHeight/desiredNavHeight) * desiredNavWidth;
+      var shiftedNavHeight = (minNavWidth/desiredNavWidth) * desiredNavHeight;
+
+      //check to see if Height takes priority over Width
+      if(shiftedNavWidth < minNavWidth)
+      {
+         realNavWidth = shiftedNavWidth;
+         realNavHeight = minNavHeight;
+      }
+      else
+      {
+         realNavWidth = minNavWidth;
+         realNavHeight = shiftedNavHeight;
+      }
+
       // Create the main viewer.
        navWindowViewer = new ROS2D.Viewer({
          divID : 'navWindow',
-         width : 750,
-         height : 800
+         width : realNavWidth,
+         height : realNavHeight
        });
 
        // Setup the nav client.
@@ -479,8 +514,8 @@
   function processParamInitialization()
   {
     //initialize to parameter values
-    var connectionChoice = getParam("connection");
-    var subscriptionChoice = getParam("subscription");
+    var connectionChoice = getParam("c");
+    var subscriptionChoice = getParam("s");
     if(connectionChoice == "" && subscriptionChoice == "")
     {
       alert("ERROR: No connection or subscription configuration included.");
@@ -537,7 +572,7 @@
 
   <body onload="initialize()">
 
-    <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+    <div class="navbar navbar-inverse" role="navigation" style="margin-top:-50px;">
       <div class="container-fluid">
         <div class="navbar-header">
           <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
