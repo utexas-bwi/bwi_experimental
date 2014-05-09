@@ -453,7 +453,7 @@
       $('#connectionSelect').append('<option value="' + index + '">' + index + '</option>');
     }
 
-    for(var index in topicConfig) {
+    for(var index in subscriptionConfig) {
       $('#subscriptionSelect').append('<option value="' + index + '">' + index + '</option>');
     }
 
@@ -462,13 +462,72 @@
 
   }
 
+  function getParam ( sname )
+  {
+    var params = location.search.substr(location.search.indexOf("?")+1);
+    var sval = "";
+    params = params.split("&");
+      // split param and value into individual pieces
+      for (var i=0; i<params.length; i++)
+         {
+           temp = params[i].split("=");
+           if ( [temp[0]] == sname ) { sval = temp[1]; }
+         }
+    return sval;
+  }
+
+  function processParamInitialization()
+  {
+    //initialize to parameter values
+    var connectionChoice = getParam("connection");
+    var subscriptionChoice = getParam("subscription");
+    if(connectionChoice == "" && subscriptionChoice == "")
+    {
+      alert("ERROR: No connection or subscription configuration included.");
+    }
+    else if(connectionChoice == "")
+    {
+      alert("ERROR: No connection configuration included.");
+    }
+    else if(subscriptionChoice == "")
+    {
+      alert("ERROR: No subscription configuration included.");
+    }
+    else
+    {
+      //choices included
+      if(!(connectionChoice in connectionConfig))
+      {
+        alert("ERROR: Connection configuration doesn't exist.");
+      }
+      else if(!(subscriptionChoice in subscriptionConfig))
+      {
+        alert("ERROR: Subscription configuration doesn't exist.");
+      }
+      else
+      {
+        //choices are valid
+        $("#connectionSelect").val(connectionChoice).trigger('change');
+        $("#subscriptionSelect").val(subscriptionChoice).trigger('change');
+        connectToROS();
+
+      }
+    }
+  }
   
 
   function initialize()
   {
     initializeConfigOptions();
-    // initializeROS();
-    // initializeSensorTable();
+    if(location.search.indexOf("?") >= 0)
+    {
+      processParamInitialization();
+    }
+    else
+    {
+      $('#configurationcontainer').css({ "display": ''});
+
+    }
   }
 
 
@@ -503,7 +562,7 @@
 
     <div class="container-fluid">
 
-      <div id="configurationcontainer">
+      <div id="configurationcontainer" style="display:none;">
         <h1 class="page-header">Configuration</h1>
 
         <div class="panel panel-default">
@@ -731,14 +790,11 @@
 
     <script>
 
-      
-
-      //Connect to ROS
-      $('#connectROS').click( function() {
-
+      function connectToROS()
+      {
         //Get connection info
         hostInfo = createConnectionConfig($('#inputHost').val(), $('#inputRosbridgePort').val(), $('#inputMjpegServerPort').val());
-        rosBridgeAddress = hostInfo.Host + ":" + hostInfo.RosbridgePort;
+        rosBridgeAddress = "ws://" + hostInfo.Host + ":" + hostInfo.RosbridgePort;
         rosMjpegVideoAddress = hostInfo.Host;
         rosMjpegVideoPort = hostInfo.MjpegServerPort;
 
@@ -785,7 +841,14 @@
         $('#dashboardcontainer').css({ "display": ''});
 
         initializeROS();
-        initializeSubscribers();
+        initializeSensorTable();
+      }
+
+      
+
+      //Connect to ROS
+      $('#connectROS').click( function() {
+        connectToROS();
       });
 
 
@@ -837,8 +900,8 @@
         else
         {
           //initialize content
-          var subscrVideo = topicConfig[$(this).val()].VideoTopics;
-          var subscrSensor = topicConfig[$(this).val()].SensorTopics;
+          var subscrVideo = subscriptionConfig[$(this).val()].VideoTopics;
+          var subscrSensor = subscriptionConfig[$(this).val()].SensorTopics;
 
           for(var i=0; i<subscrVideo.length; i++)
           {
