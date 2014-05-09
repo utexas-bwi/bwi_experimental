@@ -3,7 +3,7 @@ var connectionConfig = {
   "hypnotoad" : createConnectionConfig("hypnotoad.csres.utexas.edu", 9090, 8080)
 }
 
-var topicConfig = {
+var subscriptionConfig = {
   "default" : {
               VideoTopics: [
                             '/nav_kinect/rgb/image_raw'
