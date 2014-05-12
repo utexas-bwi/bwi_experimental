@@ -5,6 +5,13 @@ var connectionConfig = {
 
 var subscriptionConfig = {
   "default" : {
+              Enabled: {
+                          Video:   true,
+                          Teleop:  true,
+                          Nav:     true,
+                          Sensors: true
+                        },
+              VideoQuality: 10,
               VideoTopics: [
                             '/nav_kinect/rgb/image_raw'
                            ],
@@ -15,6 +22,13 @@ var subscriptionConfig = {
 
   },
   "default2" : {
+              Enabled: {
+                          Video:   false,
+                          Teleop:  false,
+                          Nav:     false,
+                          Sensors: true
+                        },
+              VideoQuality: 0,
               VideoTopics: [
                            ],
               SensorTopics: [

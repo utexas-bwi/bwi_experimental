@@ -638,19 +638,58 @@
               </select>
             </div>
 
-            <h3 class="page-header">Video Topics</h2>
-            <div id="videotopics">
+            <h3 class="page-header">Enabled Widgets</h2>
+            <div class="input-group">
+              <span class="input-group-addon">
+                <input type="checkbox" id="enabledVideo" checked>
+              </span>
+              <input type="text" class="form-control" value="Video" readonly="readonly">
             </div>
-            <button type="button" class="btn btn-default btn-md" style="width:100%;" id="addVideoTopic">
-              <span class="glyphicon glyphicon-plus"></span> Add More Topics
-            </button>
+            <div class="input-group">
+              <span class="input-group-addon">
+                <input type="checkbox" id="enabledTeleop" checked>
+              </span>
+              <input type="text" class="form-control" value="Teleop" readonly="readonly">
+            </div>
+            <div class="input-group">
+              <span class="input-group-addon">
+                <input type="checkbox" id="enabledNavigation" checked>
+              </span>
+              <input type="text" class="form-control" value="Navigation" readonly="readonly">
+            </div>
+            <div class="input-group">
+              <span class="input-group-addon">
+                <input type="checkbox" id="enabledSensors" checked>
+              </span>
+              <input type="text" class="form-control" value="Sensors" readonly="readonly">
+            </div>
 
-            <h3 class="page-header">Sensor Topics</h2>
-            <div id="sensortopics">
+
+            <div id="VideoTopics">
+              <h3 class="page-header">Video Topics</h3>
+
+              <div class="input-group">
+                <span class="input-group-addon">Video Quality</span>
+                <input type="text" class="form-control" placeholder="Value from 0-100" id="videoQuality">
+              </div>
+              <br/>
+              <br />
+              <div id="videotopics">
+              </div>
+              <button type="button" class="btn btn-default btn-md" style="width:100%;" id="addVideoTopic">
+                <span class="glyphicon glyphicon-plus"></span> Add More Topics
+              </button>
             </div>
-            <button type="button" class="btn btn-default btn-md" style="width:100%;" id="addSensorTopic">
-              <span class="glyphicon glyphicon-plus"></span> Add More Topics
-            </button>
+
+            <div id="SensorTopics">
+              <h3 class="page-header">Sensor Topics</h3>
+
+              <div id="sensortopics">
+              </div>
+              <button type="button" class="btn btn-default btn-md" style="width:100%;" id="addSensorTopic">
+                <span class="glyphicon glyphicon-plus"></span> Add More Topics
+              </button>
+            </div>
 
           </div>
         </div>
@@ -833,30 +872,54 @@
         rosMjpegVideoAddress = hostInfo.Host;
         rosMjpegVideoPort = hostInfo.MjpegServerPort;
 
+        //Get enabled widgets
+        enabledVideo = $('#enabledVideo').prop('checked');
+        enabledTeleop = $('#enabledTeleop').prop('checked');
+        enabledNavigation = $('#enabledNavigation').prop('checked');
+        enabledSensors = $('#enabledSensors').prop('checked');
+
+
         //Get subscription info
-        //video info
-        rosMjpegVideoTopics = [];
-        $('#videotopics').find('input').each(function () {
-          if(this.value!="")
-          {
-            rosMjpegVideoTopics.push(this.value);
-          }
-        });
+        //video quality
+        if(enabledVideo)
+        {
+          rosMjpegVideoQuality = $('#videoQuality').val();
+          //video info
+          rosMjpegVideoTopics = [];
+          $('#videotopics').find('input').each(function () {
+            if(this.value!="")
+            {
+              rosMjpegVideoTopics.push(this.value);
+            }
+          });
+        }
+        else
+        {
+          rosMjpegVideoQuality = 1;
+          rosMjpegVideoTopics = [];
+        }
 
         //sensor info
-        tableSubscriptions = [];
-        $('#sensortopics').children('div').each(function () {
-          // rosMjpegVideoTopics.push(this.value);
-          var tempTopicBuffer = [];
-          $(this).find('input').each(function(){
-            tempTopicBuffer.push(this.value);
+        if(enabledSensors)
+        {
+          tableSubscriptions = [];
+          $('#sensortopics').children('div').each(function () {
+            // rosMjpegVideoTopics.push(this.value);
+            var tempTopicBuffer = [];
+            $(this).find('input').each(function(){
+              tempTopicBuffer.push(this.value);
+            });
+            if(tempTopicBuffer[0] != "")
+            {
+              var splitSubtopics = tempTopicBuffer[2].split(/[\s,]+/);
+              tableSubscriptions.push(createSubscriptionObject(tempTopicBuffer[0], tempTopicBuffer[1], splitSubtopics));
+            }
           });
-          if(tempTopicBuffer[0] != "")
-          {
-            var splitSubtopics = tempTopicBuffer[2].split(/[\s,]+/);
-            tableSubscriptions.push(createSubscriptionObject(tempTopicBuffer[0], tempTopicBuffer[1], splitSubtopics));
-          }
-        });
+        }
+        else
+        {
+          tableSubscriptions = [];
+        }
 
         rosMjpegServerInfo = {
                                Host : rosMjpegVideoAddress,
@@ -874,6 +937,18 @@
 
         $('#configurationcontainer').css({ "display": 'none'});
         $('#dashboardcontainer').css({ "display": ''});
+
+        if(enabledVideo){ $('#divVideo').css({ "display": ''}); }
+        else{ $('#divVideo').css({ "display": 'none'}); }
+
+        if(enabledTeleop){ $('#divTeleop').css({ "display": ''}); }
+        else{ $('#divTeleop').css({ "display": 'none'}); }
+
+        if(enabledNavigation){ $('#divNav').css({ "display": ''}); }
+        else{ $('#divNav').css({ "display": 'none'}); }
+
+        if(enabledSensors){ $('#divSensors').css({ "display": ''}); }
+        else{ $('#divSensors').css({ "display": 'none'}); }
 
         initializeROS();
         initializeSensorTable();
@@ -931,12 +1006,45 @@
         {
           addSensorTopic('','',[]);
           addVideoTopic('');
+          $('#enabledVideo').prop('checked', true);
+          $('#enabledTeleop').prop('checked', true);
+          $('#enabledNavigation').prop('checked', true);
+          $('#enabledSensors').prop('checked', true);
+          $('#videoQuality').val('');
+          $('#VideoTopics').css({ "display": ''});
+          $('#SensorTopics').css({ "display": ''});
         }
         else
         {
           //initialize content
-          var subscrVideo = subscriptionConfig[$(this).val()].VideoTopics;
-          var subscrSensor = subscriptionConfig[$(this).val()].SensorTopics;
+          var subscrConfig = subscriptionConfig[$(this).val()];
+          var subscrVideo = subscrConfig.VideoTopics;
+          var subscrSensor = subscrConfig.SensorTopics;
+
+          $('#videoQuality').val(subscrConfig.VideoQuality);
+          $('#enabledVideo').prop('checked', subscrConfig.Enabled.Video);
+          $('#enabledTeleop').prop('checked', subscrConfig.Enabled.Teleop);
+          $('#enabledNavigation').prop('checked', subscrConfig.Enabled.Navigation);
+          $('#enabledSensors').prop('checked', subscrConfig.Enabled.Sensors);
+
+          if(subscrConfig.Enabled.Video)
+          {
+            $('#VideoTopics').css({ "display": ''});
+          }
+          else
+          {
+            $('#VideoTopics').css({ "display": 'none'});
+          }
+
+          if(subscrConfig.Enabled.Sensors)
+          {
+            $('#SensorTopics').css({ "display": ''});
+          }
+          else
+          {
+            $('#SensorTopics').css({ "display": 'none'});
+          }
+
 
           for(var i=0; i<subscrVideo.length; i++)
           {
@@ -966,6 +1074,28 @@
         inputRosbridgePort.value=hostInfo.RosbridgePort;
         inputMjpegServerPort.value=hostInfo.MjpegServerPort;
 
+      });
+
+      $("#enabledVideo").change(function() {
+          if(this.checked)
+          {
+            $('#VideoTopics').css({ "display": ''});
+          }
+          else
+          {
+            $('#VideoTopics').css({ "display": 'none'});
+          }
+      });
+
+      $("#enabledSensors").change(function() {
+          if(this.checked)
+          {
+            $('#SensorTopics').css({ "display": ''});
+          }
+          else
+          {
+            $('#SensorTopics').css({ "display": 'none'});
+          }
       });
 
       //When minimizing accordion for sensors, delete the subscribers so you're not wasting bandwith
