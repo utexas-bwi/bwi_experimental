@@ -21,7 +21,6 @@
     <script src="js/eventemitter2.js"></script>
     <script src="js/roslib.js"></script>
    <script type="text/javascript" src="http://cdn.robotwebtools.org/ros2djs/current/ros2d.min.js"></script>
-   <script type="text/javascript" src="http://cdn.robotwebtools.org/nav2djs/current/nav2d.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.23/jquery-ui.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
@@ -38,24 +37,23 @@
   var ros;
   function initializeROS()
   {
-     // var ros = new ROSLIB.Ros();
+     ros = new ROSLIB.Ros();
 
      // // If there is an error on the backend, an 'error' emit will be emitted.
-     // ros.on('error', function(error) {
-     //   console.log(error);
-     // });
+     ros.on('error', function(error) {
+       console.log('Error connecting to ' + rosBridgeAddress);
+     });
 
-     // // Find out exactly when we made a connection.
-     // ros.on('connection', function() {
-     //   console.log('Connection made!');
-     //   rosLibIsConnected = true;
-     // });
+     // Find out exactly when we made a connection.
+     ros.on('connection', function() {
+       console.log('Connection made to ' + rosBridgeAddress);
+     });
 
      // // Create a connection to the rosbridge WebSocket server.
-     // ros.connect(rosBridgeAddress);
-     ros = new ROSLIB.Ros({
-         url : rosBridgeAddress
-     });
+     ros.connect(rosBridgeAddress);
+     // ros = new ROSLIB.Ros({
+     //     url : rosBridgeAddress
+     // });
   }
 
 
@@ -302,12 +300,12 @@
       var realVideoHeight;
 
       //Current size of window
-      var windowWidth = "innerWidth" in window 
+      var windowWidth = ("innerWidth" in window 
                   ? window.innerWidth
-                  : document.documentElement.offsetWidth; 
-      var windowHeight = "innerHeight" in window 
+                  : document.documentElement.offsetWidth)-100; 
+      var windowHeight = ("innerHeight" in window 
                ? window.innerHeight
-               : document.documentElement.offsetHeight; 
+               : document.documentElement.offsetHeight)-100; 
 
       //How big of a video can we fit for our width and height?
       var minVideoWidth = Math.min(rosMjpegServerInfo.Width,  windowWidth);
@@ -354,19 +352,19 @@
   var navWindowClient;
   function createNavSubscribers()
   {
-      var desiredNavWidth = 650;
+      var desiredNavWidth = 800;
       var desiredNavHeight = 800;
 
       var realNavWidth;
       var realNavHeight;
 
-      //Current size of window
-      var windowWidth = "innerWidth" in window 
+      // Current size of window
+      var windowWidth = ("innerWidth" in window 
                   ? window.innerWidth
-                  : document.documentElement.offsetWidth; 
-      var windowHeight = "innerHeight" in window 
+                  : document.documentElement.offsetWidth)-25; 
+      var windowHeight = ("innerHeight" in window 
                ? window.innerHeight
-               : document.documentElement.offsetHeight; 
+               : document.documentElement.offsetHeight)-25; 
 
       //How big of a Nav can we fit for our width and height?
       var minNavWidth = Math.min(desiredNavWidth, windowWidth);
@@ -397,18 +395,11 @@
        });
 
        // Setup the nav client.
-       navWindowClient = NAV2D.OccupancyGridClientNav({
+       navWindowClient = ROS2D.OccupancyGridClient({
          ros : ros,
-         rootObject : navWindowViewer.scene,
-         viewer : navWindowViewer,
-         serverName : navWindowServerName
+         rootObject : navWindowViewer.scene
        });
 
-       // Scale the canvas to fit to the map
-      // navWindowClient.on('change', function() {
-      //   navWindowViewier.scaleToDimensions(navWindowClient.currentGrid.width, navWindowClient.currentGrid.height);
-      //   navWindowViewier.shift(navWindowClient.currentGrid.pose.position.x, navWindowClient.currentGrid.pose.position.y);
-      // });
   }
 
   function deleteNavSubscribers()
@@ -470,8 +461,8 @@
     }
     else if(action=='zoomin')
     {
-      navWindowViewer.scene.scaleX = 1 + navWindowViewer.scene.scaleX*1.5;
-      navWindowViewer.scene.scaleY = 1 + navWindowViewer.scene.scaleY*1.5;
+      navWindowViewer.scene.scaleX = navWindowViewer.scene.scaleX*1.5;
+      navWindowViewer.scene.scaleY = navWindowViewer.scene.scaleY*1.5;
     }
     else if(action=='zoomout')
     {
@@ -549,10 +540,29 @@
       }
     }
   }
+
   
 
   function initialize()
   {
+    //redirect console output
+    if (typeof console  != "undefined") 
+    if (typeof console.log != 'undefined')
+    {
+        console.olog = console.log;
+    }
+    else
+    {
+        console.olog = function() {};
+    }
+
+    console.log = function(message) {
+        console.olog(message);
+        logToScreen('BWI Dashboard', message);
+    };
+    console.error = console.debug = console.info =  console.log
+
+    //initialize config
     initializeConfigOptions();
     if(location.search.indexOf("?") >= 0)
     {
@@ -601,8 +611,13 @@
         <h1 class="page-header">Configuration</h1>
 
         <div class="panel panel-default">
-          <div class="panel-heading">
-            <h3 class="panel-title">Connection</h3>
+          <div class="panel-heading clearfix">
+            <h3 class="panel-title pull-left">Connection</h3>
+            <div class="btn-group pull-right">
+              <button type="button" class="btn btn-default btn-xs" id="connectionExport">
+                <span class="glyphicon glyphicon-download-alt"></span> Export Configuration
+              </button>
+            </div>
           </div>
           <div class="panel-body">
             <div class="input-group">
@@ -627,8 +642,13 @@
         </div>
 
         <div class="panel panel-default">
-          <div class="panel-heading">
-            <h3 class="panel-title">Subscriptions</h3>
+          <div class="panel-heading clearfix">
+            <h3 class="panel-title pull-left">Subscriptions</h3>
+            <div class="btn-group pull-right">
+              <button type="button" class="btn btn-default btn-xs" id="subscriptionExport">
+                <span class="glyphicon glyphicon-download-alt"></span> Export Configuration
+              </button>
+            </div>
           </div>
           <div class="panel-body">
             <div class="input-group">
@@ -665,8 +685,9 @@
             </div>
 
 
+
             <div id="VideoTopics">
-              <h3 class="page-header">Video Topics</h3>
+              <h3 class="page-header">Video Configuration</h3>
 
               <div class="input-group">
                 <span class="input-group-addon">Video Quality</span>
@@ -682,7 +703,7 @@
             </div>
 
             <div id="SensorTopics">
-              <h3 class="page-header">Sensor Topics</h3>
+              <h3 class="page-header">Sensor Configuration</h3>
 
               <div id="sensortopics">
               </div>
@@ -699,10 +720,78 @@
           <span class="glyphicon glyphicon-off"></span> Connect
         </button>
 
+
+        <div class="modal fade" id="connectionExportModal">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h3 class="modal-title">Export Connection Configuration</h3>
+              </div>
+              <div class="modal-body">
+                <p>Add the following code as a new addition to the <i>connectionConfig</i> variable in config.js located in the '/js/' directory (make sure to add commas between entries as need be):</p>
+                <pre id="connectionExportPre" ></pre>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal fade" id="subscriptionExportModal">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h3 class="modal-title">Export Subscription Configuration</h3>
+              </div>
+              <div class="modal-body">
+                <p>Add the following code as a new addition to the <i>subscriptionConfig</i> variable in config.js located in the '/js/' directory (make sure to add commas between entries as need be):</p>
+                <pre id="subscriptionExportPre" ></pre>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
+
+
 
       <div id="dashboardcontainer" style="display:none;">
           <h1 class="page-header">Dashboard</h1>
+
+
+          <div class="panel-group" id="divLog">
+            <div class="panel panel-default">
+              <div class="panel-heading">
+                <h4 class="panel-title">
+                    Message Log
+                </h4>
+              </div>
+              <div id="collapseLog" class="panel-collapse collapse in">
+                <div class="panel-body">
+                  <div style="height:100px;display:block;overflow-y:auto;" id="scrollLog">
+                    <table class="table table-striped" style="overflow: scroll;" >
+                      <thead>
+                         <tr>
+                           <th>From</th>
+                           <th>Timestamp</th>
+                           <th>Message</th>
+                         </tr>
+                      </thead>
+                      <tbody id="tbodyLog">
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
 
           <div class="panel-group" id="divVideo">
             <div class="panel panel-default">
@@ -864,6 +953,8 @@
 
     <script>
 
+      
+
       function connectToROS()
       {
         //Get connection info
@@ -899,6 +990,7 @@
           rosMjpegVideoTopics = [];
         }
 
+
         //sensor info
         if(enabledSensors)
         {
@@ -912,7 +1004,7 @@
             if(tempTopicBuffer[0] != "")
             {
               var splitSubtopics = tempTopicBuffer[2].split(/[\s,]+/);
-              tableSubscriptions.push(createSubscriptionObject(tempTopicBuffer[0], tempTopicBuffer[1], splitSubtopics));
+              tableSubscriptions.push(createSensorSubscriptionObject(tempTopicBuffer[0], tempTopicBuffer[1], splitSubtopics));
             }
           });
         }
@@ -960,6 +1052,109 @@
       $('#connectROS').click( function() {
         connectToROS();
       });
+
+
+
+
+
+      $('#connectionExport').click( function(){
+          var exportStr = JSON.stringify(createConnectionConfig($('#inputHost').val(), $('#inputRosbridgePort').val(), $('#inputMjpegServerPort').val()), null, 2);
+          exportStr = exportStr.replace(/\"([^(\")"]+)\":/g,"$1:");
+          exportStr = '"your_config_name_here" : ' + exportStr;
+          $('#connectionExportPre').text(exportStr);
+          $('#connectionExportModal').modal('show');
+      });
+
+      $('#subscriptionExport').click( function(){
+          var exportStr = JSON.stringify(createConfigurationObject(), null, 2);
+          exportStr = exportStr.replace(/\"([^(\")"]+)\":/g,"$1:");
+          exportStr = '"your_config_name_here" : ' + exportStr;
+          $('#subscriptionExportPre').text(exportStr);
+          $('#subscriptionExportModal').modal('show');
+      });
+
+
+        function logToScreen(fromName, logInput)
+        {
+            var logMessage = logInput;
+            if(logInput !== null && typeof logInput === 'object')
+            {
+              logMessage = JSON.stringify(logInput, null, 2);
+            }
+            var tbodyLog = document.getElementById('tbodyLog');
+            var trLog = document.createElement('tr');
+
+            var tdFrom = document.createElement('td');
+            tdFrom.innerHTML = fromName;
+
+            var tdUpdated = document.createElement('td');
+            tdUpdated.innerHTML = formatNowTimestamp();
+
+            var tdValue = document.createElement('td');
+            tdValue.innerHTML = logMessage;
+
+            trLog.appendChild(tdFrom);
+            trLog.appendChild(tdUpdated);
+            trLog.appendChild(tdValue);
+            tbodyLog.appendChild(trLog);
+
+            //scroll to bottom of div
+            // $('#scrollLog').scrollTop($('#scrollLog')[0].scrollHeight);
+            $("#scrollLog").animate({ scrollTop: $('#scrollLog')[0].scrollHeight}, 1000);
+        }
+
+
+      function createConfigurationObject()
+      {
+        var tempVideotopics = [];
+        if($('#enabledVideo').prop('checked'))
+        {
+          $('#videotopics').find('input').each(function () {
+              if(this.value!="")
+              {
+                tempVideotopics.push(this.value);
+              }
+            });
+        }
+
+        var tempSensortopics = [];
+        if($('#enabledSensors').prop('checked'))
+        {
+          $('#sensortopics').children('div').each(function () {
+            // rosMjpegVideoTopics.push(this.value);
+            var tempTopicBuffer = [];
+            $(this).find('input').each(function(){
+              tempTopicBuffer.push(this.value);
+            });
+            if(tempTopicBuffer[0] != "")
+            {
+              var splitSubtopics = tempTopicBuffer[2].split(/[\s,]+/);
+              tempSensortopics.push(createSensorSubscriptionObject(tempTopicBuffer[0], tempTopicBuffer[1], splitSubtopics));
+            }
+          });
+        }
+
+
+
+        var tempConfigObject = {
+              Enabled: {
+                          Video:   $('#enabledVideo').prop('checked'),
+                          Teleop:  $('#enabledTeleop').prop('checked'),
+                          Nav:     $('#enabledNavigation').prop('checked'),
+                          Sensors: $('#enabledSensors').prop('checked')
+                        },
+              VideoQuality: $('#videoQuality').val(),
+              VideoTopics: tempVideotopics,
+              SensorTopics: tempSensortopics
+                          };
+
+
+
+        return tempConfigObject;
+      }
+
+
+
 
 
       function addVideoTopic(topicname)
@@ -1026,7 +1221,7 @@
           $('#enabledTeleop').prop('checked', subscrConfig.Enabled.Teleop);
           $('#enabledNavigation').prop('checked', subscrConfig.Enabled.Navigation);
           $('#enabledSensors').prop('checked', subscrConfig.Enabled.Sensors);
-
+          
           if(subscrConfig.Enabled.Video)
           {
             $('#VideoTopics').css({ "display": ''});
@@ -1034,6 +1229,15 @@
           else
           {
             $('#VideoTopics').css({ "display": 'none'});
+          }
+
+          if(subscrConfig.Enabled.Nav)
+          {
+            $('#NavTopics').css({ "display": ''});
+          }
+          else
+          {
+            $('#NavTopics').css({ "display": 'none'});
           }
 
           if(subscrConfig.Enabled.Sensors)
@@ -1084,6 +1288,17 @@
           else
           {
             $('#VideoTopics').css({ "display": 'none'});
+          }
+      });
+
+      $("#enabledNavigation").change(function() {
+          if(this.checked)
+          {
+            $('#NavTopics').css({ "display": ''});
+          }
+          else
+          {
+            $('#NavTopics').css({ "display": 'none'});
           }
       });
 

@@ -16,8 +16,8 @@ var subscriptionConfig = {
                             '/nav_kinect/rgb/image_raw'
                            ],
               SensorTopics: [
-                              createSubscriptionObject('/odom', 'nav_msgs/Odometry', ['twist/twist/linear', 'twist/twist/angular']),
-                              createSubscriptionObject('/clock', 'rosgraph_messages/clock', [])
+                              createSensorSubscriptionObject('/odom', 'nav_msgs/Odometry', ['twist/twist/linear', 'twist/twist/angular']),
+                              createSensorSubscriptionObject('/clock', 'rosgraph_messages/clock', [])
                             ]
 
   },
@@ -32,7 +32,7 @@ var subscriptionConfig = {
               VideoTopics: [
                            ],
               SensorTopics: [
-                              createSubscriptionObject('/odom', 'nav_msgs/Odometry', [])
+                              createSensorSubscriptionObject('/odom', 'nav_msgs/Odometry', [])
                             ]
   }
 }
@@ -64,6 +64,12 @@ var subscriptionConfig = {
   //The topics that will be viewable from video window
   var rosMjpegVideoTopics;
 
+  //Which widgets are enabled
+  var enabledVideo;
+  var enabledTeleop;
+  var enabledNavigation;
+  var enabledSensors;
+
   //The subscriptions that are shown in the sensor table
   //The format of the function is: createSubscriptionObject(topic name, topic type, topic filters)
   //For instance, to stream just the linear and angular subtopics of odom, you would use:
@@ -90,8 +96,8 @@ function createConnectionConfig(host, rosbridgeport, mjpegserverport)
        };
 }
 
-//Used to make the creation of a subscription object easy
-function createSubscriptionObject(topicname, messagetype, subtopicnames)
+//Used to make the creation of a sensor subscription object easy
+function createSensorSubscriptionObject(topicname, messagetype, subtopicnames)
 {
  return {
          TopicName: topicname,
