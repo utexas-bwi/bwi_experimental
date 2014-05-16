@@ -300,7 +300,6 @@
   var mjpegVideoViewer;
   function createVideoSubscribers()
   {
-
       // --------------------------------------------------------
       // Determine the size of the video that we can fit on the screen
       // --------------------------------------------------------
@@ -313,19 +312,19 @@
       //Current size of window
       var windowWidth = ("innerWidth" in window 
                   ? window.innerWidth
-                  : document.documentElement.offsetWidth)-100; 
+                  : document.documentElement.offsetWidth); 
       var windowHeight = ("innerHeight" in window 
                ? window.innerHeight
-               : document.documentElement.offsetHeight)-100; 
+               : document.documentElement.offsetHeight); 
 
       //How big of a video can we fit for our width and height?
-      var minVideoWidth = Math.min(realVideoWidth,  windowWidth);
+      var minVideoWidth = Math.min(desiredVideoWidth,  windowWidth);
       var minVideoHeight = Math.min(desiredVideoHeight, windowHeight);
 
       //If we resize our video according to the resolution we chose in config, 
       //what will we have to shift our videoWidth and videoHeight to respectively
       var shiftedVideoWidth = (minVideoHeight/desiredVideoHeight) * realVideoWidth;
-      var shiftedVideoHeight = (minVideoWidth/realVideoWidth) * desiredVideoHeight;
+      var shiftedVideoHeight = (minVideoWidth/desiredVideoWidth) * desiredVideoHeight;
 
       //check to see if Height takes priority over Width
       if(shiftedVideoWidth < minVideoWidth)
@@ -340,7 +339,6 @@
       }
 
       // --------------------------------------------------------
-
 
     // Create the main viewer.
     mjpegVideoViewer = new MJPEGCANVAS.MultiStreamViewer({
@@ -1264,7 +1262,7 @@
           $('#videoQuality').val(subscrConfig.VideoQuality);
           $('#enabledVideo').prop('checked', subscrConfig.Enabled.Video);
           $('#enabledTeleop').prop('checked', subscrConfig.Enabled.Teleop);
-          $('#enabledNavigation').prop('checked', subscrConfig.Enabled.Navigation);
+          $('#enabledNavigation').prop('checked', subscrConfig.Enabled.Nav);
           $('#enabledSensors').prop('checked', subscrConfig.Enabled.Sensors);
 
           if(subscrConfig.Enabled.Video)

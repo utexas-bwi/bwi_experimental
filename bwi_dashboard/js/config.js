@@ -1,10 +1,15 @@
 var connectionConfig = {
   "localhost" : createConnectionConfig("localhost", 9090, 8080),
-  "hypnotoad" : createConnectionConfig("hypnotoad.csres.utexas.edu", 9090, 8080)
+  "hypnotoad" : createConnectionConfig("hypnotoad.csres.utexas.edu", 9090, 8080),
+  "zapp" : createConnectionConfig("zapp.csres.utexas.edu", 9090, 8080),
+  "nibbler" : createConnectionConfig("nibbler.csres.utexas.edu", 9090, 8080),
+  "kif" : createConnectionConfig("kif.csres.utexas.edu", 9090, 8080),
+  "scruffy" : createConnectionConfig("scruffy.csres.utexas.edu", 9090, 8080)
+
 }
 
 var subscriptionConfig = {
-  "default" : {
+  "driving" : {
               Enabled: {
                           Video:   true,
                           Teleop:  true,
@@ -21,7 +26,7 @@ var subscriptionConfig = {
                             ]
 
   },
-  "default2" : {
+  "expanded_sensors" : {
               Enabled: {
                           Video:   false,
                           Teleop:  false,
@@ -32,7 +37,32 @@ var subscriptionConfig = {
               VideoTopics: [
                            ],
               SensorTopics: [
-                              createSensorSubscriptionObject('/odom', 'nav_msgs/Odometry', [])
+                              {
+                                TopicName: "/rosout",
+                                MessageType: "rosgraph_msgs/Log",
+                                SubTopicNames: [
+                                  ""
+                                ]
+                              },
+                              {
+                                TopicName: "/odom",
+                                MessageType: "nav_msgs/Odometry",
+                                SubTopicNames: ["twist/twist/linear", "twist/twist/angular"]
+                              },
+                              {
+                                TopicName: "/joint_states",
+                                MessageType: "sensor_msgs/JointState",
+                                SubTopicNames: [
+                                  ""
+                                ]
+                              },
+                              {
+                                TopicName: "/nav_kinect_scan_manager/bond",
+                                MessageType: "bond/Status",
+                                SubTopicNames: [
+                                  ""
+                                ]
+                              }
                             ]
   }
 }
@@ -42,6 +72,13 @@ var subscriptionConfig = {
 // where subtopics is an array of the specific values you are looking to extract from the topic, such as ['twist/twist/linear', 'twist/twist/angular']
 var logTopics = [
                   // createSensorSubscriptionObject('/odom', 'nav_msgs/Odometry', [])
+                     {
+                                TopicName: "/rosout",
+                                MessageType: "rosgraph_msgs/Log",
+                                SubTopicNames: [
+                                  "msg"
+                                ]
+                      }
                 ];
 
 
