@@ -8,7 +8,7 @@ This tool is an experimental web dashboard to control various components of a ro
 
 ##Dependencies
 
-There are 3 main components that must be run in order for the application to work as intended:
+There are 3 main components that must be run in order for the application to work as intended (Note: Not all of the dependencies are required to run the dashboard, but only the tools listed in "Used in" will work):
 - rosbridge
  - Used to communicate topics to and from the dashboard
  - Used in: Teleop, Navigation, Sensors
@@ -22,7 +22,6 @@ There are 3 main components that must be run in order for the application to wor
  - Used in: Navigation
  - Run using: `rosrun robot_pose_publisher robot_pose_publisher`
 
- * Note: Not all of the dependencies are required to run the dashboard, but only the tools listed in "Used in" will work.
 
 ##Created Files
 
