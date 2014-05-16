@@ -2,6 +2,7 @@ bwi_dashboard
 =================
 - Created by Asher Johnson
 - Email: IAmAsherJohnson@gmail.com
+
 Feel free to contact me with any questions.
 
 This tool is an experimental web dashboard to control various components of a robot running ROS. The main use of this tool was planned around the BWI project, yet it can be used by any robot capable of running the dependencies listed below.
@@ -22,6 +23,28 @@ There are 3 main components that must be run in order for the application to wor
  - Used in: Navigation
  - Run using: `rosrun robot_pose_publisher robot_pose_publisher`
 
+##Features
+
+- Message Log
+ - Shows output from javascript log and topics provided in js/config.js by the variable logTopics.
+- Video
+ - Displays the output of video topics.
+ - Video quality can be chosen from a value between 0-100.
+ - Multiple topics can be subscribed to and can be changed via the edit button on the video that is displayed.
+- Teleop
+ - Controls the robot's velocity.
+ - The speed scale can be set between 0-100.
+ - The buttons can be used to control the robot.
+ - The QWEASD keys can also be used on a laptop or desktop computer.
+- Navigation
+ - Shows the current map loaded onto the robot.
+ - If robot_pose_publisher is running, it will display the robot's position (will display as a yellow arrow).
+ - The screen can be double clicked to place a navigation goal (will display as a pink arrow).
+ - The initial location of the map is based on the 0,0 coordinate location of the map.
+ - The arrow buttons and zoom buttons can be used to relocate the map to a usable location.
+- Sensors
+ - Shows the JSON output of subscribed topics.
+ - Subtopics can be provided to simplify the output provided, as the whole path to that element. For example, both "twist/twist/linear" and "twist/twist" are valid subtopics of "/odom".
 
 ##Created Files
 
