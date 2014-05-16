@@ -37,6 +37,13 @@ var subscriptionConfig = {
   }
 }
 
+//These topics are shown in the log at the top of the screen
+//Add them in the form of createSensorSubscriptionObject(topicName, topicType, subtopics),
+// where subtopics is an array of the specific values you are looking to extract from the topic, such as ['twist/twist/linear', 'twist/twist/angular']
+var logTopics = [
+                  // createSensorSubscriptionObject('/odom', 'nav_msgs/Odometry', [])
+                ];
+
 
 // STOP EDITING VALUES
 //***************************************************************************
@@ -105,10 +112,3 @@ function createSensorSubscriptionObject(topicname, messagetype, subtopicnames)
          SubTopicNames: subtopicnames
        };
 }
-
-//TO DO:
-//Add variables to control which widgets are shown
-//.htaccess file to make use controlled
-//text window at top of screen to stream messages to user, like "You are logged onto X"
-//compressed image transport (__image_transport:=compressed)
-//Get parameters for topics etc from GET parameters

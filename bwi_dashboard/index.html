@@ -54,6 +54,8 @@
      // ros = new ROSLIB.Ros({
      //     url : rosBridgeAddress
      // });
+
+    
   }
 
 
@@ -220,6 +222,24 @@
          trSubscr.appendChild(tdEmpty);
          tbodySubscr.appendChild(trSubscr);
       }
+  }
+
+  function initializeLogSubscriptions()
+  {
+    logTopics.forEach(function(subscr) {
+        var logListener = new ROSLIB.Topic({
+           ros : ros,
+           name : subscr.TopicName,
+           messageType : subscr.MessageType
+         });
+
+         var JSONsubtopicnames = createJSONSubTopicArray(subscr.SubTopicNames.slice(0));
+         
+         // Then we add a callback to be called every time a message is published on this topic.
+         logListener.subscribe(function(message) {
+            logToScreen(subscr.TopicName, processListenerJSON(message, JSONsubtopicnames));
+         });
+     });
   }
 
   function formatNowTimestamp() {
@@ -1044,7 +1064,10 @@
 
         initializeROS();
         initializeSensorTable();
+        initializeLogSubscriptions();
       }
+
+
 
       
 
@@ -1099,8 +1122,8 @@
             tbodyLog.appendChild(trLog);
 
             //scroll to bottom of div
-            // $('#scrollLog').scrollTop($('#scrollLog')[0].scrollHeight);
-            $("#scrollLog").animate({ scrollTop: $('#scrollLog')[0].scrollHeight}, 1000);
+            $('#scrollLog').scrollTop($('#scrollLog')[0].scrollHeight);
+            // $("#scrollLog").animate({ scrollTop: $('#scrollLog')[0].scrollHeight}, 1000);
         }
 
 
@@ -1221,7 +1244,7 @@
           $('#enabledTeleop').prop('checked', subscrConfig.Enabled.Teleop);
           $('#enabledNavigation').prop('checked', subscrConfig.Enabled.Navigation);
           $('#enabledSensors').prop('checked', subscrConfig.Enabled.Sensors);
-          
+
           if(subscrConfig.Enabled.Video)
           {
             $('#VideoTopics').css({ "display": ''});
