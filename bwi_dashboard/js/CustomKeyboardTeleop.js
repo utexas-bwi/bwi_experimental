@@ -132,13 +132,6 @@ KEYBOARDTELEOP.Teleop = function(options) {
       handleKey(buttonToHandle.val, false);
     };
   });
-  // var buttonElement = document.getElementById('teleopUpKey');
-  //   buttonElement.onmousedown = function() {
-  //      handleKey(87, true);
-  //   };
-  //   buttonElement.onmouseup = function() {
-  //      handleKey(87, false);
-  //   };
 
   //END ASHER'S CUSTOM CODE
   //-------------------------------------------------------------------

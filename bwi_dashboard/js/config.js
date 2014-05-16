@@ -16,8 +16,8 @@ var subscriptionConfig = {
                             '/nav_kinect/rgb/image_raw'
                            ],
               SensorTopics: [
-                              createSensorSubscriptionObject('/odom', 'nav_msgs/Odometry', ['twist/twist/linear', 'twist/twist/angular']),
-                              createSensorSubscriptionObject('/clock', 'rosgraph_messages/clock', [])
+                              createSensorSubscriptionObject('/odom', 'nav_msgs/Odometry', []),
+                              createSensorSubscriptionObject('/odom', 'nav_msgs/Odometry', ['twist/twist/linear', 'twist/twist/angular'])
                             ]
 
   },
