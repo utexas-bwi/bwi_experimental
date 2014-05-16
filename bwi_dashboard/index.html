@@ -22,6 +22,7 @@
     <script src="js/eventemitter2.js"></script>
     <script src="js/roslib.js"></script>
     <script src="js/ros2d.min.js"></script>
+    <script type="text/javascript" src="http://cdn.robotwebtools.org/nav2djs/current/nav2d.min.js"></script>
     <script src="js/jquery.min.js"></script>
     <script src="js/jquery-ui.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
@@ -412,10 +413,18 @@
        });
 
        // Setup the nav client.
-       navWindowClient = ROS2D.OccupancyGridClient({
+       navWindowClient = NAV2D.OccupancyGridClientNav({
          ros : ros,
-         rootObject : navWindowViewer.scene
+         rootObject : navWindowViewer.scene,
+         viewer : navWindowViewer,
+         serverName : navWindowServerName
        });
+
+       //for normal map but without the location
+       // navWindowClient = ROS2D.OccupancyGridClient({
+       //   ros : ros,
+       //   rootObject : navWindowViewer.scene
+       // });
 
   }
 
