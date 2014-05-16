@@ -23,7 +23,7 @@ There are 3 main components that must be run in order for the application to wor
  - Used in: Navigation
  - Run using: `rosrun robot_pose_publisher robot_pose_publisher`
 
-##Features
+##Widgets
 
 - Message Log
  - Shows output from javascript log and topics provided in js/config.js by the variable logTopics.
@@ -54,7 +54,7 @@ There are several files required to run this code, but the following files are t
 - js/config.js : The configuration file that includes necessary variables and configuration defaults
 - js/CustomKeyboardTeleop.js : It is the keyboard teleop plugin created as part of the Robot Web Tools project, but I had to customize it to allow the buttons to control the commands
 
-##How to use
+##How To Use
 
 There is a file, `js/config.js`, that contains default configurations that can be used with this program. However, you can also input connection and topic information on the configuration screen of the dashboard.
 
