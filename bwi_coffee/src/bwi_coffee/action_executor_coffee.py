@@ -2,6 +2,7 @@
 
 from bwi_planning import ActionExecutor
 from segbot_gui.srv import QuestionDialogRequest
+from map_mux.srv import *
 
 import rospy
 import time
@@ -15,9 +16,11 @@ class ActionExecutorCoffee(ActionExecutor):
                                                      AtomCoffee)
 
     def execute_action(self, action, next_state, next_step):
+        #ros::ServiceClient client = n.serviceClient<map_mux::ChangeMap>("change_map");
+        rospy.wait_for_service('change_map')
 
         success = False
-        if action.name not in ["order", "load", "unloadto", "greet"]:
+        if action.name not in ["order", "load", "unloadto", "greet", "choosefloor"]:
             success, observations = \
                     super(ActionExecutorCoffee, self).execute_action(action,
                                                                      next_state,
@@ -46,8 +49,8 @@ class ActionExecutorCoffee(ActionExecutor):
 
         if action.name == "unloadto":
             response = self.gui(QuestionDialogRequest.CHOICE_QUESTION,
-                                "Here is your " + str(action.value.value[0]) + 
-                                "! Please let me know once you have removed it.", 
+                                "Here is your " + str(action.value.value[0]) +
+                                "! Please let me know once you have removed it.",
                                 ["Done!"], 0.0)
             if response.index == 0: # The Done! button was hit
                 observations.append(AtomCoffee("served",str(action.value.value[1])+","+str(action.value.value[0]),time=next_step))
@@ -59,6 +62,29 @@ class ActionExecutorCoffee(ActionExecutor):
                      [], 0.0)
             time.sleep(5.0)
             observations.append(AtomCoffee("closeto",str(action.value),time=next_step))
+            success = True
+
+        if action.name == "choosefloor":
+            #call change map service
+            try:
+                service_change_map = rospy.ServiceProxy('change_map', ChangeMap)
+                if action.value.value == "f2":
+                    resp = service_change_map(2)
+                    print "Ran change_map with 2"
+                if action.value.value == "f3":
+                    resp = service_change_map(3)
+                    print "Ran change_map with 3"
+
+                response = self.gui(QuestionDialogRequest.CHOICE_QUESTION,
+                                "Please let me know once floor" + str(action.value.value[1]) + "has been reached",
+                                ["Done!"], 0.0)
+                if response.index == 0: # The Done! button was hit
+                    success = True
+                #time.sleep(15.0)
+            except rospy.ServiceException:
+                rospy.loginfo("serviced failed - change_map")
+            #observations.append(AtomCoffee("closeto",str(action.value),time=next_step))
+
             success = True
 
         rospy.loginfo("  Observations: " + str(observations))
