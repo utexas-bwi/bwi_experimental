@@ -36,7 +36,7 @@ bool computeAnswerSet(bwi_kr::ComputeAnswerSet::Request& req,
 	string &queryFile = req.queryFile;
 	
 	string packagePath = ros::package::getPath("bwi_kr")+"/";
-	const string outputFilePath = packagePath + "queries/outputFile.txt";
+	const string outputFilePath = "/tmp/bwi_kr_query_output.txt";
 	
 	commandLine << "clingo " << queryFile << " " << packagePath << "domain/*.asp " << " > " << outputFilePath;
 	
