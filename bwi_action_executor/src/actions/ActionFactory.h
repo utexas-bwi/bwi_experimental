@@ -9,15 +9,18 @@
 
 namespace bwi_actexec {
 
-class ActionFactory {
-
-
-public:
+struct ActionFactory {
+	
+	typedef std::map<std::string, Action*> ActionMap;
 	
 	ActionFactory(Action *act);
 	
 	static Action *byName(const std::string& name) throw (std::runtime_error);
-	static std::map<std::string, Action*> &actions();
+	static ActionMap &actions();
+	
+	
+	
+	
 };
 
 }

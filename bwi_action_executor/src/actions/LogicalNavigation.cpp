@@ -1,0 +1,79 @@
+#include "LogicalNavigation.h"
+
+#include "ActionFactory.h"
+
+#include <bwi_planning_common/PlannerInterface.h>
+#include <bwi_kr/ChangeFluent.h>
+
+#include <ros/ros.h>
+
+#include <sstream>
+#include <iostream>
+
+using namespace ros;
+using namespace std;
+
+namespace bwi_actexec {
+	
+LogicalNavigation::LogicalNavigation(const std::string& name) :
+			name(name),
+			parameters(),
+			done(false){}
+
+	
+void LogicalNavigation::init(const vector< string >& params) {
+	this->parameters = params;
+}
+
+void LogicalNavigation::run() {
+	
+	cerr << "calling " << name << endl;
+
+	NodeHandle n;
+	ros::ServiceClient navClient = n.serviceClient<bwi_planning_common::PlannerInterface> ( "execute_logical_goal" );
+	navClient.waitForExistence();
+	
+	bwi_planning_common::PlannerInterface pi;
+	
+	pi.request.command.name = name;
+	pi.request.command.value = parameters;
+	
+	navClient.call(pi);
+	
+	ros::ServiceClient krClient = n.serviceClient<bwi_kr::ChangeFluent> ( "/bwi_kr/change_fluent" );
+	krClient.waitForExistence();
+	
+	for(int i=0, size=pi.response.observations.size() ; i < size; ++i) {
+	
+		bwi_kr::ChangeFluent cf;
+	
+		cf.request.fluent.name = pi.response.observations[i].name;
+		cf.request.fluent.parameters = pi.response.observations[i].value;
+		
+		krClient.call(cf);
+	}
+	
+	
+	done = true;
+	
+}
+
+string LogicalNavigation::toASP(unsigned int timeStep) const {
+	stringstream nameS;
+	
+	nameS << name << "(";
+
+	for(int i=0, size=parameters.size(); i<size ; ++i)
+		nameS << parameters[i] << ",";
+
+	nameS << timeStep <<")";
+	
+	return nameS.str();
+}
+
+
+static ActionFactory goToFactory(new LogicalNavigation("goto"));
+static ActionFactory gothroughFactory(new LogicalNavigation("gothrough"));
+static ActionFactory approachFactory(new LogicalNavigation("approach"));
+	
+} //namespace

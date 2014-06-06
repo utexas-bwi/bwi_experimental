@@ -11,7 +11,7 @@ struct Action {
 	
 	virtual void init(const std::vector<std::string>& paramters) {}
 	
-	virtual int paramNumber() const {return 0;}
+	virtual int paramNumber() const = 0;
 	
 	virtual std::string getName() const = 0;
 	
@@ -20,6 +20,8 @@ struct Action {
 	virtual bool hasFinished() const = 0;
 	
 	virtual Action *clone() const =0;
+	
+	virtual std::string toASP(unsigned int timeStep) const  = 0;
 	
 virtual ~Action() {}
 };

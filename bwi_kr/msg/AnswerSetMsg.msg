@@ -1,2 +1,2 @@
 bool satisfied
-string[] predicates
+bwi_kr/Predicate[] predicates

@@ -48,12 +48,14 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
   FILES
   AnswerSetMsg.msg
+  Predicate.msg
  )
 
 ## Generate services in the 'srv' folder
  add_service_files(
    FILES
    ComputeAnswerSet.srv
+   ChangeFluent.srv
  )
 
 ## Generate actions in the 'action' folder

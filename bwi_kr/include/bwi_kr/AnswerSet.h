@@ -1,6 +1,8 @@
 #ifndef bwi_kr_AnswerSet_h__guard 
 #define bwi_kr_AnswerSet_h__guard
 
+#include <bwi_kr/Predicate.h>
+
 #include <string>
 #include <vector>
 
@@ -12,11 +14,11 @@ public:
 	
 	bool isSatisfied() { return satisfiable;}
 	
-	std::vector<std::string> getPredicates() {return predicates;}
+	std::vector<Predicate> getPredicates() {return predicates;}
 	
 private:
 	bool satisfiable;
-	std::vector<std::string> predicates;
+	std::vector<Predicate> predicates;
 };
 
 

@@ -25,11 +25,7 @@ room(f3_cor4).
 room(f3_cor5).
 shop(f3_504).
 
-knowinside(alice,o3_508,0).
-knowinside(bob,o3_510,0).
-knowinside(carol,o3_512,0).
-knowinside(table1,f3_410,0). 
-knowinside(coffeecounter,f3_504,0). 
+
 room(R) :- office(R).
 room(R) :- shop(R). 
 
@@ -66,7 +62,9 @@ acc(R1,R2) :- acc(R1,R3), acc(R2,R3), room(R1), room(R2), room(R3).
 knows(alice, dan).
 
 -hasdoor(R,D) :- not hasdoor(R,D), room(R), door(D).
--open(D,I) :- not open(D,I), door(D), I=0..n.
+%-open(D,I) :- not open(D,I), door(D), I=0..n.
+open(D,I) :- not -open(D,I), door(D), I=0..n.
+
 -dooracc(R1,D,R2) :- not dooracc(R1,D,R2), room(R1), room(R2), room(D).
 -acc(R1,R2) :- not acc(R1,R2), room(R1), room(R2). 
 -knows(P1,P2) :- not knows(P1,P2), person(P1), person(P2).

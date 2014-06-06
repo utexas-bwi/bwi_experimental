@@ -9,31 +9,31 @@
 using namespace segbot_gui;
 
 namespace bwi_actexec {
-	
-	CallGUI::CallGUI(const std::string &name, const TYPE type,  const std::string& message, 
-			float timeOut,
-			const std::vector<std::string> &options) :
-						name(name),
-						type(type),
-						message(message),
-						timeOut(timeOut),
-						options(options),
-						done(false){}
-	
+
+CallGUI::CallGUI ( const std::string &name, const TYPE type,  const std::string& message,
+                   float timeOut,
+                   const std::vector<std::string> &options ) :
+	name ( name ),
+	type ( type ),
+	message ( message ),
+	timeOut ( timeOut ),
+	options ( options ),
+	done ( false ) {}
+
 void CallGUI::run() {
-	
+
 	ros::NodeHandle n;
-	ros::ServiceClient client = n.serviceClient<segbot_gui::QuestionDialog>("question_dialog");
-	
+	ros::ServiceClient client = n.serviceClient<segbot_gui::QuestionDialog> ( "question_dialog" );
+
 	segbot_gui::QuestionDialog req;
-	
+
 	req.request.type = type;
 	req.request.message = message;
 	req.request.options = options;
 	req.request.timeout = timeOut;
-		
-	client.call(req);
-	
+
+	client.call ( req );
+
 	done = true;
 
 }
@@ -43,9 +43,9 @@ bool CallGUI::hasFinished() const {
 }
 
 
-static ActionFactory hello(new CallGUI("approach",CallGUI::DISPLAY,"Hello World"));
-static ActionFactory hello2(new CallGUI("gothrough",CallGUI::DISPLAY,"Hello World 2"));
-static ActionFactory hello3(new CallGUI("opendoor",CallGUI::DISPLAY,"Hello World 3"));
+//static ActionFactory hello2 ( new CallGUI ( "gothrough",CallGUI::DISPLAY,"gothrough" ) );
+//static ActionFactory hello3 ( new CallGUI ( "opendoor",CallGUI::DISPLAY,"opendoor" ) );
+//static ActionFactory hello4 ( new CallGUI ( "getin",CallGUI::DISPLAY,"getin" ) );
 
 }
 

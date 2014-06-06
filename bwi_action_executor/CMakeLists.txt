@@ -105,7 +105,9 @@ include_directories(
 # )
 
 ## Declare a cpp executable
- add_executable(bwi_action_executor_node src/main.cpp  src/actions/CallGUI.cpp src/actions/ActionFactory.cpp )
+set(ACTEXEC_SRC)
+add_subdirectory(src)
+add_executable(bwi_action_executor_node ${ACTEXEC_SRC} )
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
