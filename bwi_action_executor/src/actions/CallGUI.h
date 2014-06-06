@@ -25,7 +25,7 @@ public:
 	}
 
 	int paramNumber() const {
-		return 1;
+		return 0;
 	}
 
 	void run();
@@ -37,6 +37,9 @@ public:
 	};
 
 private:
+	
+	virtual std::vector<std::string> getParameters() const { return std::vector<std::string>();}
+	
 	std::string name;
 	TYPE type;
 	std::string message;

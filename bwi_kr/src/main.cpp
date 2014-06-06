@@ -38,6 +38,7 @@ int main(int argc, char **argv) {
 	createInitialstate(packagePath + domainName + "/initial.txt");
 
 	ros::ServiceServer computeAS = n.advertiseService("compute_answer_set", computeAnswerSet);
+	//TODO consider accepting a vector of Predicates
 	ros::ServiceServer changeF = n.advertiseService("change_fluent", changeFluent);
 	
 	ros::spin();

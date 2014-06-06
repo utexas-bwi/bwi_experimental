@@ -107,6 +107,9 @@ loaded(O,I+1) :- loaded(O,I), not -loaded(O,I+1), I=0..n-1.
 closeto(P,I+1) :- closeto(P,I), not -closeto(P,I+1), I=0..n-1. 
 -closeto(P,I+1) :- -closeto(P,I), not closeto(P,I+1), I=0..n-1. 
 
+open(D,I+1) :- open(D,I), not -open(D,I+1), I=0..n-1. 
+-open(D,I+1) :- -open(D,I), not open(D,I+1), I=0..n-1. 
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % exogenous rules
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -247,7 +250,6 @@ closeto(P,I+1) :- closeto(P,I), not -closeto(P,I+1), I=0..n-1.
 %#show waiting/2.
 %#show -waiting/2.
 
-%#show approach/2.
 %#show approach/2.
 %#show gothrough/2.
 %#show opendoor/2.

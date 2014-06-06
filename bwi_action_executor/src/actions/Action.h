@@ -21,9 +21,13 @@ struct Action {
 	
 	virtual Action *clone() const =0;
 	
-	virtual std::string toASP(unsigned int timeStep) const  = 0;
+	virtual std::string toASP(unsigned int timeStep) const;
 	
-virtual ~Action() {}
+	virtual ~Action() {}
+	
+private:
+	
+ virtual std::vector<std::string> getParameters() const = 0;
 };
 	
 	

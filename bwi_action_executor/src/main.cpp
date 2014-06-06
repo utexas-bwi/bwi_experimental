@@ -2,15 +2,13 @@
 
 #include "actions/Action.h"
 #include "actions/ActionFactory.h"
+#include "actions/LogicalNavigation.h"
 
-
-#include <bwi_kr/ComputeAnswerSet.h>
+#include "kr_interface.h"
 
 #include <ros/ros.h>
-#include <ros/package.h>
 
 #include <iostream>
-#include <fstream>
 #include <boost/concept_check.hpp>
 #include <boost/graph/graph_concepts.hpp>
 
@@ -24,14 +22,16 @@ using namespace std;
 std::list<Action *> computePlan(const std::string& ,unsigned int);
 bool checkPlan(const std::list<Action *> & plan, const std::string& goalSpecification);
 
-void generateQuery(const string& goalSpecification, unsigned int n, const string& queryPath);
-
 int main(int argc, char** argv) {
 
 	ros::init(argc, argv, "bwi_action_executor");
 	ros::NodeHandle n;
 
-	ros::Rate loop(1.);
+	ros::Rate loop(10);
+	
+	//noop updates the fluents with the current position
+	LogicalNavigation setInitialState("noop");
+	setInitialState.run();
 	
 
 	//forever
@@ -39,10 +39,9 @@ int main(int argc, char** argv) {
 	//TODO wait for a goal
 
 
-	string goal = ":- not at(o3_512,n).";
-	std::list<Action *> plan = computePlan(goal, 10);
-	
-	cerr << "plan size " << plan.size() <<  endl;
+	string goal = ":- not at(o3_510,n).";
+	const unsigned int MAX_N = 20;
+	std::list<Action *> plan = computePlan(goal, MAX_N);
 	
 	if(plan.empty())
 		throw runtime_error("The plan to achieve " + goal + " is empty!");
@@ -56,15 +55,32 @@ int main(int argc, char** argv) {
 		ros::spinOnce();
 
 		if (!currentAction->hasFinished()) {
+			cerr << "executing " << currentAction->toASP(0) << endl;
 			currentAction->run();
 		}
 		else {
 
-			bool valid = checkPlan(plan,goal);
-			
-			//TODO consider plan repair
-
 			delete currentAction;
+			
+			cerr << "checking..." << endl;
+			bool valid = checkPlan(plan,goal);
+			if(!valid) {
+				
+				//TODO consider plan repair
+				
+				//desotry all actions still in the plan
+				cerr << "destroying the plan" << endl;
+				list<Action *>::iterator actIt = plan.begin();
+				for(; actIt != plan.end(); ++actIt)
+					delete *actIt;
+				
+				plan.clear();
+				
+				plan = computePlan(goal,MAX_N);
+			}
+			
+			
+
 
 			if (plan.empty())
 				return 0;
@@ -82,29 +98,28 @@ int main(int argc, char** argv) {
 
 
 std::list<Action *> computePlan(const std::string& goalSpecification, unsigned int max_n) {
-
-	string packagePath = ros::package::getPath("bwi_action_executor") +"/";
-	string queryPath = packagePath+"queries/ourquery.asp";
-
-	ros::NodeHandle n;
-	ros::ServiceClient client = n.serviceClient<bwi_kr::ComputeAnswerSet> ("/bwi_kr/compute_answer_set");
-
-	client.waitForExistence();
-
-	bwi_kr::ComputeAnswerSet answerSet;
 	
-	answerSet.request.queryFile = queryPath;
 
-	for (int i=0; i<max_n && !answerSet.response.answerSet.satisfied ; ++i) {
+	bwi_kr::AnswerSetMsg answerSet;
 
-		generateQuery(goalSpecification, i, queryPath);
+	for (int i=0; i<max_n && !answerSet.satisfied ; ++i) {
+		
+		stringstream goal;
+		goal << goalSpecification << endl;
+		goal << "#hide." << endl;
+		
+		ActionFactory::ActionMap::const_iterator actIt = ActionFactory::actions().begin();
+		for( ; actIt != ActionFactory::actions().end(); ++actIt) {
+			//the last parameter is always the the step number
+			goal << "#show " << actIt->second->getName() << "/" << actIt->second->paramNumber() + 1 << "." << endl;
+		}
 
-		client.call(answerSet);
+		answerSet = kr_query(goal.str(),i,"planQuery.asp");
 
 	}
 
 
-	vector<bwi_kr::Predicate> &preds = answerSet.response.answerSet.predicates;
+	vector<bwi_kr::Predicate> &preds = answerSet.predicates;
 	vector<Action *> planVector(preds.size());
 
 	for (int j=0 ; j<preds.size() ; ++j) {
@@ -120,18 +135,7 @@ std::list<Action *> computePlan(const std::string& goalSpecification, unsigned i
 }
 
 bool checkPlan(const std::list<Action *> & plan, const std::string& goalSpecification) {
-	string packagePath = ros::package::getPath("bwi_action_executor") +"/";
-	string queryPath = packagePath+"queries/ourquery.asp";
 
-	ros::NodeHandle n;
-	ros::ServiceClient client = n.serviceClient<bwi_kr::ComputeAnswerSet> ("/bwi_kr/compute_answer_set");
-
-	client.waitForExistence();
-
-	bwi_kr::ComputeAnswerSet answerSet;
-	
-	answerSet.request.queryFile = queryPath;
-	
 	stringstream queryStream;
 
 	list<Action *>::const_iterator planIt = plan.begin();
@@ -141,34 +145,9 @@ bool checkPlan(const std::list<Action *> & plan, const std::string& goalSpecific
 	}
 	
 	queryStream << goalSpecification << endl;
-
-	generateQuery(queryStream.str(), plan.size()+1, queryPath);
-
-	client.call(answerSet);
-
-	return answerSet.response.answerSet.satisfied;
-
-}
-
-
-
-void generateQuery(const string& goalSpecification, unsigned int n, const string& queryPath) {
 	
-	ofstream queryFile(queryPath.c_str());
-	
-	queryFile << "#const n=" << n << "." << endl;
-	
-	queryFile << goalSpecification  <<endl;
-	
-	queryFile << "#hide." << endl;
-	
-	ActionFactory::ActionMap::const_iterator actIt = ActionFactory::actions().begin();
-	for( ; actIt != ActionFactory::actions().end(); ++actIt) {
-		
-		//the last parameter is always the the step number
-		queryFile << "#show " << actIt->second->getName() << "/" << actIt->second->paramNumber() + 1 << "." << endl;
-		
-	}
-	
-	queryFile.close();
+	bwi_kr::AnswerSetMsg answerSet = kr_query(queryStream.str(),plan.size(), "checkPlan.asp");
+
+	return answerSet.satisfied;
+
 }

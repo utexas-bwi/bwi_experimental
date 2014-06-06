@@ -21,11 +21,12 @@ public:
 	
 	bool hasFinished() const {return done;}
 	
-	std::string toASP(unsigned int timeStep) const;
-	
 	Action *clone() const {return new LogicalNavigation(*this);}
 	
 private:
+	
+	virtual std::vector<std::string> getParameters() const {return parameters;}
+	
 	std::string name;
 	std::vector<std::string> parameters;
 	bool done;

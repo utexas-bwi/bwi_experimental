@@ -8,7 +8,6 @@
 #include <ros/ros.h>
 
 #include <sstream>
-#include <iostream>
 
 using namespace ros;
 using namespace std;
@@ -26,8 +25,6 @@ void LogicalNavigation::init(const vector< string >& params) {
 }
 
 void LogicalNavigation::run() {
-	
-	cerr << "calling " << name << endl;
 
 	NodeHandle n;
 	ros::ServiceClient navClient = n.serviceClient<bwi_planning_common::PlannerInterface> ( "execute_logical_goal" );
@@ -57,20 +54,6 @@ void LogicalNavigation::run() {
 	done = true;
 	
 }
-
-string LogicalNavigation::toASP(unsigned int timeStep) const {
-	stringstream nameS;
-	
-	nameS << name << "(";
-
-	for(int i=0, size=parameters.size(); i<size ; ++i)
-		nameS << parameters[i] << ",";
-
-	nameS << timeStep <<")";
-	
-	return nameS.str();
-}
-
 
 static ActionFactory goToFactory(new LogicalNavigation("goto"));
 static ActionFactory gothroughFactory(new LogicalNavigation("gothrough"));
