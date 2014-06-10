@@ -14,7 +14,9 @@ using namespace std;
 
 namespace bwi_actexec {
 	
-OpenDoor::OpenDoor(const string& name) : name(name) {}
+OpenDoor::OpenDoor(const string& name) :
+		name(name),
+		asked(false){}
 
 	
 void OpenDoor::run() {
@@ -29,16 +31,11 @@ void OpenDoor::run() {
 		LogicalNavigation senseDoor("sensedoor");
 		vector<string> params;
 		params.push_back(doorName);
-		
 		senseDoor.init(params);
-		
 		senseDoor.run();
-		
 		//check if door is open
 		bwi_kr::AnswerSetMsg answerSet = kr_query("open(" + doorName + ",0).",0);
-
 		doorOpen = answerSet.satisfied;
-		
 		cerr << "door open: " << doorOpen << endl;
 	}
 	

@@ -1,8 +1,11 @@
-
-
 #include "actions/Action.h"
 #include "actions/ActionFactory.h"
 #include "actions/LogicalNavigation.h"
+#include "actions/Load.h"
+#include "actions/Unload.h"
+#include "actions/Greet.h"
+#include "actions/Order.h"
+#include "actions/ChooseFloor.h"
 
 #include "kr_interface.h"
 
@@ -29,6 +32,33 @@ int main(int argc, char** argv) {
 
 	ros::Rate loop(10);
 	
+	//ChooseFloor l("choosefloor");
+	//vector< string> params1;
+	//params1.push_back("f2");
+	//l.init(params1);
+	//l.run();
+//(optimization = 18
+//  approach(d3_500,0
+//, opendoor(d3_500,1
+//, gothrough(d3_500,2
+//, approach(d3_ele1,3
+//, opendoor(d3_ele1,4
+//, gothrough(d3_ele1,5
+//, ----choosefloor(f2,6
+//, approach(d2_ele1,7
+//, opendoor(d2_ele1,8
+//, gothrough(d2_ele1,9
+//, goto(coffeecounter,10
+//, order(coffee,11
+//, load(coffee,12
+//, approach(d2_ele1,13
+//, opendoor(d2_ele1,14
+//, gothrough(d2_ele1,15
+//, greet(alice,16
+//, unloadto(coffee,alice,17
+//]
+
+
 	//noop updates the fluents with the current position
 	LogicalNavigation setInitialState("noop");
 	setInitialState.run();
@@ -58,17 +88,17 @@ int main(int argc, char** argv) {
 			cerr << "executing " << currentAction->toASP(0) << endl;
 			currentAction->run();
 		}
-		else {
+		else { // Move on to next action
 
 			delete currentAction;
 			
-			cerr << "checking..." << endl;
+			cerr << "Forward Projecting Plan to Check Validity..." << endl;
 			bool valid = checkPlan(plan,goal);
 			if(!valid) {
 				
 				//TODO consider plan repair
 				
-				//desotry all actions still in the plan
+				//Destroy all actions still in the plan
 				cerr << "destroying the plan" << endl;
 				list<Action *>::iterator actIt = plan.begin();
 				for(; actIt != plan.end(); ++actIt)
