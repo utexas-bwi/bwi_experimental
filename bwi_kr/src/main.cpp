@@ -101,8 +101,12 @@ bool changeFluent(bwi_kr::ChangeFluent::Request &req,
 	//TODO check that the fluent exists and has the correct number of parameters
 	
 	stringstream ss;
-	
+    //std::string str1 = "";
+    //for( int i = 0; i < req.fluent.size() ; i ++ ){
+	//str1 = str1 +  req.fluent[i].name + "(" +  concatenateParameters(req.fluent[i].parameters) + "1)." + "\n";//+ std::endl;
+    //}
 	ss << req.fluent.name << "(" << concatenateParameters(req.fluent.parameters) << "1)." << endl;
+    std::cerr << "Fluent added to KR: " << ss.str() << std::endl;
 	createCurrentState(ss.str());
 	
 	return true;
@@ -124,6 +128,7 @@ void createInitialstate(const std::string& initialFile) {
 
 void createCurrentState(const std::string& observations) {
 	
+    std:cerr << "-----------Observations string: " << observations << std::endl;
 	const string queryPath = "/tmp/bwi_kr_currentstate_query.txt";
 	
 	stringstream copyCommand;
@@ -139,6 +144,12 @@ void createCurrentState(const std::string& observations) {
 	ComputeAnswerSet answer;
 	answer.request.queryFile = queryPath;
 	
+    static int counter = 0;
+	stringstream cc;
+	cc << "cp " << packagePath + domainName + "/current.asp " << packagePath + domainName + "/current_" << counter << ".txt ";
+    std::cerr << "---------------Counter: "<<counter << std::endl;
+    counter++;
+	system(cc.str().c_str());
 	computeAnswerSet(answer.request,answer.response);
 	
 	ofstream currentFile((packagePath + domainName + "/current.asp").c_str());

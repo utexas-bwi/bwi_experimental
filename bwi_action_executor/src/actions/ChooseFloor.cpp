@@ -31,17 +31,22 @@ void ChooseFloor::run(){
     service_change_map.waitForExistence();
 
 	int floor = -1;
+    std::string door ;
 
 	if( parameters[0] == "f2"){
 		floor = 2;
+        door = "d2_ele1";
 	}
 	if( parameters[0] == "f3"){
 		floor = 3;
+        door = "d3_ele1";
 	}
+    std::cerr << "we are at the start" + floor << std::endl;
     map_mux::ChangeMap cm;
     cm.request.data = floor;
     service_change_map.call(cm);
 
+    std::cerr << "map service has been called" << std::endl;
 	vector< string > options;
     ostringstream convert;
     convert << floor;
@@ -50,26 +55,51 @@ void ChooseFloor::run(){
     std::string str2 =  "Please let me know when we have reached floor "+ convert.str();
 
 	options.push_back(str1);
-	CallGUI loadGUI("LoadGUI", CallGUI::CHOICE_QUESTION, str2 ,0.0,  options );
+	CallGUI loadGUI("LoadGUI", CallGUI::DISPLAY, str2 , 0.0,  options );
 	loadGUI.run();
 
-    // DO NOT NEED TO DO AT THIS TIME Pass along "fake" observation to KR node
-    //NodeHandle n;
-    //std::vector<bwi_planning_common::PlannerAtom> observations;
-    //bwi_planning_common::PlannerAtom observation1;
-    //observation1.name = "";
-    //observation1.value.push_back(parameters[0]);
-    //observations.push_back(observation1);
-    //ros::ServiceClient krClient = n.serviceClient<bwi_kr::ChangeFluent> ( "/bwi_kr/change_fluent" );
-    //krClient.waitForExistence();
-    //for(int i=0, size=observations.size() ; i < size; ++i) {
-        //bwi_kr::ChangeFluent cf;
-        //cf.request.fluent.name = observations[i].name;
-        //cf.request.fluent.parameters = observations[i].value;
-        //krClient.call(cf);
-    //}
+    ros::ServiceClient krClient = n.serviceClient<bwi_kr::ChangeFluent> ( "/bwi_kr/change_fluent" );
+    
+    bwi_kr::ChangeFluent cf;
+	cf.request.fluent.name ="at";
+	cf.request.fluent.parameters.push_back("f2_ele1");
+    krClient.call(cf);
+
+    cf.request.fluent.parameters.clear();
+	cf.request.fluent.name ="beside";
+	cf.request.fluent.parameters.push_back(door);
+    krClient.call(cf);
+
+    cf.request.fluent.parameters.clear();
+	cf.request.fluent.name ="facing";
+	cf.request.fluent.parameters.push_back(door);
+    krClient.call(cf);
+        
 
 
+//    std::cerr << "gui is called" << std::endl;
+//    // DO NOT NEED TO DO AT THIS TIME Pass along "fake" observation to KR node
+//    std::vector<bwi_planning_common::PlannerAtom> observations;
+//    bwi_planning_common::PlannerAtom observation1;
+//    bwi_planning_common::PlannerAtom observation2;
+//    observation1.name = "at";
+//    observation1.value.push_back("f2_ele1");
+//    //observation1.name = "facing";
+//    //observation1.value.push_back(door);
+//    observation2.name = "facing";
+//    observation2.value.push_back(door);
+//    observations.push_back(observation1);
+//    ros::ServiceClient krClient = n.serviceClient<bwi_kr::ChangeFluent> ( "/bwi_kr/change_fluent" );
+//    krClient.waitForExistence();
+//        bwi_kr::ChangeFluent cf;
+//    for(int i=0, size=observations.size() ; i < size; ++i) {
+//		cf.request.fluent.name =observations[i].name;
+//		cf.request.fluent.parameters = observations[i].value;
+//    }
+//        krClient.call(cf);
+//
+
+    std::cerr << "done is set" << std::endl;
 	done = true;
 }
 

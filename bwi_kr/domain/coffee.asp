@@ -75,19 +75,19 @@ served(P,O,I+1) :- unloadto(O,P,I), item(O), thing(P), I=0..n-1.
 :- unloadto(O,P,I), -loaded(O,I), I=0..n. 
 
 % NEW CODE 
-%at(E,I+1):- choosefloor(F,I), onfloor(E,F), elevator(E), floor(F), I=0..n-1. 
-%-waiting(IT,I+1) :- choosefloor(F,I), floor(F), item(IT), I=0..n-1.
-%-closeto(T,I+1) :- choosefloor(F,I), floor(F), thing(T), I=0..n-1.              
-%-facing(D,I+1) :- choosefloor(F,I), floor(F), door(D), I=0..n-1.                
-%:- choosefloor(F,I), at(R,I), -elevator(R), floor(F), I=0..n.
+at(E,I+1):- choosefloor(F,I), onfloor(E,F), elevator(E), floor(F), I=0..n-1. 
+-waiting(IT,I+1) :- choosefloor(F,I), floor(F), item(IT), I=0..n-1.
+-closeto(T,I+1) :- choosefloor(F,I), floor(F), thing(T), I=0..n-1.              
+-facing(D,I+1) :- choosefloor(F,I), floor(F), door(D), I=0..n-1.                
+:- choosefloor(F,I), at(R,I), -elevator(R), floor(F), I=0..n.
 
 
 
 % CODE Previously
-at(E,I+1):- choosefloor(F,I), onfloor(E,F), elevator(E), floor(F), I=0..n-1. 
--waiting(IT,I+1) :- choosefloor(F,I), floor(F), item(IT), I=0..n-1.
--closeto(T,I) :- choosefloor(F,I), floor(F), thing(T), I=0..n-1.
-:- choosefloor(F,I), at(R,I), -elevator(R), floor(F), I=0..n.
+%at(E,I+1):- choosefloor(F,I), onfloor(E,F), elevator(E), floor(F), I=0..n-1. 
+%-waiting(IT,I+1) :- choosefloor(F,I), floor(F), item(IT), I=0..n-1.
+%-closeto(T,I) :- choosefloor(F,I), floor(F), thing(T), I=0..n-1.
+%:- choosefloor(F,I), at(R,I), -elevator(R), floor(F), I=0..n.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % inertial laws
@@ -140,10 +140,13 @@ open(D,I+1) :- open(D,I), not -open(D,I+1), I=0..n-1.
 {unloadto(O,P,I)} :- item(O), thing(P), I=0..n-1. 
 {getin(R,I)} :- room(R), I=0..n-1. 
 {choosefloor(F,I)} :- floor(F), I=0..n-1. 
-
+%%-noop(I) :- not noop(I), I=0..n-1 .
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % nonexecutabilities
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%1{approach(D,I) ,gothrough(D,I) ,opendoor(D,I) ,greet(P,I) ,goto(O,I) ,askploc(P1,P2,I) ,load(T,I) ,unloadto(T,P,I) ,order(T,I) ,getin(R,I) ,noop(I) ,choosefloor(F,I)}1 :- door(D), person(P), object(O), thing(P1), thing(P2), item(T), thing(P), room(R), floor(F), I=0..n-1. 
+
 
 :- choosefloor(F,I), load(O1,I).
 :- choosefloor(F,I), unloadto(O1,P,I).
@@ -155,6 +158,7 @@ open(D,I+1) :- open(D,I), not -open(D,I+1), I=0..n-1.
 :- choosefloor(F,I), order(IT,I). 
 :- choosefloor(F,I), goto(O,I).
 :- choosefloor(F,I), getin(R,I).
+:- choosefloor(F,I), noop(I).
 :- getin(R,I), load(O1,I).
 :- getin(R,I), unloadto(O1,P,I).
 :- getin(R,I), approach(D,I). 
@@ -200,7 +204,6 @@ open(D,I+1) :- open(D,I), not -open(D,I+1), I=0..n-1.
 :- opendoor(D,I), greet(P,I).
 :- opendoor(D,I), askploc(P1,P2,I).
 :- greet(P,I), askploc(P1,P2,I).
-
 :- noop(I), approach(D,I).
 :- noop(I), gothrough(D,I).
 :- noop(I), opendoor(D,I).
@@ -298,3 +301,12 @@ open(D,I+1) :- open(D,I), not -open(D,I+1), I=0..n-1.
 -waiting(O,0) :- not waiting(O,0), item(O).
 -loaded(O,0) :- not loaded(O,0), item(O).
 -closeto(P,0) :- not closeto(P,0), thing(P).
+
+
+
+%at(R2,I+1) :- approach(D,I), at(R1,I), hasdoor(R2,D), acc(R1,R2), door(D), 
+%at(R,I+1) :- gothrough(D,I), dooracc(R1,D,R), at(R1,I), R1!=R, room(R), door(D),
+%at(R,I+1) :- getin(R,I), room(R), I=0..n-1.
+%at(R,I+1) :- goto(O,I), knowinside(O,R,I), object(O), room(R), I=0..n-1.
+%at(E,I+1):- choosefloor(F,I), onfloor(E,F), elevator(E), floor(F), I=0..n-1. 
+%at(R,I+1) :- at(R,I), not -at(R,I+1), I=0..n-1.

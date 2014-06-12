@@ -38,18 +38,36 @@ void LogicalNavigation::run() {
 	navClient.call(pi);
 	
 	ros::ServiceClient krClient = n.serviceClient<bwi_kr::ChangeFluent> ( "/bwi_kr/change_fluent" );
-	krClient.waitForExistence();
+	//krClient.waitForExistence();
 	
+		//bwi_kr::ChangeFluent cf;
+	//for(int i=0 ; i < pi.response.observations.size(); ++i) {
+        //bwi_kr::Predicate fluent_single ;
+		//fluent_single.name = pi.response.observations[i].name;
+		//fluent_single.parameters = pi.response.observations[i].value;
+        //cf.request.fluent.push_back(fluent_single);
+	//}
+		//krClient.call(cf);
+       
+		//bwi_kr::ChangeFluent cf;
+
+	//for(int i=0 ; i < pi.response.observations.size(); ++i) {
+		//cf.request.fluent.name = pi.response.observations[i].name;
+		//cf.request.fluent.parameters = pi.response.observations[i].value;
+//        //cf.request.fluent.push_back(fluent_single);
+	//}
+		//krClient.call(cf);
+		krClient.waitForExistence();
+
 	for(int i=0, size=pi.response.observations.size() ; i < size; ++i) {
-	
+
 		bwi_kr::ChangeFluent cf;
-	
+
 		cf.request.fluent.name = pi.response.observations[i].name;
 		cf.request.fluent.parameters = pi.response.observations[i].value;
-		
+
 		krClient.call(cf);
 	}
-	
 	
 	done = true;
 	

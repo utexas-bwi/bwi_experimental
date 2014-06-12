@@ -31,65 +31,51 @@ int main(int argc, char** argv) {
 	ros::NodeHandle n;
 
 	ros::Rate loop(10);
-	
-	//ChooseFloor l("choosefloor");
-	//vector< string> params1;
-	//params1.push_back("f2");
-	//l.init(params1);
-	//l.run();
-//(optimization = 18
-//  approach(d3_500,0
-//, opendoor(d3_500,1
-//, gothrough(d3_500,2
-//, approach(d3_ele1,3
-//, opendoor(d3_ele1,4
-//, gothrough(d3_ele1,5
-//, ----choosefloor(f2,6
-//, approach(d2_ele1,7
-//, opendoor(d2_ele1,8
-//, gothrough(d2_ele1,9
-//, goto(coffeecounter,10
-//, order(coffee,11
-//, load(coffee,12
-//, approach(d2_ele1,13
-//, opendoor(d2_ele1,14
-//, gothrough(d2_ele1,15
-//, greet(alice,16
-//, unloadto(coffee,alice,17
-//]
-
 
 	//noop updates the fluents with the current position
 	LogicalNavigation setInitialState("noop");
 	setInitialState.run();
-	
 
 	//forever
 
 	//TODO wait for a goal
 
 
-	string goal = ":- not at(o3_510,n).";
-	const unsigned int MAX_N = 20;
+	//string goal = ":- not served(alice,coffee,n).";
+	string goal = ":- not at(f3_410,n).";
+	const unsigned int MAX_N = 40;
+    std::cerr << "Comuputing inital plan";
 	std::list<Action *> plan = computePlan(goal, MAX_N);
-	
+    std::list< Action *>::iterator planit1 = plan.begin();
+    std::string ss1;
+    for (; planit1 != plan.end(); ++planit1){
+        ss1 = ss1 + (*planit1)->toASP(0) + " ";
+    }
+    
+
+    std::cerr << "Plan Length is: " << plan.size() << std::endl;
+    std::cerr << "The list of all the actions is: " << ss1 << std::endl;
+
+
+
+    
+    
 	if(plan.empty())
+	
+	
 		throw runtime_error("The plan to achieve " + goal + " is empty!");
-	
-	
 	Action * currentAction = plan.front();
 	plan.pop_front();
 
 	while (ros::ok()) {
 
 		ros::spinOnce();
-
 		if (!currentAction->hasFinished()) {
-			cerr << "executing " << currentAction->toASP(0) << endl;
+			cerr << "Executing the current action: " << currentAction->toASP(0) << endl;
 			currentAction->run();
 		}
 		else { // Move on to next action
-
+            cerr << "Action " << currentAction->toASP(0) << "hasfinished()" << std::endl; 
 			delete currentAction;
 			
 			cerr << "Forward Projecting Plan to Check Validity..." << endl;
@@ -99,7 +85,7 @@ int main(int argc, char** argv) {
 				//TODO consider plan repair
 				
 				//Destroy all actions still in the plan
-				cerr << "destroying the plan" << endl;
+				cerr << "Forward projection failed, destroying the plan" << endl;
 				list<Action *>::iterator actIt = plan.begin();
 				for(; actIt != plan.end(); ++actIt)
 					delete *actIt;
@@ -107,6 +93,15 @@ int main(int argc, char** argv) {
 				plan.clear();
 				
 				plan = computePlan(goal,MAX_N);
+
+                // Print new plan
+                std::list< Action *>::iterator planit2 = plan.begin();
+                std::string ss2;
+                for (; planit2 != plan.end(); ++planit2){
+                    ss2 = ss2 + (*planit2)->toASP(0) + " ";
+                }
+                std::cerr << "Plan Length is: " << plan.size() << std::endl;
+                std::cerr << "The list of all the actions is: " << ss2 << std::endl;
 			}
 			
 			
@@ -150,8 +145,8 @@ std::list<Action *> computePlan(const std::string& goalSpecification, unsigned i
 
 
 	vector<bwi_kr::Predicate> &preds = answerSet.predicates;
-	vector<Action *> planVector(preds.size());
 
+	vector<Action *> planVector(preds.size());
 	for (int j=0 ; j<preds.size() ; ++j) {
 		
 		Action *act = ActionFactory::byName(preds[j].name);

@@ -46,13 +46,13 @@ void Load::run(){
     observations.push_back(observation1);
     ros::ServiceClient krClient = n.serviceClient<bwi_kr::ChangeFluent> ( "/bwi_kr/change_fluent" );
     krClient.waitForExistence();
-    for(int i=0, size=observations.size() ; i < size; ++i) {
-        bwi_kr::ChangeFluent cf;
-        cf.request.fluent.name = observations[i].name;
-        cf.request.fluent.parameters = observations[i].value;
-        krClient.call(cf);
-    }
 
+        bwi_kr::ChangeFluent cf;
+    for(int i=0, size=observations.size() ; i < size; ++i) {
+		cf.request.fluent.name =observations[i].name;
+		cf.request.fluent.parameters = observations[i].value;
+    }
+        krClient.call(cf);
 
 
 	done = true;
