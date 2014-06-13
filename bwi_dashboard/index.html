@@ -17,16 +17,17 @@
     <!-- Custom styles for this style -->
     <link href="css/dashboard.css" rel="stylesheet">
 
-    <script type="text/javascript" src="http://cdn.robotwebtools.org/EaselJS/current/easeljs.min.js"></script>
+    <!-- Import necessary javascript files -->
+    <script src="js/easeljs.min.js"></script>
     <script src="js/eventemitter2.js"></script>
     <script src="js/roslib.js"></script>
-   <script type="text/javascript" src="http://cdn.robotwebtools.org/ros2djs/current/ros2d.min.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
-    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.23/jquery-ui.min.js"></script>
+    <script src="js/ros2d.min.js"></script>
+    <script src="js/nav2d.min.js"></script>
+    <script src="js/jquery.min.js"></script>
+    <script src="js/jquery-ui.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="http://cdn.robotwebtools.org/mjpegcanvasjs/current/mjpegcanvas.min.js"></script>
-    <!-- <script type="text/javascript" src="http://cdn.robotwebtools.org/keyboardteleopjs/current/keyboardteleop.min.js"></script> -->
-    <script type="text/javascript" src="js/CustomKeyboardTeleop.js"></script>
+    <script src="js/mjpegcanvas.min.js"></script>
+    <script src="js/CustomKeyboardTeleop.js"></script>
     <script src="js/docs.min.js"></script>
     <script src="js/config.js"></script>
 
@@ -34,6 +35,7 @@
 
      
 
+  // Initialize ROSBRIDGE connection
   var ros;
   function initializeROS()
   {
@@ -51,18 +53,17 @@
 
      // // Create a connection to the rosbridge WebSocket server.
      ros.connect(rosBridgeAddress);
-     // ros = new ROSLIB.Ros({
-     //     url : rosBridgeAddress
-     // });
+    
   }
 
 
   //SUBSCRIBE TO TOPICS
   var sensorListeners = [];
+  var listenerCount = 0;
   function createListener(topicname, messagetype, subtopicnames)
   {
      // Create a Topic object with details of the topic's name and message type.
-     sensorListeners[topicname] = new ROSLIB.Topic({
+     sensorListeners[listenerCount] = new ROSLIB.Topic({
        ros : ros,
        name : topicname,
        messageType : messagetype
@@ -71,24 +72,42 @@
      var JSONsubtopicnames = createJSONSubTopicArray(subtopicnames.slice(0));
 
      // Then we add a callback to be called every time a message is published on this topic.
-     sensorListeners[topicname].subscribe(function(message) {
+     var currentCount = listenerCount;
+     sensorListeners[listenerCount].subscribe(function(message) {
 
-      // var updateMessage = printObject(message, '');
-       document.getElementById('trUpdated' + topicname).innerHTML = formatNowTimestamp();
-       document.getElementById('trValue' + topicname).innerHTML = '<div style="min-width:500px;" class="jsondiv">' + processListenerJSON(message, JSONsubtopicnames) + '</div>';
+       document.getElementById('trUpdated' + currentCount).innerHTML = formatNowTimestamp();
+       document.getElementById('trValue' + currentCount).innerHTML = '<div style="min-width:500px;" class="jsondiv">' + processListenerJSON(message, JSONsubtopicnames) + '</div>';
 
      });
 
+     listenerCount++;
+
   }
 
+  // Used as helper method to decide if we need to simplify our incoming topic or not
   function processListenerJSON(jsonmessage, subtopicnames)
   {
-    if(subtopicnames.length==0)
+    //Check to see if the subtopics are empty
+    var emptySubtopics = true;
+    for(var i =0; i<subtopicnames.length && emptySubtopics; i++)
     {
+      for(var j =0; j<subtopicnames[i].length && emptySubtopics; j++)
+      {
+        if(subtopicnames[i][j]!="")
+        {
+          emptySubtopics = false
+        }
+      }
+    }
+
+    if(emptySubtopics || subtopicnames.length==0)
+    {
+      // No subtopics to filter by, can just return the message
       return JSON.stringify(jsonmessage, null, 2);
     }
     else
     {
+      // Need to simplify the message with our subtopics
       return JSON.stringify(getSimplifiedJSON(jsonmessage, subtopicnames.slice(0)), null, 2);
     }
   }
@@ -170,23 +189,17 @@
     return subtopicnames;
   }
 
-
-  function printObject(object, spacing)
-  {
-    for (property in message) {
-        updateMessage += property + ':' + message[property]+'; ';
-      }
-  }
-
+  // Create the rows for the sensor table
   function initializeSensorTable()
   {
     var tbodySubscr = document.getElementById('tbodyTableSubscriptions');
       if (tableSubscriptions.length>0)
       {
+        var counter = 0;
          tableSubscriptions.forEach(function(subscr) {
 
             var trSubscr = document.createElement('tr');
-            trSubscr.id = 'trSubscr' + subscr.TopicName;
+            trSubscr.id = 'trSubscr' + counter;
 
             var tdTopic = document.createElement('td');
             tdTopic.innerHTML = subscr.TopicName;
@@ -196,11 +209,12 @@
             tdType.className = 'hidden-xs hidden-sm';
 
             var tdUpdated = document.createElement('td');
-            tdUpdated.id = 'trUpdated' + subscr.TopicName;
+            tdUpdated.id = 'trUpdated' + counter;
 
             var tdValue = document.createElement('td');
-            tdValue.id = 'trValue' + subscr.TopicName;
+            tdValue.id = 'trValue' + counter;
 
+            counter++;
 
             trSubscr.appendChild(tdTopic);
             trSubscr.appendChild(tdType);
@@ -222,11 +236,27 @@
       }
   }
 
+  // Initialize subscriptions to log at the top of the dashboard
+  function initializeLogSubscriptions()
+  {
+    logTopics.forEach(function(subscr) {
+        var logListener = new ROSLIB.Topic({
+           ros : ros,
+           name : subscr.TopicName,
+           messageType : subscr.MessageType
+         });
+
+         var JSONsubtopicnames = createJSONSubTopicArray(subscr.SubTopicNames.slice(0));
+
+         // Then we add a callback to be called every time a message is published on this topic.
+         logListener.subscribe(function(message) {
+            logToScreen(subscr.TopicName, processListenerJSON(message, JSONsubtopicnames));
+         });
+     });
+  }
+
+  // Format timestamp for use in sensors and logs
   function formatNowTimestamp() {
-      //Get the current timestamp
-      // if (!Date.now) {
-      //   Date.now = function() { return new Date().getTime(); };
-      // }
       var dt = new Date();
 
       var hours = dt.getHours();
@@ -245,56 +275,37 @@
       return hours + ":" + minutes + ":" + seconds;
   }  
 
-  // function formatNowTimestamp() {
-  //   // Create a date object with the current time
-  //     var now = new Date();
-     
-  //   // Create an array with the current month, day and time
-  //     // var date = [ now.getMonth() + 1, now.getDate(), now.getFullYear() ];
-     
-  //   // Create an array with the current hour, minute and second
-  //     var time = [ now.getHours(), now.getMinutes(), now.getSeconds() ];
-     
-  //   // Determine AM or PM suffix based on the hour
-  //     var suffix = ( time[0] < 12 ) ? "AM" : "PM";
-     
-  //   // Convert hour from military time
-  //     time[0] = ( time[0] < 12 ) ? time[0] : time[0] - 12;
-     
-  //   // If hour is 0, set it to 12
-  //     time[0] = time[0] || 12;
-     
-  //   // If seconds and minutes are less than 10, add a zero
-  //     for ( var i = 1; i < 3; i++ ) {
-  //       if ( time[i] < 10 ) {
-  //         time[i] = "0" + time[i];
-  //       }
-  //     }
-     
-  //   // Return the formatted string
-  //     // return date.join("/") + " " + time.join(":") + " " + suffix;
-  //     return time.join(":") + " " + suffix;
 
-  //   }
-
+  // Create subscriptions for each of the topics we want to monitor in the sensors table
   function createSensorSubscribers()
   {
+     listenerCount = 0;
      tableSubscriptions.forEach(function(subscr) {
         createListener(subscr.TopicName, subscr.MessageType, subscr.SubTopicNames);
      });
   }
 
+  // Unsubscribe and delete listeners for current sensor topics
   function deleteSensorSubscribers()
   {
+     var counter = 0;
      tableSubscriptions.forEach(function(subscr) {
-        sensorListeners[subscr.TopicName].unsubscribe();
-        sensorListeners[subscr.TopicName] = null;
+        sensorListeners[counter].unsubscribe();
+        sensorListeners[counter] = null;
+        counter++;
      });
+     listenerCount = 0;
   }
 
+  // Initialize the video connection
   var mjpegVideoViewer;
   function createVideoSubscribers()
   {
+      // --------------------------------------------------------
+      // Determine the size of the video that we can fit on the screen
+      // --------------------------------------------------------
+      var desiredVideoWidth = 640; //desired/max width
+      var desiredVideoHeight = 480; //desired/max height
 
       var realVideoWidth;
       var realVideoHeight;
@@ -302,19 +313,19 @@
       //Current size of window
       var windowWidth = ("innerWidth" in window 
                   ? window.innerWidth
-                  : document.documentElement.offsetWidth)-100; 
+                  : document.documentElement.offsetWidth); 
       var windowHeight = ("innerHeight" in window 
                ? window.innerHeight
-               : document.documentElement.offsetHeight)-100; 
+               : document.documentElement.offsetHeight); 
 
       //How big of a video can we fit for our width and height?
-      var minVideoWidth = Math.min(rosMjpegServerInfo.Width,  windowWidth);
-      var minVideoHeight = Math.min(rosMjpegServerInfo.Height, windowHeight);
+      var minVideoWidth = Math.min(desiredVideoWidth,  windowWidth);
+      var minVideoHeight = Math.min(desiredVideoHeight, windowHeight);
 
       //If we resize our video according to the resolution we chose in config, 
       //what will we have to shift our videoWidth and videoHeight to respectively
-      var shiftedVideoWidth = (minVideoHeight/rosMjpegServerInfo.Height) * rosMjpegServerInfo.Width;
-      var shiftedVideoHeight = (minVideoWidth/rosMjpegServerInfo.Width) * rosMjpegServerInfo.Height;
+      var shiftedVideoWidth = (minVideoHeight/desiredVideoHeight) * realVideoWidth;
+      var shiftedVideoHeight = (minVideoWidth/desiredVideoWidth) * desiredVideoHeight;
 
       //check to see if Height takes priority over Width
       if(shiftedVideoWidth < minVideoWidth)
@@ -327,6 +338,8 @@
          realVideoWidth = minVideoWidth;
          realVideoHeight = shiftedVideoHeight;
       }
+
+      // --------------------------------------------------------
 
     // Create the main viewer.
     mjpegVideoViewer = new MJPEGCANVAS.MultiStreamViewer({
@@ -341,19 +354,24 @@
     });
   }
 
+  // This doesn't erase the subscription, but it removes the viewer
   function deleteVideoSubscribers()
   {
       document.getElementById('mjpegVideoScreen').innerHTML = "";
       mjpegVideoViewer = null;
   }
 
-
+  // Initialize the Navigation connection
   var navWindowViewer;
   var navWindowClient;
   function createNavSubscribers()
   {
-      var desiredNavWidth = 800;
-      var desiredNavHeight = 800;
+
+      // --------------------------------------------------------
+      // Determine the size of the Nav that we can fit on the screen
+      // --------------------------------------------------------
+      var desiredNavWidth = 800; //desired/max width
+      var desiredNavHeight = 800; //desired/max height
 
       var realNavWidth;
       var realNavHeight;
@@ -395,27 +413,39 @@
        });
 
        // Setup the nav client.
-       navWindowClient = ROS2D.OccupancyGridClient({
+       navWindowClient = NAV2D.OccupancyGridClientNav({
          ros : ros,
-         rootObject : navWindowViewer.scene
+         rootObject : navWindowViewer.scene,
+         viewer : navWindowViewer,
+         serverName : navWindowServerName
        });
+
+       //for normal map but without the location
+       // navWindowClient = ROS2D.OccupancyGridClient({
+       //   ros : ros,
+       //   rootObject : navWindowViewer.scene
+       // });
 
   }
 
+  // This doesn't erase the subscription, but it removes the viewer
   function deleteNavSubscribers()
   {
       document.getElementById('navWindow').innerHTML = "";
       navWindowViewer = null;
   }
 
+  // Initialize the teleop connection
   var teleopClient;
   function createTeleopSubscribers()
   {
+      // Create teleop client
       teleopClient = new KEYBOARDTELEOP.Teleop({
         ros : ros,
         topic : teleopTopic
       });
 
+      // Create the slider for the speed
       $('#teleopSpeedSlider').slider({
         range : 'min',
         min : 0,
@@ -429,18 +459,20 @@
         }
       });
 
+      // Set the initial speed
       $('#teleopSpeedLabel').html('Speed: ' + ($('#teleopSpeedSlider').slider('value')) + '%');
       teleopClient.scale = ($('#teleopSpeedSlider').slider('value') / 100.0);
 
   }
 
+  // Removes teleop client
   function deleteTeleopSubscribers()
   {
       teleopClient.scale = 0;
       teleopClient = null;
   }
 
-
+  // Carries out action for navigation buttons
   function navAction(action)
   {
     if(action=='left')
@@ -461,18 +493,20 @@
     }
     else if(action=='zoomin')
     {
+      // 1.5 is arbitrary, change the number to change how fast the zooming happens
       navWindowViewer.scene.scaleX = navWindowViewer.scene.scaleX*1.5;
       navWindowViewer.scene.scaleY = navWindowViewer.scene.scaleY*1.5;
     }
     else if(action=='zoomout')
     {
+      // 1.5 is arbitrary, change the number to change how fast the zooming happens
       navWindowViewer.scene.scaleX = navWindowViewer.scene.scaleX/1.5;
       navWindowViewer.scene.scaleY = navWindowViewer.scene.scaleY/1.5;
     }
   }
  
 
-    
+  // initialize the drop downs for the connection/subscription defaults
   function initializeConfigOptions()
   {
     for(var index in connectionConfig) {
@@ -483,11 +517,12 @@
       $('#subscriptionSelect').append('<option value="' + index + '">' + index + '</option>');
     }
 
+    // Create empty fields for Custom entries
     addVideoTopic('');
     addSensorTopic('','',[]);
-
   }
 
+  // Get url parameter for the id "sname"
   function getParam ( sname )
   {
     var params = location.search.substr(location.search.indexOf("?")+1);
@@ -502,6 +537,7 @@
     return sval;
   }
 
+  // Process the url parameters (if any)
   function processParamInitialization()
   {
     //initialize to parameter values
@@ -532,7 +568,7 @@
       }
       else
       {
-        //choices are valid
+        //choices are valid, start the dashboard with the options chosen
         $("#connectionSelect").val(connectionChoice).trigger('change');
         $("#subscriptionSelect").val(subscriptionChoice).trigger('change');
         connectToROS();
@@ -542,7 +578,7 @@
   }
 
   
-
+  // This is run when the page is started
   function initialize()
   {
     //redirect console output
@@ -566,12 +602,13 @@
     initializeConfigOptions();
     if(location.search.indexOf("?") >= 0)
     {
+      // URL Parameters exist, process them
       processParamInitialization();
     }
     else
     {
+      // No URL Parameters exist, carry on as normal
       $('#configurationcontainer').css({ "display": ''});
-
     }
   }
 
@@ -582,6 +619,7 @@
 
   <body onload="initialize()">
 
+  <!-- HEADER -->
     <div class="navbar navbar-inverse" role="navigation" style="margin-top:-50px;">
       <div class="container-fluid">
         <div class="navbar-header">
@@ -607,6 +645,7 @@
 
     <div class="container-fluid">
 
+    <!-- CONFIGURATION SCREEN -->
       <div id="configurationcontainer" style="display:none;">
         <h1 class="page-header">Configuration</h1>
 
@@ -721,6 +760,7 @@
         </button>
 
 
+        <!-- EXPORT MODAL FOR CONNECTION -->
         <div class="modal fade" id="connectionExportModal">
           <div class="modal-dialog">
             <div class="modal-content">
@@ -739,6 +779,7 @@
           </div>
         </div>
 
+        <!-- EXPORT MODAL FOR SUBSCRIPTIONS -->
         <div class="modal fade" id="subscriptionExportModal">
           <div class="modal-dialog">
             <div class="modal-content">
@@ -761,6 +802,7 @@
 
 
 
+      <!-- DASHBOARD SCREEN -->
       <div id="dashboardcontainer" style="display:none;">
           <h1 class="page-header">Dashboard</h1>
 
@@ -946,15 +988,13 @@
         </div>
 
     </div>
-
-
-    <!-- Placed at the end of the document so the pages load faster -->
     
 
     <script>
 
       
-
+      //This function is called when the "CONNECT" button is pressed or when url parameters are loaded in
+      //It sets up the proper variables, then connects to ROSBRIDGE
       function connectToROS()
       {
         //Get connection info
@@ -1017,8 +1057,6 @@
                                Host : rosMjpegVideoAddress,
                                Port : rosMjpegVideoPort,
                                Quality : rosMjpegVideoQuality, //0-100
-                               Height : 480,
-                               Width : 640,
                                Topics : rosMjpegVideoTopics,
                                Labels : rosMjpegVideoTopics
                               }
@@ -1030,6 +1068,7 @@
         $('#configurationcontainer').css({ "display": 'none'});
         $('#dashboardcontainer').css({ "display": ''});
 
+        //Enable widgets that have been selected
         if(enabledVideo){ $('#divVideo').css({ "display": ''}); }
         else{ $('#divVideo').css({ "display": 'none'}); }
 
@@ -1042,21 +1081,23 @@
         if(enabledSensors){ $('#divSensors').css({ "display": ''}); }
         else{ $('#divSensors').css({ "display": 'none'}); }
 
+        //initialize the components of the dashboard
         initializeROS();
         initializeSensorTable();
+        initializeLogSubscriptions();
       }
 
-      
 
-      //Connect to ROS
+
+      //Connect button has been pressed
       $('#connectROS').click( function() {
         connectToROS();
       });
 
 
 
-
-
+      // Fires when the "Export" button next to the connection configuration is pressed
+      // Shows the user the proper variable to put into the config.js file
       $('#connectionExport').click( function(){
           var exportStr = JSON.stringify(createConnectionConfig($('#inputHost').val(), $('#inputRosbridgePort').val(), $('#inputMjpegServerPort').val()), null, 2);
           exportStr = exportStr.replace(/\"([^(\")"]+)\":/g,"$1:");
@@ -1065,6 +1106,8 @@
           $('#connectionExportModal').modal('show');
       });
 
+      // Fires when the "Export" button next to the subscription configuration is pressed
+      // Shows the user the proper variable to put into the config.js file
       $('#subscriptionExport').click( function(){
           var exportStr = JSON.stringify(createConfigurationObject(), null, 2);
           exportStr = exportStr.replace(/\"([^(\")"]+)\":/g,"$1:");
@@ -1073,37 +1116,7 @@
           $('#subscriptionExportModal').modal('show');
       });
 
-
-        function logToScreen(fromName, logInput)
-        {
-            var logMessage = logInput;
-            if(logInput !== null && typeof logInput === 'object')
-            {
-              logMessage = JSON.stringify(logInput, null, 2);
-            }
-            var tbodyLog = document.getElementById('tbodyLog');
-            var trLog = document.createElement('tr');
-
-            var tdFrom = document.createElement('td');
-            tdFrom.innerHTML = fromName;
-
-            var tdUpdated = document.createElement('td');
-            tdUpdated.innerHTML = formatNowTimestamp();
-
-            var tdValue = document.createElement('td');
-            tdValue.innerHTML = logMessage;
-
-            trLog.appendChild(tdFrom);
-            trLog.appendChild(tdUpdated);
-            trLog.appendChild(tdValue);
-            tbodyLog.appendChild(trLog);
-
-            //scroll to bottom of div
-            // $('#scrollLog').scrollTop($('#scrollLog')[0].scrollHeight);
-            $("#scrollLog").animate({ scrollTop: $('#scrollLog')[0].scrollHeight}, 1000);
-        }
-
-
+      // Used by the subscription export to create the proper variable info
       function createConfigurationObject()
       {
         var tempVideotopics = [];
@@ -1154,14 +1167,46 @@
       }
 
 
+        // Adds an entry to the log window at the top of the screen and scrolls down to the bottom
+        function logToScreen(fromName, logInput)
+        {
+            var logMessage = logInput;
+            if(logInput !== null && typeof logInput === 'object')
+            {
+              logMessage = JSON.stringify(logInput, null, 2);
+            }
+            var tbodyLog = document.getElementById('tbodyLog');
+            var trLog = document.createElement('tr');
+
+            var tdFrom = document.createElement('td');
+            tdFrom.innerHTML = fromName;
+
+            var tdUpdated = document.createElement('td');
+            tdUpdated.innerHTML = formatNowTimestamp();
+
+            var tdValue = document.createElement('td');
+            tdValue.innerHTML = logMessage;
+
+            trLog.appendChild(tdFrom);
+            trLog.appendChild(tdUpdated);
+            trLog.appendChild(tdValue);
+            tbodyLog.appendChild(trLog);
+
+            //scroll to bottom of div
+            $('#scrollLog').scrollTop($('#scrollLog')[0].scrollHeight);
+            // $("#scrollLog").animate({ scrollTop: $('#scrollLog')[0].scrollHeight}, 1000);
+        }
 
 
-
+      // Adds a field to the list of video topics on the configuration window
+      // topicname is used as the value of the input
       function addVideoTopic(topicname)
       {
         $("#videotopics").append('<div class="input-group"><span class="input-group-addon">Topic Name</span><input type="text" class="form-control" placeholder="/nav_kinect/rgb/image_raw" value="' + topicname + '"></div><br/>');
       }
 
+      // Adds the appropriate fields to the list of sensor subscriptions on the configuration window
+      // the input variables are used as the initial values of the inputs
       function addSensorTopic(topicname, messagetype, topicrestrictions)
       {
         var topicrestrictionsString = '';
@@ -1176,29 +1221,36 @@
         $("#sensortopics").append('<div><div class="input-group"><span class="input-group-addon">Topic Name</span><input type="text" class="form-control" placeholder="/odom" value="' + topicname + '"></div><div class="input-group"><span class="input-group-addon">Message Type</span><input type="text" class="form-control" placeholder="nav_msgs/Odometry" value="' + messagetype + '"></div><div class="input-group"><span class="input-group-addon">SubTopics</span><input type="text" class="form-control" placeholder="twist/twist/linear, twist/twist/angular" value="' + topicrestrictionsString + '"></div></div><br/>');
       }
 
+      //Clears the list of video fields on the configuration screen
       function clearVideoTopics()
       {
         $("#videotopics").empty();
       }
 
+      //Clears the list of sensor fields on the configuration screen
       function clearSensorTopics()
       {
         $("#sensortopics").empty();
       }
 
-      $('#addSensorTopic').click( function() {
-        addSensorTopic('','',[]);
-      });
-
+      // Fires when the "Add" button is pressed for the video topics on the configuration screen
       $('#addVideoTopic').click( function() {
         addVideoTopic('');
       });
 
+      // Fires when the "Add" button is pressed for the sensor topics on the configuration screen
+      $('#addSensorTopic').click( function() {
+        addSensorTopic('','',[]);
+      });
+
+      
+      // Fires when a new subscription default is chosen on the configuration screen
       $('#subscriptionSelect').change( function() {    
         clearVideoTopics();
         clearSensorTopics();
         if($(this).val()=="CUSTOM")
         {
+          // The user wants to put in their own values, reset all the fields
           addSensorTopic('','',[]);
           addVideoTopic('');
           $('#enabledVideo').prop('checked', true);
@@ -1219,9 +1271,9 @@
           $('#videoQuality').val(subscrConfig.VideoQuality);
           $('#enabledVideo').prop('checked', subscrConfig.Enabled.Video);
           $('#enabledTeleop').prop('checked', subscrConfig.Enabled.Teleop);
-          $('#enabledNavigation').prop('checked', subscrConfig.Enabled.Navigation);
+          $('#enabledNavigation').prop('checked', subscrConfig.Enabled.Nav);
           $('#enabledSensors').prop('checked', subscrConfig.Enabled.Sensors);
-          
+
           if(subscrConfig.Enabled.Video)
           {
             $('#VideoTopics').css({ "display": ''});
@@ -1264,9 +1316,11 @@
 
       });
 
+      // Fires when a new connection default is chosen on the configuration screen
        $('#connectionSelect').change( function() {    
         if($(this).val()=="CUSTOM")
         {
+          // The user wants to put in their own values, reset all the fields
           hostInfo = createConnectionConfig("","","");
         }
         else
@@ -1349,39 +1403,6 @@
       $('#collapseTeleop').on('shown.bs.collapse', function (e) {
           createTeleopSubscribers();
       })
-
-
-      // $(window).resize(resizeResponse);
-
-      // var resizedVideoWidth;
-      // var resizedVideoHeight;
-
-      // resizeResponse(); //initialize the width and height of video
-      
-      // function resizeResponse() {
-
-         
-
-
-      //   var videoCanvases = document.getElementById('mjpegVideoScreen').getElementsByTagName('canvas');
-
-      //   if(videoCanvases.length>0)
-      //   {
-      //      var videoCanvas = videoCanvases[0];
-
-      //      if(resizedVideoWidth!=videoCanvas.width || resizedVideoHeight!=videoCanvas.height)
-      //      {
-      //          //Need to resize 
-      //          videoCanvas.width = resizedVideoWidth;
-      //          videoCanvas.height = resizedVideoHeight;
-      //          videoCanvas.draw();
-      //      }
-
-      //   }
-
-
-
-      //  }
 
 
     </script>

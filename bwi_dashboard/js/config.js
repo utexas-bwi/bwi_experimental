@@ -1,10 +1,15 @@
 var connectionConfig = {
   "localhost" : createConnectionConfig("localhost", 9090, 8080),
-  "hypnotoad" : createConnectionConfig("hypnotoad.csres.utexas.edu", 9090, 8080)
+  "hypnotoad" : createConnectionConfig("hypnotoad.csres.utexas.edu", 9090, 8080),
+  "zapp" : createConnectionConfig("zapp.csres.utexas.edu", 9090, 8080),
+  "nibbler" : createConnectionConfig("nibbler.csres.utexas.edu", 9090, 8080),
+  "kif" : createConnectionConfig("kif.csres.utexas.edu", 9090, 8080),
+  "scruffy" : createConnectionConfig("scruffy.csres.utexas.edu", 9090, 8080)
+
 }
 
 var subscriptionConfig = {
-  "default" : {
+  "driving" : {
               Enabled: {
                           Video:   true,
                           Teleop:  true,
@@ -16,12 +21,11 @@ var subscriptionConfig = {
                             '/nav_kinect/rgb/image_raw'
                            ],
               SensorTopics: [
-                              createSensorSubscriptionObject('/odom', 'nav_msgs/Odometry', ['twist/twist/linear', 'twist/twist/angular']),
-                              createSensorSubscriptionObject('/clock', 'rosgraph_messages/clock', [])
+                              createSensorSubscriptionObject('/odom', 'nav_msgs/Odometry', ['twist/twist/linear', 'twist/twist/angular'])
                             ]
 
   },
-  "default2" : {
+  "expanded_sensors" : {
               Enabled: {
                           Video:   false,
                           Teleop:  false,
@@ -32,10 +36,49 @@ var subscriptionConfig = {
               VideoTopics: [
                            ],
               SensorTopics: [
-                              createSensorSubscriptionObject('/odom', 'nav_msgs/Odometry', [])
+                              {
+                                TopicName: "/rosout",
+                                MessageType: "rosgraph_msgs/Log",
+                                SubTopicNames: [
+                                  ""
+                                ]
+                              },
+                              {
+                                TopicName: "/odom",
+                                MessageType: "nav_msgs/Odometry",
+                                SubTopicNames: ["twist/twist/linear", "twist/twist/angular"]
+                              },
+                              {
+                                TopicName: "/joint_states",
+                                MessageType: "sensor_msgs/JointState",
+                                SubTopicNames: [
+                                  ""
+                                ]
+                              },
+                              {
+                                TopicName: "/nav_kinect_scan_manager/bond",
+                                MessageType: "bond/Status",
+                                SubTopicNames: [
+                                  ""
+                                ]
+                              }
                             ]
   }
 }
+
+//These topics are shown in the log at the top of the screen
+//Add them in the form of createSensorSubscriptionObject(topicName, topicType, subtopics),
+// where subtopics is an array of the specific values you are looking to extract from the topic, such as ['twist/twist/linear', 'twist/twist/angular']
+var logTopics = [
+                  // createSensorSubscriptionObject('/odom', 'nav_msgs/Odometry', [])
+                     {
+                                TopicName: "/rosout",
+                                MessageType: "rosgraph_msgs/Log",
+                                SubTopicNames: [
+                                  "msg"
+                                ]
+                      }
+                ];
 
 
 // STOP EDITING VALUES
@@ -105,10 +148,3 @@ function createSensorSubscriptionObject(topicname, messagetype, subtopicnames)
          SubTopicNames: subtopicnames
        };
 }
-
-//TO DO:
-//Add variables to control which widgets are shown
-//.htaccess file to make use controlled
-//text window at top of screen to stream messages to user, like "You are logged onto X"
-//compressed image transport (__image_transport:=compressed)
-//Get parameters for topics etc from GET parameters

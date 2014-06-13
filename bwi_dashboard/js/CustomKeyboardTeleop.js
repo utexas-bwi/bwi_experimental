@@ -117,20 +117,21 @@ KEYBOARDTELEOP.Teleop = function(options) {
   //buttonsToHandle must be declared in config.js and imported to the index.html page before importing this
   buttonsToHandle.forEach(function(buttonToHandle) {
     var buttonElement = document.getElementById(buttonToHandle.id);
+    var timer;
     buttonElement.onmousedown = function() {
        handleKey(buttonToHandle.val, true); //up
     };
     buttonElement.onmouseup = function() {
        handleKey(buttonToHandle.val, false); //up
     };
+    buttonElement.ontouchstart = function() {
+      timer = setInterval(function(){handleKey(buttonToHandle.val, true)}, 250); // 250ms interval
+    };
+    buttonElement.ontouchend = function() {
+      clearInterval(timer);
+      handleKey(buttonToHandle.val, false);
+    };
   });
-  // var buttonElement = document.getElementById('teleopUpKey');
-  //   buttonElement.onmousedown = function() {
-  //      handleKey(87, true);
-  //   };
-  //   buttonElement.onmouseup = function() {
-  //      handleKey(87, false);
-  //   };
 
   //END ASHER'S CUSTOM CODE
   //-------------------------------------------------------------------
