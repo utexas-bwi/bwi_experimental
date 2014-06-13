@@ -9,4 +9,6 @@ class PlannerCoffeeNew(PlannerCoffee):
     def __init__(self): 
         super(PlannerCoffeeNew, self).__init__()
 
-      
+    # TODO: where is this "start" method called???
+    def start(self):
+
