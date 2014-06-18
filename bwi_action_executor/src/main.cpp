@@ -42,7 +42,9 @@ int main(int argc, char** argv) {
 
 
 	//string goal = ":- not served(alice,coffee,n).";
-	string goal = ":- not at(f3_410,n).";
+	//string goal = ":- not at(f3_410,n).";
+	string goal;
+    n.getParam("/bwi_action_executor/goal", goal);
 	const unsigned int MAX_N = 40;
     std::cerr << "Comuputing inital plan";
 	std::list<Action *> plan = computePlan(goal, MAX_N);

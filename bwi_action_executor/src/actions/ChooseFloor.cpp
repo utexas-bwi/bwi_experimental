@@ -6,6 +6,7 @@
 #include <bwi_planning_common/PlannerInterface.h>
 #include <bwi_kr/ChangeFluent.h>
 #include <map_mux/ChangeMap.h>
+#include "LogicalNavigation.h"
 #include "CallGUI.h"
 
 #include <ros/ros.h>
@@ -58,23 +59,22 @@ void ChooseFloor::run(){
 	CallGUI loadGUI("LoadGUI", CallGUI::DISPLAY, str2 , 0.0,  options );
 	loadGUI.run();
 
-    ros::ServiceClient krClient = n.serviceClient<bwi_kr::ChangeFluent> ( "/bwi_kr/change_fluent" );
-    
-    bwi_kr::ChangeFluent cf;
-	cf.request.fluent.name ="at";
-	cf.request.fluent.parameters.push_back("f2_ele1");
-    krClient.call(cf);
-
-    cf.request.fluent.parameters.clear();
-	cf.request.fluent.name ="beside";
-	cf.request.fluent.parameters.push_back(door);
-    krClient.call(cf);
-
-    cf.request.fluent.parameters.clear();
-	cf.request.fluent.name ="facing";
-	cf.request.fluent.parameters.push_back(door);
-    krClient.call(cf);
+    //ros::ServiceClient krClient = n.serviceClient<bwi_kr::ChangeFluent> ( "/bwi_kr/change_fluent" );
+    //bwi_kr::ChangeFluent cf;
+	//cf.request.fluent.name ="at";
+	//cf.request.fluent.parameters.push_back("f2_ele1");
+    //krClient.call(cf);
+    //cf.request.fluent.parameters.clear();
+	//cf.request.fluent.name ="beside";
+	//cf.request.fluent.parameters.push_back(door);
+    //krClient.call(cf);
+    //cf.request.fluent.parameters.clear();
+	//cf.request.fluent.name ="facing";
+	//cf.request.fluent.parameters.push_back(door);
+    //krClient.call(cf);
         
+	LogicalNavigation setInitialState("noop");
+	setInitialState.run();
 
 
 //    std::cerr << "gui is called" << std::endl;

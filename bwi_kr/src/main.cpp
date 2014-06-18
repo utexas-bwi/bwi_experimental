@@ -144,12 +144,14 @@ void createCurrentState(const std::string& observations) {
 	ComputeAnswerSet answer;
 	answer.request.queryFile = queryPath;
 	
-    static int counter = 0;
-	stringstream cc;
-	cc << "cp " << packagePath + domainName + "/current.asp " << packagePath + domainName + "/current_" << counter << ".txt ";
-    std::cerr << "---------------Counter: "<<counter << std::endl;
-    counter++;
-	system(cc.str().c_str());
+    ////DEBUG:: MAKE FILE AT EACH ASP TIME STEP SO WE CAN SEE WHAT IS HAPPENING
+    //static int counter = 0;
+	//stringstream cc;
+	//cc << "cp " << packagePath + domainName + "/current.asp " << packagePath + domainName + "/current_" << counter << ".txt ";
+    //std::cerr << "---------------Counter: "<<counter << std::endl;
+    //counter++;
+	//system(cc.str().c_str());
+
 	computeAnswerSet(answer.request,answer.response);
 	
 	ofstream currentFile((packagePath + domainName + "/current.asp").c_str());
