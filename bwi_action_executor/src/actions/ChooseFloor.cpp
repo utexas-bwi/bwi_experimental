@@ -61,20 +61,20 @@ void ChooseFloor::run(){
 
     //ros::ServiceClient krClient = n.serviceClient<bwi_kr::ChangeFluent> ( "/bwi_kr/change_fluent" );
     //bwi_kr::ChangeFluent cf;
-	//cf.request.fluent.name ="at";
-	//cf.request.fluent.parameters.push_back("f2_ele1");
+    //cf.request.fluent.name ="at";
+    //cf.request.fluent.parameters.push_back("f2_ele1");
     //krClient.call(cf);
     //cf.request.fluent.parameters.clear();
-	//cf.request.fluent.name ="beside";
-	//cf.request.fluent.parameters.push_back(door);
+    //cf.request.fluent.name ="beside";
+    //cf.request.fluent.parameters.push_back(door);
     //krClient.call(cf);
     //cf.request.fluent.parameters.clear();
-	//cf.request.fluent.name ="facing";
-	//cf.request.fluent.parameters.push_back(door);
+    //cf.request.fluent.name ="facing";
+    //cf.request.fluent.parameters.push_back(door);
     //krClient.call(cf);
         
-	LogicalNavigation setInitialState("noop");
-	setInitialState.run();
+    LogicalNavigation setInitialState("noop");
+    setInitialState.run();
 
 
 //    std::cerr << "gui is called" << std::endl;

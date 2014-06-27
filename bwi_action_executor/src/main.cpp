@@ -45,14 +45,24 @@ int main(int argc, char** argv) {
 	//string goal = ":- not at(f3_410,n).";
 	string goal;
     n.getParam("/bwi_action_executor/goal", goal);
+    std::cerr << "Plan Goal is: "<< goal << endl;
 	const unsigned int MAX_N = 40;
     std::cerr << "Comuputing inital plan";
 	std::list<Action *> plan = computePlan(goal, MAX_N);
+    std::cerr << "Plan finished computing";
     std::list< Action *>::iterator planit1 = plan.begin();
     std::string ss1;
+    int mycounter = 0;
     for (; planit1 != plan.end(); ++planit1){
         ss1 = ss1 + (*planit1)->toASP(0) + " ";
     }
+
+    for (; planit1 != plan.end(); ++planit1){
+        if ( (*planit1) == NULL ) {
+            mycounter++;
+        }
+    }
+    cerr << "[BWI_ACTION_EXECUTOR] Counter of nulls: " << mycounter << endl;
     
 
     std::cerr << "Plan Length is: " << plan.size() << std::endl;
@@ -144,7 +154,6 @@ std::list<Action *> computePlan(const std::string& goalSpecification, unsigned i
 		answerSet = kr_query(goal.str(),i,"planQuery.asp");
 
 	}
-
 
 	vector<bwi_kr::Predicate> &preds = answerSet.predicates;
 

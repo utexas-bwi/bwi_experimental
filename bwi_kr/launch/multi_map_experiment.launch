@@ -19,6 +19,7 @@
 
   <node name="bwi_action_executor" pkg="bwi_action_executor" type="bwi_action_executor_node" output="screen">
     <param name="goal" value=":- not at(f3_410,n)." />
+    <!--<param name="goal" value=":- not served(alice,coffee,n)." />-->
   </node>
 
   <!-- launch the gui -->
