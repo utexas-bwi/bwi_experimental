@@ -42,21 +42,19 @@ void ChooseFloor::run(){
 		floor = 3;
         door = "d3_ele1";
 	}
-    std::cerr << "we are at the start" + floor << std::endl;
     map_mux::ChangeMap cm;
     cm.request.data = floor;
     service_change_map.call(cm);
 
-    std::cerr << "map service has been called" << std::endl;
 	vector< string > options;
     ostringstream convert;
     convert << floor;
 
-    std::string str1 =  "We have arrived on floor "+ convert.str() + ".";
     std::string str2 =  "Please let me know when we have reached floor "+ convert.str();
+    std::string str1 =  "We have arrived on floor "+ convert.str() + ".";
 
 	options.push_back(str1);
-	CallGUI loadGUI("LoadGUI", CallGUI::DISPLAY, str2 , 0.0,  options );
+	CallGUI loadGUI("LoadGUI", CallGUI::CHOICE_QUESTION, str2 , 0.0,  options );
 	loadGUI.run();
 
     //ros::ServiceClient krClient = n.serviceClient<bwi_kr::ChangeFluent> ( "/bwi_kr/change_fluent" );
@@ -99,7 +97,6 @@ void ChooseFloor::run(){
 //        krClient.call(cf);
 //
 
-    std::cerr << "done is set" << std::endl;
 	done = true;
 }
 
