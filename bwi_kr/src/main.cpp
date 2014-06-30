@@ -10,6 +10,9 @@
 #include <bwi_kr/AnswerSet.h>
 #include <bwi_kr/ComputeAnswerSet.h>
 #include <bwi_kr/ChangeFluent.h>
+#include <std_srvs/Empty.h>
+#include <boost/thread.hpp>
+#include <ros/spinner.h>
 
 using namespace std;
 using namespace bwi_kr;
@@ -20,13 +23,16 @@ string packagePath;
 static void createCurrentState(const std::string& observations);
 static void createInitialstate(const std::string& initialFile);
 
+boost::shared_mutex mutex;
 
 bool computeAnswerSet(bwi_kr::ComputeAnswerSet::Request& req,
 						bwi_kr::ComputeAnswerSet::Response &res);
 
 bool changeFluent(bwi_kr::ChangeFluent::Request &req,
 						bwi_kr::ChangeFluent::Response &res);
+bool printService(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res);
 
+AnswerSet doComputeAnswerSet(const string& queryFilereq);
 
 int main(int argc, char **argv) {
 
@@ -40,10 +46,18 @@ int main(int argc, char **argv) {
 	ros::ServiceServer computeAS = n.advertiseService("compute_answer_set", computeAnswerSet);
 	//TODO consider accepting a vector of Predicates
 	ros::ServiceServer changeF = n.advertiseService("change_fluent", changeFluent);
+	ros::ServiceServer empty = n.advertiseService("empty", printService);
 	
-	ros::spin();
+	ros::MultiThreadedSpinner m;
+	
+	ros::spin(m);
 
 	return 0;
+}
+
+bool printService(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res) {
+	ROS_INFO_STREAM("[thread=" << boost::this_thread::get_id() << "]");
+	ros::Duration (60).sleep();
 }
 
 static AnswerSet readAnswerSet(const std::string& filePath) {
@@ -63,23 +77,36 @@ static AnswerSet readAnswerSet(const std::string& filePath) {
 
 bool computeAnswerSet(bwi_kr::ComputeAnswerSet::Request& req,
 						bwi_kr::ComputeAnswerSet::Response &res) {
-	
-	stringstream commandLine;
-	
-	string &queryFile = req.queryFile;
-	
-	const string outputFilePath = "/tmp/bwi_kr_query_output.txt";
-	
-	commandLine << "clingo " << queryFile << " " << packagePath << domainName << "/*.asp " << " > " << outputFilePath;
-	
-	system(commandLine.str().c_str());
 
-	AnswerSet answer = readAnswerSet(outputFilePath);
+	std::cout << "before reading lock" << std::endl;
 	
+	boost::shared_lock<boost::shared_mutex> lock(mutex);
+	
+	std::cout << "after reading lock" <<std::endl;
+
+	AnswerSet answer  = doComputeAnswerSet(req.queryFile);	
+
 	res.answerSet.satisfied = answer.isSatisfied();
 	res.answerSet.predicates = answer.getPredicates();
-
+	std::cout << "returning computeAnswerSet" << std::endl;
 	return true;
+
+}
+
+AnswerSet doComputeAnswerSet(const string& queryFile) {
+	
+	stringstream outputFileNameStream;
+	outputFileNameStream << "/tmp/bwi_kr_query_output" << boost::this_thread::get_id() << ".txt";
+
+	const string outputFilePath(outputFileNameStream.str());
+
+	stringstream commandLine;
+	commandLine << "clingo " << queryFile << " " << packagePath << domainName << "/*.asp " << " > " << outputFilePath;
+		
+	system(commandLine.str().c_str());
+	
+	return readAnswerSet(outputFilePath);
+	
 
 }
 
@@ -100,11 +127,18 @@ bool changeFluent(bwi_kr::ChangeFluent::Request &req,
 	
 	//TODO check that the fluent exists and has the correct number of parameters
 	
+	std::cout << "before writing lock" << std::endl;
+
+	boost::upgrade_lock<boost::shared_mutex> lock(mutex);
+	boost::upgrade_to_unique_lock<boost::shared_mutex> uniquelock(lock);
+	
+	std::cout << "after writing lock" << std::endl;
 	stringstream ss;
 	
 	ss << req.fluent.name << "(" << concatenateParameters(req.fluent.parameters) << "1)." << endl;
-	createCurrentState(ss.str());
 	
+	createCurrentState(ss.str());
+	std::cout << "returning changeFluent" << std::endl;
 	return true;
 }
 
@@ -136,14 +170,11 @@ void createCurrentState(const std::string& observations) {
 	queryFile << observations << endl;
 	queryFile.close();
 	
-	ComputeAnswerSet answer;
-	answer.request.queryFile = queryPath;
-	
-	computeAnswerSet(answer.request,answer.response);
+	AnswerSet answerSet = doComputeAnswerSet(queryPath);
 	
 	ofstream currentFile((packagePath + domainName + "/current.asp").c_str());
 	
-	vector<Predicate> &res = answer.response.answerSet.predicates;
+	const vector<Predicate> &res = answerSet.getPredicates();
 	
 	vector<Predicate>::const_iterator resIt = res.begin();
 	
