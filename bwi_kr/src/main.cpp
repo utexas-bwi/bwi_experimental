@@ -134,7 +134,10 @@ bool changeFluent(bwi_kr::ChangeFluent::Request &req,
 	
 	std::cout << "after writing lock" << std::endl;
 	stringstream ss;
-	
+    //std::string str1 = "";
+    //for( int i = 0; i < req.fluent.size() ; i ++ ){
+	//str1 = str1 +  req.fluent[i].name + "(" +  concatenateParameters(req.fluent[i].parameters) + "1)." + "\n";//+ std::endl;
+    //}
 	ss << req.fluent.name << "(" << concatenateParameters(req.fluent.parameters) << "1)." << endl;
 	
 	createCurrentState(ss.str());
@@ -158,6 +161,7 @@ void createInitialstate(const std::string& initialFile) {
 
 void createCurrentState(const std::string& observations) {
 	
+    std:cerr << "-----------Observations string: " << observations << std::endl;
 	const string queryPath = "/tmp/bwi_kr_currentstate_query.txt";
 	
 	stringstream copyCommand;
@@ -170,7 +174,9 @@ void createCurrentState(const std::string& observations) {
 	queryFile << observations << endl;
 	queryFile.close();
 	
+
 	AnswerSet answerSet = doComputeAnswerSet(queryPath);
+
 	
 	ofstream currentFile((packagePath + domainName + "/current.asp").c_str());
 	

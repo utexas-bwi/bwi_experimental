@@ -1,8 +1,11 @@
-
-
 #include "actions/Action.h"
 #include "actions/ActionFactory.h"
 #include "actions/LogicalNavigation.h"
+#include "actions/Load.h"
+#include "actions/Unload.h"
+#include "actions/Greet.h"
+#include "actions/Order.h"
+#include "actions/ChooseFloor.h"
 
 #include "kr_interface.h"
 
@@ -29,25 +32,51 @@ int main(int argc, char** argv) {
 	ros::NodeHandle n;
 
 	ros::Rate loop(10);
-	
+
 	//noop updates the fluents with the current position
 	LogicalNavigation setInitialState("noop");
 	setInitialState.run();
-	
 
 	//forever
 
 	//TODO wait for a goal
 
 
-	string goal = ":- not at(o3_510,n).";
-	const unsigned int MAX_N = 20;
+	//string goal = ":- not served(alice,coffee,n).";
+	//string goal = ":- not at(f3_410,n).";
+	string goal;
+    n.getParam("/bwi_action_executor/goal", goal);
+    std::cerr << "Plan Goal is: "<< goal << endl;
+	const unsigned int MAX_N = 40;
+    std::cerr << "Comuputing inital plan";
 	std::list<Action *> plan = computePlan(goal, MAX_N);
-	
+    std::cerr << "Plan finished computing";
+    std::list< Action *>::iterator planit1 = plan.begin();
+    std::string ss1;
+    int mycounter = 0;
+    for (; planit1 != plan.end(); ++planit1){
+        ss1 = ss1 + (*planit1)->toASP(0) + " ";
+    }
+
+    for (; planit1 != plan.end(); ++planit1){
+        if ( (*planit1) == NULL ) {
+            mycounter++;
+        }
+    }
+    cerr << "[BWI_ACTION_EXECUTOR] Counter of nulls: " << mycounter << endl;
+    
+
+    std::cerr << "Plan Length is: " << plan.size() << std::endl;
+    std::cerr << "The list of all the actions is: " << ss1 << std::endl;
+
+
+
+    
+    
 	if(plan.empty())
+	
+	
 		throw runtime_error("The plan to achieve " + goal + " is empty!");
-	
-	
 	Action * currentAction = plan.front();
 	plan.pop_front();
 	
@@ -56,30 +85,32 @@ int main(int argc, char** argv) {
 	while (ros::ok()) {
 
 		ros::spinOnce();
-
 		if (!currentAction->hasFinished()) {
-			cerr << "executing " << currentAction->toASP(0) << endl;
+			cerr << "Executing the current action: " << currentAction->toASP(0) << endl;
 			currentAction->run();
 		}
-		else {
-
+		else { // Move on to next action
+            cerr << "Action " << currentAction->toASP(0) << "hasfinished()" << std::endl; 
 			delete currentAction;
+
 			executed++;
 	
-			cerr << "checking..." << endl;
+			cerr << "Forward Projecting Plan to Check Validity..." << endl;
 			bool valid = checkPlan(plan,goal);
 			if(!valid) {
+				
+				cerr << "Forward projection failed, trying repair" << endl;
 				
 				//plan repair
 				int max_changes = min((MAX_N-executed-plan.size()), plan.size());
 				std::list<Action *> repairedPlan = repairPlan(plan, goal, max_changes);
 
-				//destroy all actions still in the plan
-				//cerr << "destroying the plan" << endl;
+				//delete the old plan
 				list<Action *>::iterator actIt = plan.begin();
 				for(; actIt != plan.end(); ++actIt)
 					delete *actIt;	
 				plan.clear();
+
 
 				if (repairedPlan.empty()) {
 					cerr << "replanning..." << endl;
@@ -92,13 +123,17 @@ int main(int argc, char** argv) {
 					plan = repairedPlan;
 				}
 
+
+                // Print new plan
+                std::list< Action *>::iterator planit2 = plan.begin();
+                std::string ss2;
+                for (; planit2 != plan.end(); ++planit2){
+                    ss2 = ss2 + (*planit2)->toASP(0) + " ";
+                }
+                std::cerr << "Plan Length is: " << plan.size() << std::endl;
+                std::cerr << "The list of all the actions is: " << ss2 << std::endl;
+
 			}
-			
-			
-
-
-			if (plan.empty())
-				return 0;
 
 			currentAction = plan.front();
 			plan.pop_front();
@@ -133,10 +168,9 @@ std::list<Action *> computePlan(const std::string& goalSpecification, unsigned i
 
 	}
 
-
 	vector<bwi_kr::Predicate> &preds = answerSet.predicates;
-	vector<Action *> planVector(preds.size());
 
+	vector<Action *> planVector(preds.size());
 	for (int j=0 ; j<preds.size() ; ++j) {
 		
 		Action *act = ActionFactory::byName(preds[j].name);
