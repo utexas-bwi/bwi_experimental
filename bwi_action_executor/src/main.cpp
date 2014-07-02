@@ -1,17 +1,23 @@
+// -*- mode: C++ -*-
+// -*- c-file-style: bsd -*-
 
+///
+//   bwi_action_executor -- main program
+//
 
 #include "actions/Action.h"
 #include "actions/ActionFactory.h"
 #include "actions/LogicalNavigation.h"
 
 #include "kr_interface.h"
+#include "plan_concurrently.h"
 
 #include <ros/ros.h>
 
 #include <iostream>
+#include <boost/bind.hpp>
 #include <boost/concept_check.hpp>
 #include <boost/graph/graph_concepts.hpp>
-#include <boost/thread/thread.hpp>
 
 #include <list>
 
@@ -224,8 +230,9 @@ std::list<Action *> repairPlan(const std::list<Action *> & plan, const std::stri
 //  @return new plan to use, empty if unsuccessful
 std::list<Action *> repairOrReplan(const std::list<Action *> & plan,
                                    const std::string& goal,
-                                   unsigned int max_changes) {
-	
+                                   unsigned int max_changes) 
+{
+#if 0   // serial
 	cerr << "repairing..."
              << "maximum number of changes is " << max_changes << endl;
         std::list<Action *> newPlan = repairPlan(plan, goal, max_changes);
@@ -235,5 +242,11 @@ std::list<Action *> repairOrReplan(const std::list<Action *> & plan,
                 newPlan = computePlan(goal, MAX_N);
         }
 	return newPlan;
+#else   // parallel
+	cerr << "replanning concurrently..." << endl;
+        PlanConcurrently parallel;
+        return parallel.plan(
+                boost::bind(repairPlan, plan, goal, max_changes),
+                boost::bind(computePlan, goal, MAX_N));
+#endif
 }
-
