@@ -11,28 +11,22 @@
 #include <boost/thread/thread.hpp>
 #include "actions/Action.h"
 
-class PlanConcurrently {
-
-public:
-
-        typedef std::list<bwi_actexec::Action *> Plan;
-
-        PlanConcurrently() {}
-        ~PlanConcurrently() {}
-
-        /// make plans concurrently
-        //
-        //  @param f1 callable object for first plan
-        //  @param f2 callable object for second plan
-        //
-        //  @return the first available non-empty list of actions.  If
-        //          both are empty planning has failed.
-        //
-        //  This is a stub for testing, it always fails.
-        template <class F1, class F2>
-        Plan plan(F1 fn1, F2 fn2) {
-                return Plan();          // empty plan
-        }
-};
+/// Run two planning functions concurrently
+//
+//  @param fn1 first callable object, returning std::list<T>
+//  @param fn2 second callable object, returning std::list<T>
+//
+//  @return the first available non-empty list result.  If both are
+//          empty, planning has failed.
+//
+//  This is a stub for testing, it does not run fn1 and fn2 in parallel.
+//
+template <typename T, class F1, class F2>
+std::list<T> plan_concurrently(F1 fn1, F2 fn2) {
+        std::list<T> result = fn1();
+        if (result.empty())
+                result = fn2();
+        return result;
+}
 
 #endif // _PLAN_CONCURRENTLY_H_

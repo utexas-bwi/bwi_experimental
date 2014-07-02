@@ -244,8 +244,7 @@ std::list<Action *> repairOrReplan(const std::list<Action *> & plan,
 	return newPlan;
 #else   // parallel
 	cerr << "replanning concurrently..." << endl;
-        PlanConcurrently parallel;
-        return parallel.plan(
+        return plan_concurrently<Action *>(
                 boost::bind(repairPlan, plan, goal, max_changes),
                 boost::bind(computePlan, goal, MAX_N));
 #endif
