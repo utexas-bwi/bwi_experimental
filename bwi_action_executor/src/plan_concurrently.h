@@ -11,6 +11,7 @@
 #include <boost/thread/thread.hpp>
 #include "actions/Action.h"
 
+
 /// Run two planning functions concurrently
 //
 //  @param fn1 first callable object, returning std::list<T>
@@ -41,24 +42,34 @@ std::list<T> plan_concurrently(F1 fn1, F2 fn2) {
         // wasteful, but that cost is tiny compared to forking and
         // execing a shell and a clasp process to compute each plan.
 
+        // Internal class for wrapping a function in a thread
         template <typename T, class F>
-        class ThreadWrapper {
+        class _ThreadWrapper {
         public:
                 std::list<T> result;
+                boost::thread thr;
+        
+                _ThreadWrapper():
+                        thr(_ThreadWrapper::tfn, this, F) {}
                 void tfn(F func) {result = func();}
-                boost::thread thr(tfn);
-                bool finished() {return thr.joinable};
-        }
-        ThreadWrapper<T, F1> t1;
-        ThreadWrapper<T, F2> t2;
+                bool finished() const {return thr.joinable;}
+        };
+
+        _ThreadWrapper<T, F1> t1;
+        _ThreadWrapper<T, F2> t2;
 
         // Polling for thread completion is absurd, but adequate for
         // our needs.  Feel free to make it better, if necessary.
         while (true) {
                 // If both finish together, we prefer the second plan.
-                if (t2.finished())
+                if (t2.finished() && !t2.result.empty())
+                        // second function returned a plan
                         return t2.result;
-                else if (t1.finished())
+                else if (t1.finished() && !t1.result.empty())
+                        // first function returned a plan
+                        return t1.result;
+                else if (t1.finished() && t2.finished())
+                        // both are finished and empty: failure
                         return t1.result;
                 else
                         usleep(1000);   // wait a millisecond
