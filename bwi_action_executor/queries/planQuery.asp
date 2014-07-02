@@ -1,4 +1,4 @@
-#const n=5.
+#const n=4.
 :- not at(o3_510,n).
 #hide.
 #show approach/2.

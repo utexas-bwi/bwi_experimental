@@ -1,5 +1,7 @@
-#const n=1.
-gothrough(d3_510,0).
+#const n=4.
+gothrough(d3_512,1).
+approach(d3_510,2).
+gothrough(d3_510,3).
 :- not at(o3_510,n).
 #hide.
 #show approach/2.
