@@ -9,7 +9,6 @@
 
 #include <boost/bind.hpp>
 #include <boost/thread/thread.hpp>
-#include "actions/Action.h"
 
 
 /// Internal class for wrapping a function in a thread
@@ -47,14 +46,7 @@ private:
 template <typename T, class F1, class F2>
 std::list<T> plan_concurrently(F1 fn1, F2 fn2) {
 
-#if 1   // serial implementation
-
-        std::list<T> result = fn1();
-        if (result.empty())
-                result = fn2();
-        return result;
-
-#else   // parallel implementation
+#if 1   // parallel implementation
 
         // This implementation is rather crude, but I can't find a
         // standard solution.  It is the simplest I could think of
@@ -83,6 +75,13 @@ std::list<T> plan_concurrently(F1 fn1, F2 fn2) {
                 else
                         usleep(1000);   // wait a millisecond
         }
+
+#else   // serial implementation
+
+        std::list<T> result = fn1();
+        if (result.empty())
+                result = fn2();
+        return result;
 #endif
 }
 
