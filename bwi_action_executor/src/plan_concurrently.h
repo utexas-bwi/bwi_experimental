@@ -12,6 +12,30 @@
 #include "actions/Action.h"
 
 
+/// Internal class for wrapping a function in a thread
+//
+//  @param func callable object of type F, returning std::list<T>
+//
+//  @post Thread started, which calls *func*.
+//  @post When *func* returns, this->finished() is true and *result*
+//        contains the function value.
+//
+template <typename T, class F>
+class _ThreadWrapper {
+public:
+        std::list<T> result;
+        boost::thread thr;
+
+        _ThreadWrapper(F func):
+                func_ (func),
+                thr (boost::thread(&_ThreadWrapper::tfn_, this)) {}
+        bool finished() const {return thr.joinable();}
+private:
+        F func_;
+        void tfn_() {result = func_();}
+};
+
+
 /// Run two planning functions concurrently
 //
 //  @param fn1 first callable object, returning std::list<T>
@@ -19,8 +43,6 @@
 //
 //  @return the first available non-empty list result.  If both are
 //          empty, planning has failed.
-//
-//  This is a stub for testing, it does not run fn1 and fn2 in parallel.
 //
 template <typename T, class F1, class F2>
 std::list<T> plan_concurrently(F1 fn1, F2 fn2) {
@@ -42,21 +64,8 @@ std::list<T> plan_concurrently(F1 fn1, F2 fn2) {
         // wasteful, but that cost is tiny compared to forking and
         // execing a shell and a clasp process to compute each plan.
 
-        // Internal class for wrapping a function in a thread
-        template <typename T, class F>
-        class _ThreadWrapper {
-        public:
-                std::list<T> result;
-                boost::thread thr;
-        
-                _ThreadWrapper():
-                        thr(_ThreadWrapper::tfn, this, F) {}
-                void tfn(F func) {result = func();}
-                bool finished() const {return thr.joinable;}
-        };
-
-        _ThreadWrapper<T, F1> t1;
-        _ThreadWrapper<T, F2> t2;
+        _ThreadWrapper<T, F1> t1(fn1);
+        _ThreadWrapper<T, F2> t2(fn2);
 
         // Polling for thread completion is absurd, but adequate for
         // our needs.  Feel free to make it better, if necessary.
