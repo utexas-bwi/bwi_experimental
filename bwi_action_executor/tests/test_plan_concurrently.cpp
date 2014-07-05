@@ -28,7 +28,7 @@ std::list<int> delayed_plan(int result, int usecs)
   return plan;
 }
 
-TEST(PlanConcurrently, planFailure)
+TEST(PlanConcurrently, planEmpty)
 {
   std::list<int> plan = plan_concurrently<int>(empty_plan, empty_plan);
   EXPECT_TRUE(plan.empty());
@@ -36,11 +36,14 @@ TEST(PlanConcurrently, planFailure)
 
 TEST(PlanConcurrently, useFirstPlan)
 {
+  std::list<int> x = boost::bind(immediate_plan, 42)();
+  EXPECT_FALSE(x.empty());
+  EXPECT_EQ(42, x.front());
   std::list<int> plan = plan_concurrently<int>
     (boost::bind(immediate_plan, 42),
      empty_plan);
   EXPECT_FALSE(plan.empty());
-  EXPECT_EQ(plan.front(), 42);
+  EXPECT_EQ(42, plan.front());
 }
 
 TEST(PlanConcurrently, useSecondPlan)
@@ -49,7 +52,7 @@ TEST(PlanConcurrently, useSecondPlan)
     (empty_plan,
      boost::bind(immediate_plan, 42));
   EXPECT_FALSE(plan.empty());
-  EXPECT_EQ(plan.front(), 42);
+  EXPECT_EQ(42, plan.front());
 }
 
 TEST(PlanConcurrently, useDelayedPlan)
@@ -58,7 +61,7 @@ TEST(PlanConcurrently, useDelayedPlan)
     (empty_plan,
      boost::bind(delayed_plan, 17, 100000));
   EXPECT_FALSE(plan.empty());
-  EXPECT_EQ(plan.front(), 17);
+  EXPECT_EQ(17, plan.front());
 }
 
 TEST(PlanConcurrently, useLessDelayedPlan)
@@ -67,7 +70,7 @@ TEST(PlanConcurrently, useLessDelayedPlan)
     (boost::bind(delayed_plan, 7, 50000),
      boost::bind(delayed_plan, 17, 100000));
   EXPECT_FALSE(plan.empty());
-  EXPECT_EQ(plan.front(), 7);
+  EXPECT_EQ(7, plan.front());
 }
 
 TEST(PlanConcurrently, useImmediatePlan)
@@ -76,19 +79,18 @@ TEST(PlanConcurrently, useImmediatePlan)
     (boost::bind(immediate_plan, 42),
      boost::bind(delayed_plan, 17, 100000));
   EXPECT_FALSE(plan.empty());
-  EXPECT_EQ(plan.front(), 42);
+  EXPECT_EQ(42, plan.front());
 }
 
-// These tests fail with the serial implementation, they requires
-// actual concurrency.  Save it for the genuine implementation.
-#if 0
+// These tests fail with the serial implementation, they require
+// actual concurrency.  Run them for the genuine implementation.
 TEST(PlanConcurrently, useSecondImmediatePlan)
 {
   std::list<int> plan = plan_concurrently<int>
     (boost::bind(delayed_plan, 17, 100000),
      boost::bind(immediate_plan, 42));
   EXPECT_FALSE(plan.empty());
-  EXPECT_EQ(plan.front(), 42);
+  EXPECT_EQ(42, plan.front());
 }
 
 TEST(PlanConcurrently, useLessDelayedSecondPlan)
@@ -97,9 +99,8 @@ TEST(PlanConcurrently, useLessDelayedSecondPlan)
     (boost::bind(delayed_plan, 17, 100000),
      boost::bind(delayed_plan, 7, 50000));
   EXPECT_FALSE(plan.empty());
-  EXPECT_EQ(plan.front(), 7);
+  EXPECT_EQ(7, plan.front());
 }
-#endif
 
 // Run all the tests that were declared with TEST()
 int main(int argc, char **argv)
