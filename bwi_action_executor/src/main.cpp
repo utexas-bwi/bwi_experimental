@@ -15,7 +15,6 @@
 
 #include <ros/ros.h>
 
-#include <iostream>
 #include <boost/bind.hpp>
 #include <boost/concept_check.hpp>
 #include <boost/graph/graph_concepts.hpp>
@@ -42,10 +41,10 @@ int main(int argc, char** argv) {
 	LogicalNavigation setInitialState("noop");
 	setInitialState.run();
 	
-	string goal = ":- not at(l3_510,n).";
+	string goal = ":- not at(o3_510,n).";
 
 	std::list<Action *> plan = computePlan(goal, MAX_N);
-    std::cerr << "Plan finished computing";
+
     std::list< Action *>::iterator planit1 = plan.begin();
     std::string ss1;
     int mycounter = 0;
@@ -58,14 +57,10 @@ int main(int argc, char** argv) {
             mycounter++;
         }
     }
-    cerr << "[BWI_ACTION_EXECUTOR] Counter of nulls: " << mycounter << endl;
-    
-
-    std::cerr << "Plan Length is: " << plan.size() << std::endl;
-    std::cerr << "The list of all the actions is: " << ss1 << std::endl;
 
 
-
+    ROS_DEBUG_STREAM( "Plan Length is: " << plan.size());
+    ROS_DEBUG_STREAM("The list of all the actions is: " << ss1);
     
     
 	if(plan.empty())
@@ -92,10 +87,10 @@ int main(int argc, char** argv) {
 
 			executed++;
 	
-			cerr << "Forward Projecting Plan to Check Validity..." << endl;
+			ROS_DEBUG("Forward Projecting Plan to Check Validity...");
 			bool valid = checkPlan(plan,goal);
 			if(!valid) {
-				cerr << "Forward projection failed, trying repair" << endl;
+				ROS_DEBUG("Forward projection failed, trying repair");
 				
 				//plan repair
 
@@ -114,7 +109,7 @@ int main(int argc, char** argv) {
 					throw runtime_error("The plan to achieve " + goal + " is empty!");
 				}
 				else {
-					cerr << "replanning success" << endl;
+					ROS_DEBUG("replanning success");
 					plan = newPlan;
 				}
 
@@ -124,8 +119,8 @@ int main(int argc, char** argv) {
                 for (; planit2 != plan.end(); ++planit2){
                     ss2 = ss2 + (*planit2)->toASP(0) + " ";
                 }
-                std::cerr << "Plan Length is: " << plan.size() << std::endl;
-                std::cerr << "The list of all the actions is: " << ss2 << std::endl;
+                ROS_DEBUG_STREAM("Plan Length is: " << plan.size());
+                ROS_DEBUG_STREAM("The list of all the actions is: " << ss2);
 
 			}
 
@@ -201,7 +196,7 @@ bool checkPlan(const std::list<Action *> & plan, const std::string& goalSpecific
 /// Try to repair the current plan.
 std::list<Action *> repairPlan(const std::list<Action *> & plan, const std::string& goalSpecification, unsigned int max_changes) {
 	
-	cerr << "repairing..." << "maximum number of changes is " << max_changes << endl;
+	ROS_DEBUG_STREAM( "repairing..." << "maximum number of changes is " << max_changes);
 
 	bwi_kr::AnswerSetMsg answerSet;
 
@@ -213,7 +208,7 @@ std::list<Action *> repairPlan(const std::list<Action *> & plan, const std::stri
 		std::list<Action *> reusedPlan(plan.begin(), plan.end());
 		
 		while (insert_N >= 0) {
-			cerr << "insert " << insert_N << " remove " << delete_N << endl;
+			ROS_DEBUG_STREAM("insert " << insert_N << " remove " << delete_N);
 
 			stringstream queryStream;
 
@@ -262,10 +257,10 @@ std::list<Action *> repairPlan(const std::list<Action *> & plan, const std::stri
 }
 
 /// Try to repair the current plan or make a new one.
-//
-//  @param plan previous list of actions, no longer valid
-//  @param goal desired goal
-//  @return new plan to use, empty if unsuccessful
+///
+///  @param plan previous list of actions, no longer valid
+///  @param goal desired goal
+///  @return new plan to use, empty if unsuccessful
 std::list<Action *> repairOrReplan(const std::list<Action *> & plan,
                                    const std::string& goal,
                                    unsigned int max_changes) 
@@ -281,7 +276,7 @@ std::list<Action *> repairOrReplan(const std::list<Action *> & plan,
         }
 	return newPlan;
 #else   // parallel
-	cerr << "replanning concurrently..." << endl;
+	ROS_DEBUG("replanning concurrently...");
         return plan_concurrently<Action *>(
                 boost::bind(repairPlan, plan, goal, max_changes),
                 boost::bind(computePlan, goal, MAX_N));
