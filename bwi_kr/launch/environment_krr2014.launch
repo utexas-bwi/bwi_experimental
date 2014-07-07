@@ -2,8 +2,8 @@
 
   <arg name="dir_path" default="$(find bwi_kr)/config/simulation" />
   <arg name="map_file" default="$(find utexas_gdc)/maps/3ne.yaml" />
-  <arg name="location_file" default="$(arg dir_path)/locations.yaml" />
-  <arg name="door_file" default="$(arg dir_path)/doors.yaml" />
+  <arg name="location_file" default="$(find utexas_gdc)/maps/locations_simulator.yaml" />
+  <arg name="door_file" default="$(find utexas_gdc)/maps/doors_simulator.yaml" />
 
   <!-- launch gazebo simulation environment and map server -->
   <include file="$(find utexas_gdc)/launch/3ne.launch" />
