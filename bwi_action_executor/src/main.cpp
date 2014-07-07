@@ -1,17 +1,22 @@
+
+// -*- mode: C++ -*-
+// -*- c-file-style: bsd -*-
+
+///
+//   bwi_action_executor -- main program
+//
+
 #include "actions/Action.h"
 #include "actions/ActionFactory.h"
 #include "actions/LogicalNavigation.h"
-#include "actions/Load.h"
-#include "actions/Unload.h"
-#include "actions/Greet.h"
-#include "actions/Order.h"
-#include "actions/ChooseFloor.h"
 
 #include "kr_interface.h"
+#include "plan_concurrently.h"
 
 #include <ros/ros.h>
 
 #include <iostream>
+#include <boost/bind.hpp>
 #include <boost/concept_check.hpp>
 #include <boost/graph/graph_concepts.hpp>
 
@@ -20,11 +25,11 @@
 using namespace bwi_actexec;
 using namespace std;
 
-
+const unsigned int MAX_N = 20;          // maximum number of plan steps
 
 std::list<Action *> computePlan(const std::string& ,unsigned int);
 bool checkPlan(const std::list<Action *> & plan, const std::string& goalSpecification);
-std::list<Action *> repairPlan(const std::list<Action *> & plan, const std::string& goalSpecification, unsigned int max_changes);
+std::list<Action *> repairOrReplan(const std::list<Action *> & plan, const std::string& goalSpecification, unsigned int max_changes);
 
 int main(int argc, char** argv) {
 
@@ -36,19 +41,9 @@ int main(int argc, char** argv) {
 	//noop updates the fluents with the current position
 	LogicalNavigation setInitialState("noop");
 	setInitialState.run();
+	
+	string goal = ":- not at(l3_510,n).";
 
-	//forever
-
-	//TODO wait for a goal
-
-
-	//string goal = ":- not served(alice,coffee,n).";
-	//string goal = ":- not at(f3_410,n).";
-	string goal;
-    n.getParam("/bwi_action_executor/goal", goal);
-    std::cerr << "Plan Goal is: "<< goal << endl;
-	const unsigned int MAX_N = 40;
-    std::cerr << "Comuputing inital plan";
 	std::list<Action *> plan = computePlan(goal, MAX_N);
     std::cerr << "Plan finished computing";
     std::list< Action *>::iterator planit1 = plan.begin();
@@ -89,8 +84,10 @@ int main(int argc, char** argv) {
 			cerr << "Executing the current action: " << currentAction->toASP(0) << endl;
 			currentAction->run();
 		}
-		else { // Move on to next action
-            cerr << "Action " << currentAction->toASP(0) << "hasfinished()" << std::endl; 
+
+		else {
+                        // current action finished
+
 			delete currentAction;
 
 			executed++;
@@ -98,31 +95,28 @@ int main(int argc, char** argv) {
 			cerr << "Forward Projecting Plan to Check Validity..." << endl;
 			bool valid = checkPlan(plan,goal);
 			if(!valid) {
-				
 				cerr << "Forward projection failed, trying repair" << endl;
 				
 				//plan repair
+
 				int max_changes = min((MAX_N-executed-plan.size()), plan.size());
-				std::list<Action *> repairedPlan = repairPlan(plan, goal, max_changes);
+				std::list<Action *> newPlan = repairOrReplan(plan, goal, max_changes);
 
 				//delete the old plan
+
 				list<Action *>::iterator actIt = plan.begin();
 				for(; actIt != plan.end(); ++actIt)
 					delete *actIt;	
 				plan.clear();
 
 
-				if (repairedPlan.empty()) {
-					cerr << "replanning..." << endl;
-					plan = computePlan(goal,MAX_N);
-					if(plan.empty())
-						throw runtime_error("The plan to achieve " + goal + " is empty!");
+				if (newPlan.empty()) {
+					throw runtime_error("The plan to achieve " + goal + " is empty!");
 				}
 				else {
-					cerr << "repair success" << endl;
-					plan = repairedPlan;
+					cerr << "replanning success" << endl;
+					plan = newPlan;
 				}
-
 
                 // Print new plan
                 std::list< Action *>::iterator planit2 = plan.begin();
@@ -134,6 +128,9 @@ int main(int argc, char** argv) {
                 std::cerr << "The list of all the actions is: " << ss2 << std::endl;
 
 			}
+
+			if (plan.empty())
+				break;  // plan completed
 
 			currentAction = plan.front();
 			plan.pop_front();
@@ -201,6 +198,7 @@ bool checkPlan(const std::list<Action *> & plan, const std::string& goalSpecific
 
 }
 
+/// Try to repair the current plan.
 std::list<Action *> repairPlan(const std::list<Action *> & plan, const std::string& goalSpecification, unsigned int max_changes) {
 	
 	cerr << "repairing..." << "maximum number of changes is " << max_changes << endl;
@@ -263,4 +261,29 @@ std::list<Action *> repairPlan(const std::list<Action *> & plan, const std::stri
 	return repairedPlan;
 }
 
-
+/// Try to repair the current plan or make a new one.
+//
+//  @param plan previous list of actions, no longer valid
+//  @param goal desired goal
+//  @return new plan to use, empty if unsuccessful
+std::list<Action *> repairOrReplan(const std::list<Action *> & plan,
+                                   const std::string& goal,
+                                   unsigned int max_changes) 
+{
+#if 0   // serial
+	cerr << "repairing..."
+             << "maximum number of changes is " << max_changes << endl;
+        std::list<Action *> newPlan = repairPlan(plan, goal, max_changes);
+        if (newPlan.empty()) {
+                cerr << "replanning..."
+                     << "maximum number of changes is " << MAX_N << endl;
+                newPlan = computePlan(goal, MAX_N);
+        }
+	return newPlan;
+#else   // parallel
+	cerr << "replanning concurrently..." << endl;
+        return plan_concurrently<Action *>(
+                boost::bind(repairPlan, plan, goal, max_changes),
+                boost::bind(computePlan, goal, MAX_N));
+#endif
+}
