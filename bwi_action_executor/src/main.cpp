@@ -208,7 +208,8 @@ bool checkPlan(const std::list<Action *> & plan, const std::string& goalSpecific
 
 /// Try to repair the current plan.
 //
-//  @param plan list of action pointers representing the current plan.
+//  @param plan list of action pointers representing the current plan
+//              (passed by value).
 //  @param goalSpecification string representing the goal state.
 //  @param max_changes maximum number of plan changes to attempt.
 //  @return list of pointers to actions for executing the amended plan.
@@ -218,7 +219,7 @@ bool checkPlan(const std::list<Action *> & plan, const std::string& goalSpecific
 //         be a copy of the previously executing plan, so it can be
 //         modified without interference.
 //
-std::list<Action *> repairPlan(const std::list<Action *> & plan,
+std::list<Action *> repairPlan(std::list<Action *> plan,
                                const std::string& goalSpecification,
                                unsigned int max_changes) {
 	
