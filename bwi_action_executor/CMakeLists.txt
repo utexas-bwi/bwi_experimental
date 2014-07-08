@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   segbot_gui
   roslib
   bwi_kr
+  map_mux
 )
 
 find_package(Boost REQUIRED COMPONENTS thread)
