@@ -105,6 +105,9 @@ add_subdirectory(actasp/src/)
 
 ## Declare a cpp executable
  add_executable(bwi_kr_execution_node src/main.cpp)
+ 
+ add_executable(asp_formatter src/asp_formatter.cpp)
+ target_link_libraries(asp_formatter actasp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
