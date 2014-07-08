@@ -143,7 +143,15 @@ int main(int argc, char** argv) {
 }
 
 
-
+/// Compute a new plan to get from current state to goal.
+//
+//  @param goalSpecification string representing the goal state.
+//  @param max_n maximum number of steps allowed in the plan.
+//  @return list of pointer to actions for executing the plan.
+//
+//  @note: This runs in parallel with the main thread.  It MUST not
+//         modify any variables used there.
+//
 std::list<Action *> computePlan(const std::string& goalSpecification, unsigned int max_n) {
 	
 
@@ -199,7 +207,20 @@ bool checkPlan(const std::list<Action *> & plan, const std::string& goalSpecific
 }
 
 /// Try to repair the current plan.
-std::list<Action *> repairPlan(const std::list<Action *> & plan, const std::string& goalSpecification, unsigned int max_changes) {
+//
+//  @param plan list of action pointers representing the current plan.
+//  @param goalSpecification string representing the goal state.
+//  @param max_changes maximum number of plan changes to attempt.
+//  @return list of pointers to actions for executing the amended plan.
+//
+//  @note: This runs in parallel with the main thread.  It MUST not
+//         modify any variables used there.  Specifically, *plan* must
+//         be a copy of the previously executing plan, so it can be
+//         modified without interference.
+//
+std::list<Action *> repairPlan(const std::list<Action *> & plan,
+                               const std::string& goalSpecification,
+                               unsigned int max_changes) {
 	
 	ROS_DEBUG_STREAM( "repairing..." << "maximum number of changes is " << max_changes);
 
@@ -273,20 +294,13 @@ std::list<Action *> repairOrReplan(const std::list<Action *> & plan,
                                    const std::string& goal,
                                    unsigned int max_changes) 
 {
-#if 0   // serial
-	ROS_DEBUG_STREAM("repairing..."
-             << "maximum number of changes is " << max_changes);
-        std::list<Action *> newPlan = repairPlan(plan, goal, max_changes);
-        if (newPlan.empty()) {
-                ROS_DEBUG_STREAM("replanning..."
-                     << "maximum number of changes is " << MAX_N);
-                newPlan = computePlan(goal, MAX_N);
-        }
-	return newPlan;
-#else   // parallel
 	ROS_DEBUG("replanning concurrently...");
+
+        // Make a copy of the plan, for repairPlan to edit in another
+        // thread.
+        std::list<Action *> editablePlan(plan.begin(), plan.end());
+
         return plan_concurrently<Action *>(
-                boost::bind(repairPlan, plan, goal, max_changes),
+                boost::bind(repairPlan, editablePlan, goal, max_changes),
                 boost::bind(computePlan, goal, MAX_N));
-#endif
 }
