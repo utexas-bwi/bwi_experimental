@@ -1,11 +1,11 @@
 
 #include <ros/ros.h>
 #include <ros/package.h>
+#include <ros/console.h>
 
 #include <sstream>
 #include <cstdlib>
 #include <fstream>
-#include <iostream>
 
 #include <bwi_kr/AnswerSet.h>
 #include <bwi_kr/ComputeAnswerSet.h>
@@ -38,6 +38,10 @@ int main(int argc, char **argv) {
 
 	ros::init(argc, argv, "bwi_kr");
 	ros::NodeHandle n("~");
+	
+	if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug) ) {
+		ros::console::notifyLoggerLevelsChanged();
+	}
 	
 	packagePath = ros::package::getPath("bwi_kr")+"/";
 	
@@ -77,18 +81,14 @@ static AnswerSet readAnswerSet(const std::string& filePath) {
 
 bool computeAnswerSet(bwi_kr::ComputeAnswerSet::Request& req,
 						bwi_kr::ComputeAnswerSet::Response &res) {
-
-	std::cout << "before reading lock" << std::endl;
 	
 	boost::shared_lock<boost::shared_mutex> lock(mutex);
-	
-	std::cout << "after reading lock" <<std::endl;
 
 	AnswerSet answer  = doComputeAnswerSet(req.queryFile);	
 
 	res.answerSet.satisfied = answer.isSatisfied();
 	res.answerSet.predicates = answer.getPredicates();
-	std::cout << "returning computeAnswerSet" << std::endl;
+
 	return true;
 
 }
@@ -126,13 +126,11 @@ bool changeFluent(bwi_kr::ChangeFluent::Request &req,
 						bwi_kr::ChangeFluent::Response &res) {
 	
 	//TODO check that the fluent exists and has the correct number of parameters
-	
-	std::cout << "before writing lock" << std::endl;
 
 	boost::upgrade_lock<boost::shared_mutex> lock(mutex);
 	boost::upgrade_to_unique_lock<boost::shared_mutex> uniquelock(lock);
 	
-	std::cout << "after writing lock" << std::endl;
+
 	stringstream ss;
     //std::string str1 = "";
     //for( int i = 0; i < req.fluent.size() ; i ++ ){
@@ -141,7 +139,7 @@ bool changeFluent(bwi_kr::ChangeFluent::Request &req,
 	ss << req.fluent.name << "(" << concatenateParameters(req.fluent.parameters) << "1)." << endl;
 	
 	createCurrentState(ss.str());
-	std::cout << "returning changeFluent" << std::endl;
+
 	return true;
 }
 
@@ -161,7 +159,7 @@ void createInitialstate(const std::string& initialFile) {
 
 void createCurrentState(const std::string& observations) {
 	
-    std:cerr << "-----------Observations string: " << observations << std::endl;
+    ROS_DEBUG_STREAM( "-----------Observations string: " << observations);
 	const string queryPath = "/tmp/bwi_kr_currentstate_query.txt";
 	
 	stringstream copyCommand;

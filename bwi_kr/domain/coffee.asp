@@ -140,6 +140,7 @@ open(D,I+1) :- open(D,I), not -open(D,I+1), I=0..n-1.
 {unloadto(O,P,I)} :- item(O), thing(P), I=0..n-1. 
 {getin(R,I)} :- room(R), I=0..n-1. 
 {choosefloor(F,I)} :- floor(F), I=0..n-1. 
+
 %%-noop(I) :- not noop(I), I=0..n-1 .
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % nonexecutabilities

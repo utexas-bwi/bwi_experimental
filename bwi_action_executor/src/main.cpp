@@ -14,6 +14,7 @@
 #include "plan_concurrently.h"
 
 #include <ros/ros.h>
+#include <ros/console.h>
 
 #include <boost/bind.hpp>
 #include <boost/concept_check.hpp>
@@ -34,6 +35,10 @@ int main(int argc, char** argv) {
 
 	ros::init(argc, argv, "bwi_action_executor");
 	ros::NodeHandle n;
+	
+	if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug) ) {
+		ros::console::notifyLoggerLevelsChanged();
+	}
 
 	ros::Rate loop(10);
 
@@ -41,7 +46,7 @@ int main(int argc, char** argv) {
 	LogicalNavigation setInitialState("noop");
 	setInitialState.run();
 	
-	string goal = ":- not at(o3_510,n).";
+	string goal = ":- not at(cor,n).";
 
 	std::list<Action *> plan = computePlan(goal, MAX_N);
 
@@ -64,9 +69,9 @@ int main(int argc, char** argv) {
     
     
 	if(plan.empty())
-	
-	
 		throw runtime_error("The plan to achieve " + goal + " is empty!");
+	
+	
 	Action * currentAction = plan.front();
 	plan.pop_front();
 	
@@ -76,7 +81,7 @@ int main(int argc, char** argv) {
 
 		ros::spinOnce();
 		if (!currentAction->hasFinished()) {
-			cerr << "Executing the current action: " << currentAction->toASP(0) << endl;
+			ROS_DEBUG_STREAM("Executing the current action: " << currentAction->toASP(0));
 			currentAction->run();
 		}
 
@@ -219,7 +224,7 @@ std::list<Action *> repairPlan(const std::list<Action *> & plan, const std::stri
 			}
 						
 			queryStream << goalSpecification << endl;
-			cerr << queryStream.str() << endl;
+			ROS_DEBUG_STREAM(queryStream.str());
 			queryStream << "#hide." << endl;
 		
 			ActionFactory::ActionMap::const_iterator actIt = ActionFactory::actions().begin();
@@ -230,11 +235,13 @@ std::list<Action *> repairPlan(const std::list<Action *> & plan, const std::stri
 
 			bwi_kr::AnswerSetMsg answerSet = kr_query(queryStream.str(),reusedPlan.size()+insert_N, "repairPlan.asp");
 			if (answerSet.satisfied) {
-				cerr << "satisfied" << endl;
+				ROS_DEBUG("satisfied");
 				vector<bwi_kr::Predicate> &preds = answerSet.predicates;
 				vector<Action *> planVector(preds.size());
 
 				for (int j=0 ; j<preds.size() ; ++j) {
+					
+					ROS_DEBUG_STREAM("predicate timestep: " << preds[i].timeStep);
 		
 				Action *act = ActionFactory::byName(preds[j].name);
 				act->init(preds[j].parameters);
@@ -243,12 +250,13 @@ std::list<Action *> repairPlan(const std::list<Action *> & plan, const std::stri
 
 				std::list<Action *> repairedPlan(planVector.begin(),planVector.end());
 				return repairedPlan;
-			}			
+			}
 
 			insert_N--;
 			delete_N++;
 
-			reusedPlan.pop_front();
+			if(!reusedPlan.empty())
+				reusedPlan.pop_front();
 		}
 	}
 
@@ -266,12 +274,12 @@ std::list<Action *> repairOrReplan(const std::list<Action *> & plan,
                                    unsigned int max_changes) 
 {
 #if 0   // serial
-	cerr << "repairing..."
-             << "maximum number of changes is " << max_changes << endl;
+	ROS_DEBUG_STREAM("repairing..."
+             << "maximum number of changes is " << max_changes);
         std::list<Action *> newPlan = repairPlan(plan, goal, max_changes);
         if (newPlan.empty()) {
-                cerr << "replanning..."
-                     << "maximum number of changes is " << MAX_N << endl;
+                ROS_DEBUG_STREAM("replanning..."
+                     << "maximum number of changes is " << MAX_N);
                 newPlan = computePlan(goal, MAX_N);
         }
 	return newPlan;

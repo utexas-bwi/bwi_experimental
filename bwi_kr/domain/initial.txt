@@ -19,6 +19,8 @@
 %knowinside(bob,o3_510,0).
 %knowinside(carol,o3_512,0).
 %knowinside(coffeecounter,f3_504,0). 
+
+%at(l3_414b,0).
 %at(f3_410,0).
 
 knowinside(alice,f3_500,0).
