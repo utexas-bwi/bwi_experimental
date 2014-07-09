@@ -102,7 +102,7 @@ private:
 template <typename T, class F1, class F2>
 std::list<T> plan_concurrently(F1 fn1, F2 fn2) {
 
-#if 1   // parallel implementation
+#if 0   // parallel implementation
 
         // This implementation is rather crude, but I can't find a
         // standard solution.  It is the simplest I could think of
