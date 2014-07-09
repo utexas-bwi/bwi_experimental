@@ -35,12 +35,14 @@
   <build_depend>segbot_gui</build_depend>
   <build_depend>roslib</build_depend>
   <build_depend>bwi_kr</build_depend>
+  <build_depend>map_mux</build_depend>
 
   <run_depend>roscpp</run_depend>
   <run_depend>std_msgs</run_depend>
   <run_depend>segbot_gui</run_depend>
   <run_depend>roslib</run_depend>
   <run_depend>bwi_kr</run_depend>
+  <run_depend>map_mux</run_depend>
 
   <test_depend>gtest</test_depend>
 
