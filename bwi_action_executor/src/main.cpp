@@ -6,6 +6,8 @@
 //   bwi_action_executor -- main program
 //
 
+#include "action_utils.h"
+
 #include "actions/Action.h"
 #include "actions/ActionFactory.h"
 #include "actions/LogicalNavigation.h"
@@ -24,30 +26,33 @@
 #include <algorithm>
 #include <iterator>
 
+#define SEQUENTIAL 0
+
 using namespace bwi_actexec;
 using namespace std;
 
-const unsigned int MAX_N = 20;          // maximum number of plan steps
+const unsigned int MAX_N = 50;          // maximum number of plan steps
 
 std::list<Action *> computePlan(const std::string& ,unsigned int);
 bool checkPlan(const std::list<Action *> & plan, const std::string& goalSpecification);
-std::list<Action *> repairOrReplan(const std::list<Action *> & plan, const std::string& goalSpecification, unsigned int max_changes);
+bool repairOrReplan(const std::list<Action *> & plan, const std::string& goalSpecification, unsigned int max_changes, std::list<Action *> & newPlan);
 
 ///  Delete all the actions in a plan.
-void deletePlan(std::list<Action *> & plan) {
-        list<Action *>::iterator actIt = plan.begin();
-        for(; actIt != plan.end(); ++actIt)
-                delete *actIt;	
-        plan.clear();
-}
 
+enum State {
+	pickAction,
+	executeAction,
+	verifyPlan,
+	recomputePlan,
+	waitForGoal
+};
 
 int main(int argc, char** argv) {
 
 	ros::init(argc, argv, "bwi_action_executor");
 	ros::NodeHandle n;
-	
-	if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug) ) {
+
+	if (ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug)) {
 		ros::console::notifyLoggerLevelsChanged();
 	}
 
@@ -56,92 +61,102 @@ int main(int argc, char** argv) {
 	//noop updates the fluents with the current position
 	LogicalNavigation setInitialState("noop");
 	setInitialState.run();
-	
-	string goal = ":- not at(cor,n).";
+
+	string goal = ":- 0{visited(R,n) : room(R)}5.";
 
 	std::list<Action *> plan = computePlan(goal, MAX_N);
+	
+	stringstream initialPlanString;
+	transform(plan.begin(),plan.end(),ostream_iterator<std::string>(initialPlanString),ActionToAsp());
 
-    std::list< Action *>::iterator planit1 = plan.begin();
-    std::string ss1;
-    int mycounter = 0;
-    for (; planit1 != plan.end(); ++planit1){
-        ss1 = ss1 + (*planit1)->toASP(0) + " ";
-    }
-
-    for (; planit1 != plan.end(); ++planit1){
-        if ( (*planit1) == NULL ) {
-            mycounter++;
-        }
-    }
+	ROS_DEBUG_STREAM("Plan Length is: " << plan.size());
+	ROS_DEBUG_STREAM("The list of all the actions is: " << initialPlanString.str());
 
 
-    ROS_DEBUG_STREAM( "Plan Length is: " << plan.size());
-    ROS_DEBUG_STREAM("The list of all the actions is: " << ss1);
-    
-    
-	if(plan.empty())
+	if (plan.empty())
 		throw runtime_error("The plan to achieve " + goal + " is empty!");
-	
-	
-	Action * currentAction = plan.front();
-	plan.pop_front();
-	
+
+	State currentState = pickAction;
 	unsigned int executed = 0;
 
+
 	while (ros::ok()) {
+		
+		Action * currentAction;
+		
+		switch (currentState) {
+			
+			case pickAction:
+				if(plan.empty())
+					currentState = waitForGoal;
+				else {
+					currentAction = plan.front();
+					plan.pop_front();
+					currentState = executeAction;
+				}
+			break;
+			
+			case executeAction:
+				
+				if(!currentAction->hasFinished())
+					currentAction->run();
+				else {
+					delete currentAction;
+					currentState = verifyPlan;
+				}
+				
+			break;
+			
+			case verifyPlan:
+				
+				ROS_DEBUG("Forward Projecting Plan to Check Validity...");
+
+				if(checkPlan(plan,goal)) {
+					ROS_DEBUG("Valid.");
+					currentState = pickAction;
+				} else {
+					ROS_DEBUG("Invalid.");
+					currentState = recomputePlan;
+				}
+				
+			break;
+			
+			case recomputePlan:
+			{
+				int max_changes = min((MAX_N-executed-plan.size()), plan.size());
+
+				list<Action *> newPlan;
+				bool done = repairOrReplan(plan, goal, max_changes,newPlan);
+				
+				if(done) {
+					if(newPlan.empty())
+						currentState = waitForGoal;
+					else {
+						for_each(plan.begin(),plan.end(),DeleteAction());
+						plan = newPlan;
+						stringstream newPlanString;
+						transform(plan.begin(),plan.end(),ostream_iterator<std::string>(newPlanString),ActionToAsp());
+
+						ROS_DEBUG_STREAM("Plan Length is: " << plan.size());
+						ROS_DEBUG_STREAM("The list of all the actions is: " << newPlanString.str());
+						executed = 0;
+						currentState = pickAction;
+					}
+				}
+			}
+			break;
+			
+			case waitForGoal :
+			{
+				ROS_DEBUG("No more actions to execute, waiting for a new goal");
+			}
+			break;
+			
+			
+		}
 
 		ros::spinOnce();
-		if (!currentAction->hasFinished()) {
-			ROS_DEBUG_STREAM("Executing the current action: " << currentAction->toASP(0));
-			currentAction->run();
-		}
-
-		else {
-                        // current action finished
-
-			delete currentAction;
-
-			executed++;
-	
-			ROS_DEBUG("Forward Projecting Plan to Check Validity...");
-			bool valid = checkPlan(plan,goal);
-			if(!valid) {
-				ROS_DEBUG("Forward projection failed, trying repair");
-				
-				//plan repair
-
-				int max_changes = min((MAX_N-executed-plan.size()), plan.size());
-				std::list<Action *> newPlan = repairOrReplan(plan, goal, max_changes);
-
-				//delete the old plan
-                                deletePlan(plan);
-
-				if (newPlan.empty()) {
-					throw runtime_error("The plan to achieve " + goal + " is empty!");
-				}
-				else {
-					ROS_DEBUG("replanning success");
-					plan = newPlan;
-				}
-
-                // Print new plan
-                std::list< Action *>::iterator planit2 = plan.begin();
-                std::string ss2;
-                for (; planit2 != plan.end(); ++planit2){
-                    ss2 = ss2 + (*planit2)->toASP(0) + " ";
-                }
-                ROS_DEBUG_STREAM("Plan Length is: " << plan.size());
-                ROS_DEBUG_STREAM("The list of all the actions is: " << ss2);
-
-			}
-
-			if (plan.empty())
-				break;  // plan completed
-
-			currentAction = plan.front();
-			plan.pop_front();
-
-		}
+		
 		loop.sleep();
 	}
 
@@ -159,39 +174,10 @@ int main(int argc, char** argv) {
 //         modify any variables used there.
 //
 std::list<Action *> computePlan(const std::string& goalSpecification, unsigned int max_n) {
-	
 
-	bwi_kr::AnswerSetMsg answerSet;
-
-	for (int i=0; i<max_n && !answerSet.satisfied ; ++i) {
-		
-		stringstream goal;
-		goal << goalSpecification << endl;
-		goal << "#hide." << endl;
-		
-		ActionFactory::ActionMap::const_iterator actIt = ActionFactory::actions().begin();
-		for( ; actIt != ActionFactory::actions().end(); ++actIt) {
-			//the last parameter is always the the step number
-			goal << "#show " << actIt->second->getName() << "/" << actIt->second->paramNumber() + 1 << "." << endl;
-		}
-
-		answerSet = kr_query(goal.str(),i,"planQuery.asp");
-
-	}
-
-	vector<bwi_kr::Predicate> &preds = answerSet.predicates;
-
-	vector<Action *> planVector(preds.size());
-	for (int j=0 ; j<preds.size() ; ++j) {
-		
-		Action *act = ActionFactory::byName(preds[j].name);
-		act->init(preds[j].parameters);
-		planVector[preds[j].timeStep] = act;
-	}
-
-	list<Action *> plan(planVector.begin(),planVector.end());
-	
-	return plan;
+	Replan replan(goalSpecification,MAX_N);
+	replan();
+	return replan.computedPlan();
 }
 
 bool checkPlan(const std::list<Action *> & plan, const std::string& goalSpecification) {
@@ -199,124 +185,97 @@ bool checkPlan(const std::list<Action *> & plan, const std::string& goalSpecific
 	stringstream queryStream;
 
 	list<Action *>::const_iterator planIt = plan.begin();
-	
-	for(unsigned int timeStep = 0; planIt != plan.end(); ++planIt, ++timeStep) {
+
+	for (unsigned int timeStep = 0; planIt != plan.end(); ++planIt, ++timeStep) {
 		queryStream << (*planIt)->toASP(timeStep) << "." << endl;
 	}
-	
+
 	queryStream << goalSpecification << endl;
-	
+
 	bwi_kr::AnswerSetMsg answerSet = kr_query(queryStream.str(),plan.size(), "checkPlan.asp");
 
 	return answerSet.satisfied;
 
 }
 
-/// Try to repair the current plan.
-//
-//  @param plan list of action pointers representing the current plan
-//              (passed by value).
-//  @param goalSpecification string representing the goal state (by value).
-//  @param max_changes maximum number of plan changes to attempt.
-//  @return list of pointers to actions for executing the amended plan.
-//
-//  @note: This runs in parallel with the main thread.  It MUST not
-//         modify any variables used there.  Specifically, *plan* must
-//         be a copy of the previously executing plan, so it can be
-//         modified without interference.
-//
-std::list<Action *> repairPlan(std::list<Action *> plan,
-                               std::string goalSpecification,
-                               unsigned int max_changes) {
+vector<Operation *> active;
+vector<Operation *> deathrow; //operations waiting to die
+
+bool repairOrReplan(const std::list<Action *> & plan,
+                                   const std::string& goal,
+                                   unsigned int max_changes,
+								   std::list<Action *> & newPlan) {
+
+	ROS_DEBUG("repairing or replanning...");
+
+#if SEQUENTIAL
+
+	Repair repair(plan,goal,max_changes);
 	
-	ROS_DEBUG_STREAM( "repairing..." << "maximum number of changes is " << max_changes);
-
-	bwi_kr::AnswerSetMsg answerSet;
-
-	for (int i=1; (i<=max_changes) ; ++i) {
+	repair();
+	
+	if(repair.computedPlan().empty()) {
+		//try replanning
 		
-		int insert_N = i; //number of actions inserted to old plan
-		int delete_N = 0; //number of actions deleted from old plan
+		Replan replan(goal,MAX_N);
+		replan();
 		
-		std::list<Action *> reusedPlan(plan.begin(), plan.end());
+		newPlan = replan.computedPlan();
 		
-		while (insert_N >= 0) {
-			ROS_DEBUG_STREAM("insert " << insert_N << " remove " << delete_N);
+	}
+	else
+		newPlan = repair.computedPlan();
+	
+	return true;
+	
 
-			stringstream queryStream;
-
-			list<Action *>::const_iterator planIt = reusedPlan.begin();
-			
-			for(unsigned int timeStep = insert_N; planIt != reusedPlan.end(); ++planIt, ++timeStep) {
-				queryStream << (*planIt)->toASP(timeStep) << "." << endl;
-			}
-						
-			queryStream << goalSpecification << endl;
-			ROS_DEBUG_STREAM(queryStream.str());
-			queryStream << "#hide." << endl;
-		
-			ActionFactory::ActionMap::const_iterator actIt = ActionFactory::actions().begin();
-			for( ; actIt != ActionFactory::actions().end(); ++actIt) {
-				//the last parameter is always the the step number ???
-				queryStream << "#show " << actIt->second->getName() << "/" << actIt->second->paramNumber() + 1 << "." << endl;
-			}
-
-			bwi_kr::AnswerSetMsg answerSet = kr_query(queryStream.str(),reusedPlan.size()+insert_N, "repairPlan.asp");
-			if (answerSet.satisfied) {
-				ROS_DEBUG("satisfied");
-				vector<bwi_kr::Predicate> &preds = answerSet.predicates;
-				vector<Action *> planVector(preds.size());
-
-				for (int j=0 ; j<preds.size() ; ++j) {
-					
-					ROS_DEBUG_STREAM("predicate timestep: " << preds[j].timeStep);
-		
-                                        Action *act = ActionFactory::byName(preds[j].name);
-                                        act->init(preds[j].parameters);
-                                        planVector[preds[j].timeStep] = act;
-				}
-
-				std::list<Action *> repairedPlan(planVector.begin(),planVector.end());
-                                deletePlan(plan);
-				return repairedPlan;
-			}
-
-			insert_N--;
-			delete_N++;
-
-			if(!reusedPlan.empty())
-				reusedPlan.pop_front();
+#else
+	
+	ROS_DEBUG("Cleaning the death row");
+	ROS_DEBUG_STREAM("size: " << deathrow.size());
+	//first, let's do some cleanup
+	vector<Operation *>::iterator dIt = deathrow.begin();
+	for(;dIt != deathrow.end(); ++dIt) {
+		if( (*dIt)->finished() ) {
+			delete *dIt;
+			dIt = deathrow.erase(dIt);
+			if(dIt == deathrow.end()) break; //not very elegant, but if ++dIt increments end() we are done
 		}
 	}
 
-	std::list<Action *> repairedPlan; // failure return: empty list
-        deletePlan(plan);
-	return repairedPlan;
-}
+	ROS_DEBUG_STREAM("size: " << deathrow.size());
+	//if it's the first invocation, we need to create the active operations
+	if(active.empty()) {
+		
+		ROS_DEBUG("Creating new operations");
 
-struct CloneAction {
-        Action * operator()(Action * other) {
-                return other->clone();
-        }
-};
+		active.push_back(new Replan(goal,MAX_N));
+		active.push_back(new Repair(plan,goal,max_changes));
+		
+		
+		boost::thread replanThread(boost::ref(*active[0]));
+		boost::thread repairThread(boost::ref(*active[1]));
+		
+		//let them go their own way
+		repairThread.detach();
+		replanThread.detach();
+	}
+	
+	if(active[0]->finished() || active[1]->finished()) {
+		
+		if(active[0]->finished())
+			newPlan = active[0]->computedPlan();
+		else
+			newPlan = active[1]->computedPlan();
+		
+		ROS_DEBUG("Done! Moving into the death row");
+		deathrow.insert(deathrow.end(), active.begin(),active.end());
+		active.clear();
+		return true;
+	}
+	
+	return false; 
 
-/// Try to repair the current plan or make a new one.
-///
-///  @param plan previous list of actions, no longer valid
-///  @param goal desired goal
-///  @return new plan to use, empty if unsuccessful
-std::list<Action *> repairOrReplan(const std::list<Action *> & plan,
-                                   const std::string& goal,
-                                   unsigned int max_changes) 
-{
-	ROS_DEBUG("replanning concurrently...");
-
-        // Make a copy of the plan, for repairPlan to edit in another
-        // thread.
-        std::list<Action *> editablePlan;
-        std::transform(plan.begin(), plan.end(), back_inserter(editablePlan), CloneAction());
-
-        return plan_concurrently<Action *>(
-                boost::bind(repairPlan, editablePlan, goal, max_changes),
-                boost::bind(computePlan, goal, MAX_N));
+#endif	
+	
 }
