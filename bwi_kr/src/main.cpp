@@ -17,7 +17,7 @@
 using namespace std;
 using namespace bwi_kr;
 
-const std::string domainName = "domain";
+const std::string domainName = "domain_simulation";
 string packagePath;
 
 static void createCurrentState(const std::string& observations);
