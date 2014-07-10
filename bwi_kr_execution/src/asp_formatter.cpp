@@ -129,9 +129,10 @@ static std::vector<actasp::AnswerSet> readAnswerSets(istream &input) {
 int main() {
 	
 	std::map<std::string, actasp::Action *> actionMap;
-	actionMap.insert(std::make_pair(std::string("approach"), new SimpleAction()));
-	actionMap.insert(std::make_pair(std::string("gothrough"), new SimpleAction()));
-	actionMap.insert(std::make_pair(std::string("opendoor"), new SimpleAction()));
+	actionMap.insert(std::make_pair(std::string("north"), new SimpleAction()));
+	actionMap.insert(std::make_pair(std::string("south"), new SimpleAction()));
+	actionMap.insert(std::make_pair(std::string("east"), new SimpleAction()));
+	actionMap.insert(std::make_pair(std::string("west"), new SimpleAction()));
 	
 	vector<AnswerSet> sets = readAnswerSets(cin);
 	
