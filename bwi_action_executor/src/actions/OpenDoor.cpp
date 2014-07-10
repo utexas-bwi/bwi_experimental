@@ -8,6 +8,8 @@
 #include "LogicalNavigation.h"
 #include <boost/concept_check.hpp>
 
+#include <ros/ros.h>
+
 #include <iostream>
 
 using namespace std;
@@ -36,7 +38,7 @@ void OpenDoor::run() {
 		//check if door is open
 		bwi_kr::AnswerSetMsg answerSet = kr_query("open(" + doorName + ",0).",0);
 		doorOpen = answerSet.satisfied;
-		cerr << "door open: " << doorOpen << endl;
+		ROS_DEBUG_STREAM( "door open: " << doorOpen );
 	}
 	
 	if(doorOpen) {
