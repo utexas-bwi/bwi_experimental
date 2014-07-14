@@ -3,13 +3,18 @@
 
 #include <actasp/AspRule.h>
 
-#include <string>
+#include <vector>
 
 namespace actasp {
 
 struct ActionExecutor {
 
-	virtual void setGoal(const AspRule& goalRule) throw() = 0;
+	void setGoal(const AspRule& goalRule) throw() {
+		std::vector<AspRule> goal;
+		goal.push_back(goalRule);
+		this->setGoal(goal);
+	}
+	
 	virtual void setGoal(const std::vector<actasp::AspRule>& goalRules) throw() = 0;
 
 	virtual bool goalReached() const throw() =0;

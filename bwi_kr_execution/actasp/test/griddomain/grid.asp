@@ -40,13 +40,12 @@ pos(X,Y-1,I+1) :- south(I),pos(X,Y,I), I=0..n-1.
 
 %%%%% System
 
-%if you are somewhere, you are not anywyhere else
+%%if you are somewhere, you are not anywyhere else
 -pos(X,Y,I) :- pos(Z,K,I), Z != X, X=0..max_x, Y=0..max_y.
 -pos(X,Y,I) :- pos(Z,K,I), K != Y, X=0..max_x, Y=0..max_y.
 
-% pos is inertial
+%% pos is inertial
 pos(X,Y,I+1) :- pos(X,Y,I), not -pos(X,Y,I+1), I=0..n-1.
-
 
 
 obst(X2,Y2,X1,Y1,I) :- obst(X1,Y1,X2,Y2,I).
@@ -72,6 +71,8 @@ obst(X,Y,Z,K,I+1) :- obst(X,Y,Z,K,I), not -obst(X,Y,Z,K,I),  I=0..n-1.
 
 %remember to hide non-fluents
 
+%-pos is implied by pos, so it's useless
+#hide -pos/3.
 
 
 

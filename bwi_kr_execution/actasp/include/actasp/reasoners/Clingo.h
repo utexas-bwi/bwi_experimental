@@ -28,10 +28,12 @@ public:
 	bool updateFluents(const std::vector<actasp::AspFluent> &observations) throw();
 
 	bool isPlanValid(std::list<actasp::Action*> plan, const std::vector<actasp::AspRule>& goal) const throw();
-
-	std::list<Action *> computePlan(const std::vector<actasp::AspRule>& goal) throw (std::logic_error);
 	
-	std::vector< std::list<Action *> > computeAllPlans(const std::vector<actasp::AspRule>& goal, double suboptimality) throw (std::logic_error);
+	bool isPlanValid(AnswerSet plan, const std::vector<actasp::AspRule>& goal)  const throw();
+
+	AnswerSet computePlan(const std::vector<actasp::AspRule>& goal) throw ();
+	
+	std::vector< AnswerSet> computeAllPlans(const std::vector<actasp::AspRule>& goal, double suboptimality) throw ();
 	
 	MultiPolicy computePolicy(const std::vector<actasp::AspRule>& goal, double suboptimality) throw (std::logic_error);
 	

@@ -3,20 +3,28 @@
 #include <actasp/executors/ReplanningActionExecutor.h>
 
 #include <actasp/AspKR.h>
+#include <actasp/AnswerSet.h>
 #include <actasp/Planner.h>
 #include <actasp/Action.h>
+#include <actasp/action_utils.h>
 
 #include <list>
+#include <algorithm>
+#include <iterator>
 
 using namespace std;
 
 namespace actasp {
 
-ReplanningActionExecutor::ReplanningActionExecutor(actasp::AspKR* reasoner, actasp::Planner *planner) throw (std::invalid_argument) :
+ReplanningActionExecutor::ReplanningActionExecutor(	actasp::AspKR* reasoner, 
+													actasp::Planner *planner,
+													const std::map<std::string, Action * > &actionMap
+  												) throw (std::invalid_argument) :
 	goalRules(),
 	isGoalReached(true),
 	hasFailed(false),
 	actionRunning(false),
+	actionMap(),
 	plan(),
 	kr(reasoner),
 	planner(planner) {
@@ -25,20 +33,22 @@ ReplanningActionExecutor::ReplanningActionExecutor(actasp::AspKR* reasoner, acta
 
 	if (planner == NULL)
 		throw invalid_argument("ReplanningActionExecutor: planner is NULL");
+	
+	transform(actionMap.begin(),actionMap.end(),inserter(this->actionMap,this->actionMap.begin()),ActionMapDeepCopy());
 }
 
-void ReplanningActionExecutor::setGoal(const AspRule& goalRule) throw() {
-	vector<AspRule> goal;
-	goal.push_back(goalRule);
-	this->setGoal(goal);
+ReplanningActionExecutor::~ReplanningActionExecutor() {
+	for_each(actionMap.begin(),actionMap.end(),ActionMapDelete());
 }
+
+
 void ReplanningActionExecutor::setGoal(const std::vector<actasp::AspRule>& goalRules) throw() {
 	this->goalRules = goalRules;
 
 	isGoalReached = kr->currentStateQuery(goalRules).isSatisfied();
 
 	if (!isGoalReached)
-		plan = planner->computePlan(goalRules);
+		plan = planner->computePlan(goalRules).instantiateActions(actionMap);
 
 	hasFailed = plan.empty();
 }
@@ -58,7 +68,7 @@ void ReplanningActionExecutor::executeActionStep() {
 		isGoalReached = kr->currentStateQuery(goalRules).isSatisfied();
 
 		if (!isGoalReached)
-			plan = planner->computePlan(goalRules);
+			plan = planner->computePlan(goalRules).instantiateActions(actionMap);
 
 		hasFailed = !isGoalReached && plan.empty();
 
@@ -67,7 +77,7 @@ void ReplanningActionExecutor::executeActionStep() {
 	
 	if (plan.empty()) {
 		//run out of actions and didn't reach the goal, trying to replan
-		plan = planner->computePlan(goalRules);
+		plan = planner->computePlan(goalRules).instantiateActions(actionMap);
 
 		hasFailed = plan.empty(); //if there's no plan we fail
 		if (hasFailed)

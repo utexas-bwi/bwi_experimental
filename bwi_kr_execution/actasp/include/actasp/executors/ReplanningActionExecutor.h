@@ -6,6 +6,7 @@
 
 #include <stdexcept>
 #include <list>
+#include <map>
 
 namespace actasp {
 
@@ -17,9 +18,11 @@ class ReplanningActionExecutor : public ActionExecutor {
 
 public:
 	
-	ReplanningActionExecutor(actasp::AspKR* reasoner, actasp::Planner *planner) throw (std::invalid_argument);
+	ReplanningActionExecutor(actasp::AspKR* reasoner, 
+							 actasp::Planner *planner,
+							 const std::map<std::string, Action * > &actionMap
+							) throw (std::invalid_argument);
 	
-	void setGoal(const AspRule& goalRule) throw();
 	void setGoal(const std::vector<actasp::AspRule>& goalRules) throw();
 
 	bool goalReached() const throw() {
@@ -32,12 +35,15 @@ public:
 
 	void executeActionStep();
 	
+	~ReplanningActionExecutor();
+	
 
 private:
 	std::vector<actasp::AspRule> goalRules;
 	bool isGoalReached;
 	bool hasFailed;
 	bool actionRunning;
+	std::map<std::string, Action * > actionMap;
 	
 	std::list<Action *> plan;
 	

@@ -1,7 +1,9 @@
 #include <actasp/reasoners/Clingo.h>
 
 #include <actasp/AnswerSet.h>
+#include <actasp/action_utils.h>
 #include <actasp/Action.h>
+
 
 #include <sstream>
 #include <ostream>
@@ -9,12 +11,15 @@
 #include <algorithm>
 #include <fstream>
 #include <cmath> //for floor
+#include <iostream>
 
 #define CURRENT_STATE_FILE "current.asp"
 
 using namespace std;
 
 namespace actasp {
+	
+
 
 //own the actions in the map
 Clingo::Clingo(unsigned int max_n,
@@ -24,7 +29,9 @@ Clingo::Clingo(unsigned int max_n,
 	max_n(max_n),
 	queryDir(queryDir),
 	domainDir(domainDir),
-	actionMap(actionMap) {
+	actionMap() {
+		
+	transform(actionMap.begin(),actionMap.end(),inserter(this->actionMap, this->actionMap.begin()),ActionMapDeepCopy());
 
 	//make sure directory end with '/'
 
@@ -189,7 +196,7 @@ string Clingo::generatePlanQuery(const std::vector<actasp::AspRule>& goalRules,
 	return goal.str();
 }
 
-std::list<Action *> Clingo::computePlan(const std::vector<actasp::AspRule>& goal) throw (logic_error) {
+AnswerSet Clingo::computePlan(const std::vector<actasp::AspRule>& goal) throw() {
 
 	vector<AnswerSet> answerSets;
 
@@ -201,9 +208,9 @@ std::list<Action *> Clingo::computePlan(const std::vector<actasp::AspRule>& goal
 	}
 
 	if(answerSets.empty())
-		return list<Action *>();
+		return AnswerSet(false);
 	
-	return  answerSets[0].instantiateActions(actionMap);
+	return  answerSets[0];
 }
 
 struct PolicyMerger {
@@ -240,10 +247,10 @@ MultiPolicy Clingo::computePolicy(const std::vector<actasp::AspRule>& goal, doub
 
 	int maxLength = floor(suboptimality * shortestLength);
 
-	for (int i= shortestLength; i <= maxLength && i < max_n; ++i) {
+	for (int i= shortestLength+1; i <= maxLength && i < max_n; ++i) {
 
-		string query = generatePlanQuery(goal,shortestLength,false);
-		answerSets = krQuery(query,shortestLength,"planQuery.asp",0);
+		string query = generatePlanQuery(goal,i,false);
+		answerSets = krQuery(query,i,"planQuery.asp",0);
 
 		for_each(answerSets.begin(),answerSets.end(),PolicyMerger(policy,actionMap));
 
@@ -253,20 +260,8 @@ MultiPolicy Clingo::computePolicy(const std::vector<actasp::AspRule>& goal, doub
 
 }
 
-
-struct TurnIntoPlan {
-	
-	TurnIntoPlan(std::map<std::string, Action * >& actionMap) : actionMap(actionMap) {}
-	
-	list <Action *> operator()(const AnswerSet& answer) {
-		return answer.instantiateActions(actionMap);
-	}
-	
-	std::map<std::string, Action * >& actionMap;
-};
-
-std::vector< std::list<Action *> > Clingo::computeAllPlans(	const std::vector<actasp::AspRule>& goal, 
-															double suboptimality) throw (std::logic_error) {
+std::vector< AnswerSet > Clingo::computeAllPlans(	const std::vector<actasp::AspRule>& goal, 
+															double suboptimality) throw () {
 	//TODO check the range of suboptimality
 	vector<AnswerSet> answerSets;
 
@@ -280,18 +275,17 @@ std::vector< std::list<Action *> > Clingo::computeAllPlans(	const std::vector<ac
 
 	}
 	
-	vector< list< Action *> > allPlans;
-	
-	transform(answerSets.begin(),answerSets.end(),back_inserter(allPlans),TurnIntoPlan(actionMap));
-	
+	vector< AnswerSet > allPlans(answerSets);
+
 	int maxLength = floor(suboptimality * shortestLength);
 
-	for (int i= shortestLength; i <= maxLength && i < max_n; ++i) {
 
-		string query = generatePlanQuery(goal,shortestLength,true);
-		answerSets = krQuery(query,shortestLength,"planQuery.asp",0);
+	for (int i= shortestLength+1; i <= maxLength && i < max_n; ++i) {
 
-		transform(answerSets.begin(),answerSets.end(),back_inserter(allPlans),TurnIntoPlan(actionMap));
+		string query = generatePlanQuery(goal,i,true);
+		answerSets = krQuery(query,i,"planQuery.asp",0);
+
+		allPlans.insert(allPlans.end(), answerSets.begin(),answerSets.end());
 
 	}
 
@@ -313,6 +307,14 @@ bool Clingo::isPlanValid(std::list<actasp::Action*> plan, const std::vector<acta
 	}
 
 	return !(krQuery(monitorQuery.str(),plan.size(),"monitorQuery.asp").empty());
+}
+
+bool Clingo::isPlanValid(AnswerSet plan, const std::vector<actasp::AspRule>& goal)  const throw() {
+	//TODO implement the other in terms of this rather than the other way around
+	list<Action *> planActs = plan.instantiateActions(actionMap);
+	bool valid = this->isPlanValid(planActs,goal);
+	for_each(planActs.begin(),planActs.end(),ActionDeleter());
+	return valid;
 }
 
 AnswerSet Clingo::currentStateQuery(const std::vector<actasp::AspRule>& query) const throw() {
@@ -360,8 +362,6 @@ bool Clingo::updateFluents(const std::vector<actasp::AspFluent> &observations) t
 }
 
 Clingo::~Clingo() {
-	std::map<std::string, Action * >::iterator action = actionMap.begin();
-	for (; action != actionMap.end(); ++action)
-		delete action->second;
+	for_each(actionMap.begin(),actionMap.end(),ActionMapDelete());
 }
 }

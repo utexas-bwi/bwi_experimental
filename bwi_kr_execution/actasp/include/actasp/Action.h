@@ -1,7 +1,6 @@
 #ifndef actasp_Action_h__guard
 #define actasp_Action_h__guard
 
-
 #include <string>
 #include <vector>
 
@@ -39,7 +38,7 @@ private:
 	
  virtual std::vector<std::string> getParameters() const = 0;
 };
-	
-	
+
 }
+
 #endif

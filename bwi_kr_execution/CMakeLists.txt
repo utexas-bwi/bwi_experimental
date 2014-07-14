@@ -7,6 +7,8 @@ project(bwi_kr_execution)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
+  roslib
+  message_generation
 )
 
 ## System dependencies are found with CMake's conventions
@@ -43,18 +45,20 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+ add_message_files(
+   FILES
+   AspFluent.msg
+   AspRule.msg
+   AnswerSet.msg
+ )
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+ add_service_files(
+   FILES
+   UpdateFluents.srv
+   CurrentStateQuery.srv
+   ComputePlan.srv
+ )
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -64,10 +68,10 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs
-# )
+ generate_messages(
+   DEPENDENCIES
+   std_msgs
+ )
 
 ###################################
 ## catkin specific configuration ##
@@ -82,7 +86,8 @@ catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES bwi_kr_execution
 #  CATKIN_DEPENDS roscpp std_msgs
-#  DEPENDS system_lib
+  DEPENDS system_lib
+message_runtime
 )
 
 ###########
@@ -99,14 +104,27 @@ include_directories(
 
 
 set( actasp_SRC)
+
 add_subdirectory(actasp/src/)
 ## Declare a cpp library
  add_library(actasp ${actasp_SRC})
 
+ set( kractions_SRC)
+ add_subdirectory(src/actions/)
+ add_library(kractions ${kractions_SRC})
+ target_link_libraries(kractions actasp)
+
 ## Declare a cpp executable
 
-add_executable(bwi_kr_execution_node src/main.cpp)
- 
+
+set(krexec_SRC)
+set(krreasoner_SRC)
+
+add_subdirectory(src)
+add_executable(bwi_execution_node ${krexec_SRC})
+
+add_executable(bwi_knowledge_reasoning_node  ${krreasoner_SRC})
+
 add_executable(asp_formatter src/asp_formatter.cpp)
 target_link_libraries(asp_formatter actasp)
 
@@ -115,10 +133,17 @@ target_link_libraries(asp_formatter actasp)
 # add_dependencies(bwi_kr_execution_node bwi_kr_execution_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
- target_link_libraries(bwi_kr_execution_node
-   ${catkin_LIBRARIES}
-   actasp
- )
+target_link_libraries(bwi_execution_node
+  ${catkin_LIBRARIES}
+  actasp
+  kractions
+)
+ 
+target_link_libraries( bwi_knowledge_reasoning_node
+  ${catkin_LIBRARIES}
+  actasp
+  kractions
+)
 
 #############
 ## Install ##

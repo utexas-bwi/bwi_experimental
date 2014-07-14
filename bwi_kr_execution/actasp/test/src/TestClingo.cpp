@@ -3,6 +3,8 @@
 #include <actasp/reasoners/Clingo.h>
 #include <actasp/Action.h>
 #include <actasp/AspRule.h>
+#include <actasp/AspFluent.h>
+#include <actasp/action_utils.h>
 
 #include "SimpleAction.h"
 
@@ -11,6 +13,7 @@
 #include <list>
 #include <vector>
 #include <stdexcept>
+#include <algorithm>
 
 
 struct ClingoFixture {
@@ -24,6 +27,8 @@ struct ClingoFixture {
 		actionMap.insert(std::make_pair(std::string("west"), new SimpleAction("west")));
 
 		clingo = new actasp::Clingo(36, "../test/queries/", "../test/griddomain/",actionMap);
+		
+		std::for_each(actionMap.begin(),actionMap.end(),actasp::ActionMapDelete());
 		
 		//set initial state to 2,0
 		std::vector<actasp::AspFluent> initialObs;
@@ -67,39 +72,24 @@ TEST_FIXTURE(ClingoFixture, planningTest) {
 	std::vector<actasp::AspRule> goalFormula;
 	goalFormula.push_back(actasp::AspFluent("not pos(3,4,n)"));
 
-	std::list<actasp::Action *> correctPlan;
-	correctPlan.push_back(new SimpleAction("north"));
-	correctPlan.push_back(new SimpleAction("north"));
-	correctPlan.push_back(new SimpleAction("north"));
-	correctPlan.push_back(new SimpleAction("north"));
-	correctPlan.push_back(new SimpleAction("east"));
+	std::vector<actasp::AspFluent> planFluents;
+	planFluents.push_back(actasp::AspFluent("north(0)"));
+	planFluents.push_back(actasp::AspFluent("north(1)"));
+	planFluents.push_back(actasp::AspFluent("north(2)"));
+	planFluents.push_back(actasp::AspFluent("north(3)"));
+	planFluents.push_back(actasp::AspFluent("east(4)"));
+	
+	actasp::AnswerSet correctPlan(true,planFluents);
 
- 	std::list<actasp::Action *> plan = clingo->computePlan(goalFormula);
+ 	actasp::AnswerSet plan = clingo->computePlan(goalFormula);
 
-	bool correct = plan.size() == correctPlan.size();
-
-	std::list<actasp::Action *>::iterator planIt= plan.begin();
-	std::list<actasp::Action *>::iterator corrIt= correctPlan.begin();
-
-	for (; planIt != plan.end(); ++planIt, ++corrIt) {
-		correct = correct && (((*planIt)->getName()) == ((*corrIt)->getName()));
-		delete(*planIt);
-		delete(*corrIt);
-	}
-
-	CHECK(correct);
+	CHECK(!(correctPlan < plan) && !(plan < correctPlan)); //the plans are equal
 	
 	//set an initial state and a goal that requires the missing action south
 	std::vector<actasp::AspFluent> initialObs;
 	initialObs.push_back(actasp::AspFluent("pos(3,4,0)"));
 	CHECK(clingo->updateFluents(initialObs));
-	
-	goalFormula.clear();
-	goalFormula.push_back(actasp::AspFluent("not pos(3,3,n)"));
-	
-	CHECK_THROW(clingo->computePlan(goalFormula), std::logic_error);
-	
-	
+
 }
 
 TEST_FIXTURE(ClingoFixture, emptyPlanTest) {
@@ -107,9 +97,9 @@ TEST_FIXTURE(ClingoFixture, emptyPlanTest) {
 	std::vector<actasp::AspRule> goalFormula;
 	goalFormula.push_back(actasp::AspFluent("not pos(2,0,n)"));
 
-	std::list<actasp::Action *> plan = clingo->computePlan(goalFormula);
+	actasp::AnswerSet plan = clingo->computePlan(goalFormula);
 
-	CHECK(plan.empty());
+	CHECK(plan.getFluents().empty());
 }
 
 TEST_FIXTURE(ClingoFixture, planValidityTest) {
@@ -118,7 +108,7 @@ TEST_FIXTURE(ClingoFixture, planValidityTest) {
 	std::vector<actasp::AspRule> goalFormula;
 	goalFormula.push_back(actasp::AspFluent("not pos(3,4,n)"));
 
-	std::list<actasp::Action *> plan = clingo->computePlan(goalFormula);
+	actasp::AnswerSet plan = clingo->computePlan(goalFormula);
 
 	CHECK(clingo->isPlanValid(plan,goalFormula));
 
@@ -126,10 +116,7 @@ TEST_FIXTURE(ClingoFixture, planValidityTest) {
 	wrongGoal.push_back(actasp::AspFluent("not pos(1,4,n)"));
 
 	CHECK(!(clingo->isPlanValid(plan,wrongGoal)));
-	
-	std::list<actasp::Action *>::iterator planIt = plan.begin();
-	for(; planIt != plan.end(); ++planIt)
-		delete *planIt;
+
 }
 
 TEST_FIXTURE(ClingoFixture, currentStateTest) {

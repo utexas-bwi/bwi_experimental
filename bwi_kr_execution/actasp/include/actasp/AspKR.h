@@ -19,6 +19,8 @@ struct AspKR : public actasp::MultiPlanner {
 	
 	virtual bool isPlanValid(std::list<actasp::Action*> plan, const std::vector<actasp::AspRule>& goal)  const throw() = 0;
 	
+	virtual bool isPlanValid(AnswerSet plan, const std::vector<actasp::AspRule>& goal)  const throw() = 0;
+	
 	virtual ~AspKR() {}
 };
 	

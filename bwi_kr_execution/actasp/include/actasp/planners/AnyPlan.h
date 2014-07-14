@@ -15,7 +15,7 @@ public:
 	//doesn't own
 	AnyPlan(actasp::MultiPlanner *actualPlanner);
 	
-	std::list<Action *> computePlan(const std::vector<actasp::AspRule>& goal) throw (std::logic_error);
+	AnswerSet computePlan(const std::vector<actasp::AspRule>& goal) throw (std::logic_error);
 private:
 	MultiPlanner *actualPlanner;
 	

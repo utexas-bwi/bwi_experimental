@@ -1,5 +1,7 @@
+
+
 namespace actasp {
-	
-	class Action;
-	
+
+class Action;
+
 }
