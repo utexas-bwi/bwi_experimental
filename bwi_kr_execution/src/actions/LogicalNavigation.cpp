@@ -41,6 +41,8 @@ struct PlannerAtom2AspFluent {
     
 
 void LogicalNavigation::run() {
+  
+  ROS_DEBUG_STREAM("Executing " << name);
 
 	NodeHandle n;
 	ros::ServiceClient navClient = n.serviceClient<bwi_planning_common::PlannerInterface> ( "execute_logical_goal" );

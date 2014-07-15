@@ -11,7 +11,7 @@
 using namespace std;
 using namespace actasp;
 
-//// Code copied from Clingo.coo
+//// Code copied from Clingo.cpp
 
 class SimpleAction : public actasp::Action {
 public:

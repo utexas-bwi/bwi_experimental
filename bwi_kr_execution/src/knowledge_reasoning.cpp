@@ -7,6 +7,8 @@
 #include "bwi_kr_execution/UpdateFluents.h"
 #include "bwi_kr_execution/CurrentStateQuery.h"
 #include "bwi_kr_execution/ComputePlan.h"
+#include "bwi_kr_execution/ComputeAllPlans.h"
+#include "bwi_kr_execution/IsPlanValid.h"
 
 #include <ros/ros.h>
 #include <ros/package.h>
@@ -24,13 +26,19 @@ const std::string queryDirectory("/tmp/bwi_kr_execution/");
 
 
 bool updateFluents(bwi_kr_execution::UpdateFluents::Request  &req,
-                   bwi_kr_execution::UpdateFluents::Response &res);
+                   bwi_kr_execution::UpdateFluents::Response &res) throw();
 
 bool currentStateQuery(bwi_kr_execution::CurrentStateQuery::Request  &req,
-                       bwi_kr_execution::CurrentStateQuery::Response &res);
+                       bwi_kr_execution::CurrentStateQuery::Response &res) throw();
 
 bool computePlan(bwi_kr_execution::ComputePlan::Request  &req,
                  bwi_kr_execution::ComputePlan::Response &res);
+
+bool computeAllPlans(bwi_kr_execution::ComputeAllPlans::Request  &req,
+                 bwi_kr_execution::ComputeAllPlans::Response &res);
+
+bool isPlanvalid(bwi_kr_execution::IsPlanValid::Request  &req,
+                 bwi_kr_execution::IsPlanValid::Response &res);
 
 actasp::AspKR *reasoner;
 
@@ -53,11 +61,14 @@ int main(int argc, char **argv) {
   ros::ServiceServer update_fluents = n.advertiseService("update_fluents", updateFluents);
   ros::ServiceServer current_state_query = n.advertiseService("current_state_query", currentStateQuery);
   ros::ServiceServer compute_plan = n.advertiseService("compute_plan", computePlan);
+  ros::ServiceServer compute_all_plans = n.advertiseService("compute_all_plans", computeAllPlans);
+  ros::ServiceServer is_plan_valid = n.advertiseService("is_plan_valid", isPlanvalid);
 
 
-  ros::MultiThreadedSpinner m(2); //we don't really want to potentially block all the available cores
+  //TODO make sure clingo can be executed concurrently, or create multiple instances
+ // ros::MultiThreadedSpinner m(2); //we don't really want to potentially block all the available cores
 
-  ros::spin(m);
+  ros::spin();
 
   delete reasoner;
 
@@ -65,7 +76,7 @@ int main(int argc, char **argv) {
 }
 
 bool updateFluents(bwi_kr_execution::UpdateFluents::Request  &req,
-                   bwi_kr_execution::UpdateFluents::Response &res) {
+                   bwi_kr_execution::UpdateFluents::Response &res) throw() {
 
   vector<AspFluent> fluents;
   transform(req.fluents.begin(),req.fluents.end(),back_inserter(fluents),TranslateFluent());
@@ -76,7 +87,7 @@ bool updateFluents(bwi_kr_execution::UpdateFluents::Request  &req,
 }
 
 bool currentStateQuery(bwi_kr_execution::CurrentStateQuery::Request  &req,
-                       bwi_kr_execution::CurrentStateQuery::Response &res) {
+                       bwi_kr_execution::CurrentStateQuery::Response &res) throw() {
 
   vector<AspRule> rules;
   transform(req.query.begin(),req.query.end(),back_inserter(rules),TranslateRule());
@@ -89,15 +100,41 @@ bool currentStateQuery(bwi_kr_execution::CurrentStateQuery::Request  &req,
   return true;
 }
 
+
 bool computePlan(bwi_kr_execution::ComputePlan::Request  &req,
                  bwi_kr_execution::ComputePlan::Response &res) {
   vector<AspRule> goal;
   transform(req.goal.begin(),req.goal.end(),back_inserter(goal),TranslateRule());
   
+  //TODO catch exception
   AnswerSet answer = reasoner->computePlan(goal);
   
   res.plan.satisfied = answer.isSatisfied();
   transform(answer.getFluents().begin(),answer.getFluents().end(),back_inserter(res.plan.fluents),TranslateFluent());
+  
+  return true;
+}
+
+bool computeAllPlans(bwi_kr_execution::ComputeAllPlans::Request& req, bwi_kr_execution::ComputeAllPlans::Response& res) {
+
+  vector<AspRule> goal;
+  transform(req.goal.begin(),req.goal.end(),back_inserter(goal),TranslateRule());
+  
+  //TODO catch exception
+  vector<actasp::AnswerSet> answers = reasoner->computeAllPlans(goal,req.suboptimality);
+  
+  transform(answers.begin(),answers.end(),back_inserter(res.plans),TranslateAnswerSet());
+  
+  return true;
+}
+
+
+bool isPlanvalid(bwi_kr_execution::IsPlanValid::Request& req, bwi_kr_execution::IsPlanValid::Response& res) {
+  
+  vector<AspRule> goal;
+  transform(req.goal.begin(),req.goal.end(),back_inserter(goal),TranslateRule());
+  
+  res.valid = reasoner->isPlanValid(TranslateAnswerSet()(req.plan), goal);
   
   return true;
 }

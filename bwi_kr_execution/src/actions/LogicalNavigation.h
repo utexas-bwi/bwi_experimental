@@ -11,7 +11,7 @@ public:
 	
 	explicit LogicalNavigation(const std::string &name,const std::vector<std::string>& parameters = std::vector<std::string>());
 	
-	int paramNumber() const {return parameters.size();}
+	int paramNumber() const {return 1;}
 	
 	std::string getName() const {return name;}
 	

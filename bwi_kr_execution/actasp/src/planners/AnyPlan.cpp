@@ -13,7 +13,7 @@ AnyPlan::AnyPlan(actasp::MultiPlanner *actualPlanner) : actualPlanner(actualPlan
 
 AnswerSet AnyPlan::computePlan(const std::vector<actasp::AspRule>& goal) throw (std::logic_error) {
 
-	vector< AnswerSet > allPlans = actualPlanner->computeAllPlans(goal,1.2);
+	vector< AnswerSet > allPlans = actualPlanner->computeAllPlans(goal,1);
 
 	if (allPlans.empty())
 		return AnswerSet(false);

@@ -58,6 +58,8 @@ find_package(catkin REQUIRED COMPONENTS
    UpdateFluents.srv
    CurrentStateQuery.srv
    ComputePlan.srv
+   ComputeAllPlans.srv
+   IsPlanValid.srv
  )
 
 ## Generate actions in the 'action' folder

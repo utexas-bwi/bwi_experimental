@@ -37,11 +37,6 @@ open(D,I+1) :- opendoor(D,I), door(D), I=0..n-1.
 %you can be facing only one door at a time
 -facing(D2,I):- facing(D1,I), door(D2), D1 != D2.
 
-%a door is open by default
-open(D,I) :- not -open(D,I), door(D), I=0..n.
-
-%the robot is not facing any door by default
--facing(D,I) :- not facing(D,I), door(D), I=0..n.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -54,12 +49,12 @@ open(D,I) :- not -open(D,I), door(D), I=0..n.
 %at is inertial
 at(L,I+1) :- at(L,I), not -at(L,I+1), I=0..n-1.
 
-%facing is inertial (-facing is assumed by default)
+%facing is inertial
 facing(D,I+1) :- facing(D,I), not -facing(D,I+1), I=0..n-1.
-%-facing(D,I+1) :- -facing(D,I), not facing(D,I+1), I=0..n-1.
+-facing(D,I+1) :- -facing(D,I), not facing(D,I+1), I=0..n-1.
 
-% -open is inertial (open is assumed by default)
-%open(D,I+1) :- open(D,I), not -open(D,I+1), I=0..n-1.
+% open is inertial
+open(D,I+1) :- open(D,I), not -open(D,I+1), I=0..n-1.
 -open(D,I+1) :- -open(D,I), not open(D,I+1), I=0..n-1.
 
 

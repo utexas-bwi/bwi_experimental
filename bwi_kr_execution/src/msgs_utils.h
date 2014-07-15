@@ -19,11 +19,13 @@ struct TranslateFluent {
 
 struct TranslateRule {
   actasp::AspRule operator()(const bwi_kr_execution::AspRule& bwiRule);
+  bwi_kr_execution::AspRule operator()(const actasp::AspRule& actaspRule);
 
 };
 
 struct TranslateAnswerSet {
   actasp::AnswerSet operator()(const bwi_kr_execution::AnswerSet& bwiAnswerSet);
+  bwi_kr_execution::AnswerSet operator()(const actasp::AnswerSet& actaspAnswerSet);
   
 };
 

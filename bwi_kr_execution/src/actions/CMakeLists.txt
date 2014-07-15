@@ -3,4 +3,6 @@
 SET( kractions_SRC ${KREXEC_SRC}
 	${CMAKE_CURRENT_SOURCE_DIR}/ActionFactory.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/LogicalNavigation.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/CallGUI.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/OpenDoor.cpp
 	PARENT_SCOPE)
