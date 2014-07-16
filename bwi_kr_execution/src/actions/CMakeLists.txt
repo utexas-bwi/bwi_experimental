@@ -5,4 +5,5 @@ SET( kractions_SRC ${KREXEC_SRC}
 	${CMAKE_CURRENT_SOURCE_DIR}/LogicalNavigation.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/CallGUI.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/OpenDoor.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/OpenSimulatedDoor.cpp
 	PARENT_SCOPE)
