@@ -43,11 +43,13 @@ Action* ActionFactory::byName(const std::string& name) throw (std::runtime_error
 }
 
 ActionFactory::ActionMap ActionFactory::actions() {
-	ActionFactory::ActionMap actions(bothActions().begin(),bothActions().end());
+	ActionFactory::ActionMap actions; 
 	if(simulation)
 		actions.insert(simulatedActions().begin(),simulatedActions().end());
 	else
 		actions.insert(realActions().begin(),realActions().end());
+  
+  actions.insert(bothActions().begin(),bothActions().end());
 	
 	return actions;
 }
