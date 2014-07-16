@@ -38,13 +38,11 @@ int main(int argc, char**argv) {
   ActionFactory::setSimulation(true); //parametrize this
 
   AspKR *reasoner = new RemoteReasoner();
-  Planner *planner = new AnyPlan(reasoner);
-  ActionExecutor *executor = new ReplanningActionExecutor(reasoner,planner,ActionFactory::actions());
+  ActionExecutor *executor = new ReplanningActionExecutor(reasoner,reasoner,ActionFactory::actions());
   
-  vector<AspRule> goalRules;
+  vector<AspRule> goalRules(1);
   
-  goalRules.push_back(AspRule() << AspFluent("not visited(l3_418,n)"));
-  goalRules.push_back(AspRule() << AspFluent("not visited(l3_414a,n)"));
+  goalRules[0].body.push_back(AspFluent("not at(l3_516,I)"));
   
   executor->setGoal(goalRules);
   
@@ -57,6 +55,13 @@ int main(int argc, char**argv) {
     ros::spinOnce();
 
     loop.sleep();
+  }
+  
+  if(executor->failed()) {
+    ROS_INFO("Execution failed");
+  }
+  if(executor->goalReached()) {
+    ROS_INFO("Execution succeded");
   }
   
   delete executor;
