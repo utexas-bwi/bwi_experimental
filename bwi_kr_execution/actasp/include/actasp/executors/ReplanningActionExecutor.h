@@ -42,7 +42,6 @@ private:
 	std::vector<actasp::AspRule> goalRules;
 	bool isGoalReached;
 	bool hasFailed;
-	bool actionRunning;
 	std::map<std::string, Action * > actionMap;
 	
 	std::list<Action *> plan;
