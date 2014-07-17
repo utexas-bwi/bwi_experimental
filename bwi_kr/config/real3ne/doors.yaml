@@ -3,7 +3,7 @@
     - from: l3_500
       point: [69.98, 9.98, 1.63076]
     - from: l3_414b
-      point: [69.55, 12.00, 4.86235]
+      point: [69.55, 11.95, 4.88235]
 - name: d3_414b2
   approach:
     - from: l3_414b
@@ -43,9 +43,9 @@
 - name: d3_516b
   approach:
     - from: l3_516
-      point: [71.35, 8.15, 1.51204]
+      point: [71.35, 8.00, 1.55204]
     - from: l3_500
-      point: [71.45, 9.85, 4.65363]
+      point: [71.45, 9.85, 4.70363]
 - name: d3_500
   approach:
     - from: l3_500
