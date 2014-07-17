@@ -35,7 +35,7 @@ bool computePlan(bwi_kr_execution::ComputePlan::Request  &req,
                  bwi_kr_execution::ComputePlan::Response &res);
 
 bool computeAllPlans(bwi_kr_execution::ComputeAllPlans::Request  &req,
-                 bwi_kr_execution::ComputeAllPlans::Response &res);
+                     bwi_kr_execution::ComputeAllPlans::Response &res);
 
 bool isPlanvalid(bwi_kr_execution::IsPlanValid::Request  &req,
                  bwi_kr_execution::IsPlanValid::Response &res);
@@ -47,12 +47,22 @@ int main(int argc, char **argv) {
   ros::init(argc, argv, "bwi_kr");
   ros::NodeHandle n;
 
- if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug) ) {
-   ros::console::notifyLoggerLevelsChanged();
- }
+  if (ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug)) {
+    ros::console::notifyLoggerLevelsChanged();
+  }
 
-  const string domainDirectory(ros::package::getPath("bwi_kr_execution")+"/domain_simulation/"); //TODO get this from a parameter
-  ActionFactory::setSimulation(true);
+  ros::NodeHandle privateNode("~");
+  
+  string domainDirectory;
+  privateNode.param<std::string>("domain_directory", domainDirectory, ros::package::getPath("bwi_kr_execution")+"/domain/");
+  
+  if(domainDirectory.at(domainDirectory.size()-1) != '/')
+    domainDirectory += '/';
+  
+  bool simulating;
+  privateNode.param<bool>("simulation",simulating,false);
+
+  ActionFactory::setSimulation(simulating);
 
   boost::filesystem::create_directories(queryDirectory);
 
@@ -66,7 +76,7 @@ int main(int argc, char **argv) {
 
 
   //TODO make sure clingo can be executed concurrently, or create multiple instances
- // ros::MultiThreadedSpinner m(2); //we don't really want to potentially block all the available cores
+// ros::MultiThreadedSpinner m(2); //we don't really want to potentially block all the available cores
 
   ros::spin();
 
@@ -80,7 +90,7 @@ bool updateFluents(bwi_kr_execution::UpdateFluents::Request  &req,
 
   vector<AspFluent> fluents;
   transform(req.fluents.begin(),req.fluents.end(),back_inserter(fluents),TranslateFluent());
-  
+
   res.consistent = reasoner->updateFluents(fluents);
 
   return true;
@@ -91,12 +101,12 @@ bool currentStateQuery(bwi_kr_execution::CurrentStateQuery::Request  &req,
 
   vector<AspRule> rules;
   transform(req.query.begin(),req.query.end(),back_inserter(rules),TranslateRule());
-  
+
   AnswerSet answer = reasoner->currentStateQuery(rules);
-  
+
   res.answer.satisfied = answer.isSatisfied();
   transform(answer.getFluents().begin(),answer.getFluents().end(),back_inserter(res.answer.fluents),TranslateFluent());
-  
+
   return true;
 }
 
@@ -105,13 +115,13 @@ bool computePlan(bwi_kr_execution::ComputePlan::Request  &req,
                  bwi_kr_execution::ComputePlan::Response &res) {
   vector<AspRule> goal;
   transform(req.goal.begin(),req.goal.end(),back_inserter(goal),TranslateRule());
-  
+
   //TODO catch exception
   AnswerSet answer = reasoner->computePlan(goal);
-  
+
   res.plan.satisfied = answer.isSatisfied();
   transform(answer.getFluents().begin(),answer.getFluents().end(),back_inserter(res.plan.fluents),TranslateFluent());
-  
+
   return true;
 }
 
@@ -119,22 +129,22 @@ bool computeAllPlans(bwi_kr_execution::ComputeAllPlans::Request& req, bwi_kr_exe
 
   vector<AspRule> goal;
   transform(req.goal.begin(),req.goal.end(),back_inserter(goal),TranslateRule());
-  
+
   //TODO catch exception
   vector<actasp::AnswerSet> answers = reasoner->computeAllPlans(goal,req.suboptimality);
-  
+
   transform(answers.begin(),answers.end(),back_inserter(res.plans),TranslateAnswerSet());
-  
+
   return true;
 }
 
 
 bool isPlanvalid(bwi_kr_execution::IsPlanValid::Request& req, bwi_kr_execution::IsPlanValid::Response& res) {
-  
+
   vector<AspRule> goal;
   transform(req.goal.begin(),req.goal.end(),back_inserter(goal),TranslateRule());
-  
+
   res.valid = reasoner->isPlanValid(TranslateAnswerSet()(req.plan), goal);
-  
+
   return true;
 }
