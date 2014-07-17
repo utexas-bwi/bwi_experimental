@@ -62,7 +62,7 @@ int main(int argc, char** argv) {
 	LogicalNavigation setInitialState("noop");
 	setInitialState.run();
 
-	string goal = ":- 0{visited(R,n) : room(R)}5.";
+	string goal = ":- not at(l3_500,n).";
 
 	std::list<Action *> plan = computePlan(goal, MAX_N);
 	
