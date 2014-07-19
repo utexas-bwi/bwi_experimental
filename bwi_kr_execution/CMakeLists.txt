@@ -9,6 +9,9 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   roslib
   message_generation
+  genmsg 
+  actionlib_msgs 
+  actionlib
 )
 
 ## System dependencies are found with CMake's conventions
@@ -63,17 +66,19 @@ find_package(catkin REQUIRED COMPONENTS
  )
 
 ## Generate actions in the 'action' folder
-# add_action_files(
-#   FILES
-#   Action1.action
-#   Action2.action
-# )
+add_action_files(
+   FILES
+   ExecutePlan.action
+)
 
 ## Generate added messages and services with any dependencies listed here
  generate_messages(
    DEPENDENCIES
    std_msgs
+   actionlib_msgs
  )
+ 
+ 
 
 ###################################
 ## catkin specific configuration ##
