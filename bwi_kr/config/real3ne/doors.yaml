@@ -3,7 +3,7 @@
     - from: l3_500
       point: [69.98, 9.98, 1.63076]
     - from: l3_414b
-      point: [69.55, 12.00, 4.86235]
+      point: [69.55, 11.95, 4.88235]
 - name: d3_414b2
   approach:
     - from: l3_414b
@@ -13,27 +13,27 @@
 - name: d3_414b3
   approach:
     - from: l3_414b
-      point: [64.35, 15.95, 3.14159]
+      point: [64.20, 15.72, 3.13559]
     - from: l3_414
-      point: [62.75, 15.95, 6.28319]
+      point: [62.30, 15.77, 6.23319]
 - name: d3_414a3
   approach:
     - from: l3_414
-      point: [59.5, 15.95, 3.08609]
+      point: [59.42, 15.8, 3.09609]
     - from: l3_414a
-      point: [57.7, 16.05, 6.22769]
+      point: [57.42, 15.98, 6.22769]
 - name: d3_414a1
   approach:
     - from: l3_414a
-      point: [52.1, 15.95, 1.5153]
+      point: [52.1, 15.70, 1.5553]
     - from: l3_400
-      point: [52.2, 17.75, 4.65689]
+      point: [51.8, 17.75, 4.75689]
 - name: d3_414a2
   approach:
     - from: l3_500
       point: [51.8, 10.55, 1.51204]
     - from: l3_414a
-      point: [51.9, 12.25, 4.65363]
+      point: [52.1, 12.35, 4.75363]
 - name: d3_516a
   approach:
     - from: l3_516
@@ -43,9 +43,9 @@
 - name: d3_516b
   approach:
     - from: l3_516
-      point: [71.35, 8.15, 1.51204]
+      point: [71.35, 8.00, 1.55204]
     - from: l3_500
-      point: [71.45, 9.85, 4.65363]
+      point: [71.45, 9.85, 4.70363]
 - name: d3_500
   approach:
     - from: l3_500
