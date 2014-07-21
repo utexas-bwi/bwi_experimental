@@ -21,6 +21,7 @@ room(l3_414).
 %room(l3_510).
 %room(l3_512).
 room(l3_516).
+room(l3_418).
 
 
 
@@ -49,6 +50,7 @@ door(d3_414a3).
 door(d3_414b1).
 door(d3_414b2).
 door(d3_414b3).
+door(d3_418).
 %door(d3_416).
 %door(d3_418).
 %door(d3_420).
@@ -89,6 +91,9 @@ hasdoor(l3_414b, d3_414b2).
 hasdoor(l3_400, d3_414b2).
 hasdoor(l3_414b, d3_414b3).
 hasdoor(l3_414, d3_414b3).
+
+hasdoor(l3_418, d3_418).
+hasdoor(l3_400, d3_418).
 
 %hasdoor(l3_416, d3_416).
 %hasdoor(l3_400, d3_416).
