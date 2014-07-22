@@ -9,7 +9,6 @@
 facing(D,I+1) :- approach(D,I), door(D), I=0..n-1.
 at(R2,I+1) :- approach(D,I), at(R1,I), hasdoor(R2,D), acc(R1,R2), I=0..n-1.
 :- approach(D,I), facing(D,I), door(D), I=0..n.
-:- approach(D,I), hasdoor(R1,D), at(R2,I), R1 != R2, not acc(R1,R2), not dooracc(R2,D,R1).
 
 
 at(R2,I+1) :- gothrough(D,I),  at(R1,I), dooracc(R1,D,R2), I=0..n-1.
@@ -20,9 +19,8 @@ at(R2,I+1) :- gothrough(D,I),  at(R1,I), dooracc(R1,D,R2), I=0..n-1.
 
 
 open(D,I+1) :- opendoor(D,I), door(D), I=0..n-1.
-:- opendoor(D,I), -facing(D,I), door(D), I=0..n.
+:- opendoor(D,I), not facing(D,I), door(D), I=0..n.
 :- opendoor(D,I), open(D,I), door(D), I=0..n.
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -56,5 +54,3 @@ facing(D,I+1) :- facing(D,I), not -facing(D,I+1), I=0..n-1.
 % open is inertial
 open(D,I+1) :- open(D,I), not -open(D,I+1), I=0..n-1.
 -open(D,I+1) :- -open(D,I), not open(D,I+1), I=0..n-1.
-
-

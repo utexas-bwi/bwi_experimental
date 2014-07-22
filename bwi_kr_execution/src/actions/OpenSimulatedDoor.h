@@ -30,6 +30,7 @@ private:
  
  std::string door;
  bool done;
+ bool requestSent;
  
 };
 

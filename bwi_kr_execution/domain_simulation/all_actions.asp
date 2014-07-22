@@ -10,7 +10,7 @@
 	}1 :- not noop(I), I=0..n-1.
 
 %removes the warning about noop not being defined, shouldn't have any consequences
-noop(n+1).
+noop(n).
 
 
 

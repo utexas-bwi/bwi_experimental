@@ -9,11 +9,13 @@ using namespace std;
 
 namespace actasp {
 
-AnyPlan::AnyPlan(actasp::MultiPlanner *actualPlanner) : actualPlanner(actualPlanner) {}
+AnyPlan::AnyPlan(actasp::MultiPlanner *actualPlanner, double suboptimality) : 
+        actualPlanner(actualPlanner),
+        suboptimality(suboptimality){}
 
 AnswerSet AnyPlan::computePlan(const std::vector<actasp::AspRule>& goal) throw (std::logic_error) {
 
-	vector< AnswerSet > allPlans = actualPlanner->computeAllPlans(goal,1);
+	vector< AnswerSet > allPlans = actualPlanner->computeAllPlans(goal,suboptimality);
 
 	if (allPlans.empty())
 		return AnswerSet(false);

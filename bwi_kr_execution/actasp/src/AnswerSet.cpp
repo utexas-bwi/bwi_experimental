@@ -8,7 +8,7 @@ using namespace std;
 
 namespace actasp {
 
-AnswerSet::AnswerSet(bool satisfied, std::vector<actasp::AspFluent> fluents) throw () :
+AnswerSet::AnswerSet(bool satisfied,const std::vector<actasp::AspFluent>& fluents) throw () :
 	satisfied(satisfied),
 	fluents(fluents)  {
 

@@ -106,13 +106,12 @@ include_directories(
 
 ## Declare a cpp executable
 add_executable(bwi_go_to_location_node src/go_to_location.cpp)
-
-## Add cmake target dependencies of the executable/library
-## as an example, message headers may need to be generated before nodes
 add_dependencies(bwi_go_to_location_node ${catkin_EXPORTED_TARGETS})
-
-## Specify libraries to link a library or executable target against
 target_link_libraries(bwi_go_to_location_node ${catkin_LIBRARIES})
+
+add_executable(bwi_back_and_forth_node src/back_and_forth.cpp)
+add_dependencies(bwi_back_and_forth_node ${catkin_EXPORTED_TARGETS})
+target_link_libraries(bwi_back_and_forth_node ${catkin_LIBRARIES})
 
 #############
 ## Install ##

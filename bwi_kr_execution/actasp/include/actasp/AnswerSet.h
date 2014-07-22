@@ -17,7 +17,7 @@ class AnswerSet {
 
 public:
 	
-	explicit AnswerSet(bool satisfied, std::vector<actasp::AspFluent> fluents = std::vector<AspFluent>()) throw();
+	explicit AnswerSet(bool satisfied,const std::vector<actasp::AspFluent>& fluents = std::vector<AspFluent>()) throw();
 	
 	bool isSatisfied() const throw();
 	

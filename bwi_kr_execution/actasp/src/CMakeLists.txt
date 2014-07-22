@@ -8,4 +8,5 @@ SET( actasp_SRC  ${actasp_SRC}
 	${CMAKE_CURRENT_SOURCE_DIR}/AspFluent.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/AnswerSet.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/MultiPolicy.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/action_utils.cpp
 PARENT_SCOPE)

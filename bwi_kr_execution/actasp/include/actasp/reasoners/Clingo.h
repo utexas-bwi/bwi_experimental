@@ -21,15 +21,13 @@ public:
 	Clingo(unsigned int max_n,
 	       const std::string& queryDir,
 	       const std::string& domainDir,
-	       const std::map<std::string, actasp::Action*>& actionMap) throw();
+	       const std::vector<AspFluent>& actions) throw();
 
 	AnswerSet currentStateQuery(const std::vector<actasp::AspRule>& query) const throw();
 	
 	bool updateFluents(const std::vector<actasp::AspFluent> &observations) throw();
-
-	bool isPlanValid(std::list<actasp::Action*> plan, const std::vector<actasp::AspRule>& goal) const throw();
 	
-	bool isPlanValid(AnswerSet plan, const std::vector<actasp::AspRule>& goal)  const throw();
+	bool isPlanValid(const AnswerSet& plan, const std::vector<actasp::AspRule>& goal)  const throw();
 
 	AnswerSet computePlan(const std::vector<actasp::AspRule>& goal) throw ();
 	
@@ -39,16 +37,14 @@ public:
 	
 	void setMaxTimeStep(unsigned int max_n) throw() {
 		this->max_n = max_n;
-	}
-
-	~Clingo();
+  }
 
 private:
 
 	unsigned int max_n;
 	std::string queryDir;
 	std::string domainDir;
-	std::map<std::string, Action * > actionMap;
+  std::vector<AspFluent> allActions;
 
 	std::string generatePlanQuery(	const std::vector<actasp::AspRule>& goalRules, 
 									unsigned int timeStep, 
@@ -58,6 +54,7 @@ private:
 											unsigned int timeStep,
 											const std::string& fileName, 
 											unsigned int answerSetsNumber) const throw();
+                      
 
 };
 

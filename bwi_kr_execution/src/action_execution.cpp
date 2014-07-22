@@ -10,6 +10,8 @@
 #include "actasp/ActionExecutor.h"
 #include "actasp/AspFluent.h"
 #include "actasp/planners/AnyPlan.h"
+#include "actasp/ExecutionObserver.h"
+#include "actasp/PlanningObserver.h"
 
 #include "actions/ActionFactory.h"
 #include "actions/LogicalNavigation.h"
@@ -31,8 +33,43 @@ using namespace actasp;
 typedef actionlib::SimpleActionServer<bwi_kr_execution::ExecutePlanAction> Server;
 
 
-AspKR *reasoner;
 ActionExecutor *executor;
+
+struct PrintFluent {
+  
+  PrintFluent(ostream& stream) : stream(stream) {}
+  
+  string operator()(const AspFluent& fluent) {
+    stream << fluent.toString() << " ";
+  }
+  
+  ostream &stream;
+  
+};
+
+struct Observer : public ExecutionObserver, public PlanningObserver {
+  
+  void actionStarted(const AspFluent& action) throw() {
+    ROS_INFO_STREAM("Starting execution: " << action.toString());
+  }
+  
+  void actionTerminated(const AspFluent& action) throw() {
+    ROS_INFO_STREAM("Terminating execution: " << action.toString());
+  }
+  
+  
+  void planChanged(const AnswerSet& newPlan) throw() {
+   stringstream planStream;
+   
+   ROS_INFO_STREAM("plan size: " << newPlan.getFluents().size());
+   
+   copy(newPlan.getFluents().begin(),newPlan.getFluents().end(),ostream_iterator<string>(planStream," "));
+   
+   ROS_INFO_STREAM(planStream.str());
+  }
+  
+  
+};
 
 void executePlan(const bwi_kr_execution::ExecutePlanGoalConstPtr& plan, Server* as) {
 
@@ -84,20 +121,27 @@ int main(int argc, char**argv) {
   LogicalNavigation setInitialState("noop");
   setInitialState.run();
 
-  ActionFactory::setSimulation(true); //parametrize this
+  ros::NodeHandle privateNode("~");
+  bool simulating;
+  privateNode.param<bool>("simulation",simulating,false);
+  ActionFactory::setSimulation(simulating); //parametrize this
 
-  reasoner = new RemoteReasoner();
-  executor = new ReplanningActionExecutor(reasoner,reasoner,ActionFactory::actions());
+  AspKR *reasoner = new RemoteReasoner();
+  Planner *planner = new AnyPlan(reasoner,1.5);
+  
+  //need a pointer to the specific type for the observer
+  ReplanningActionExecutor *replanner = new ReplanningActionExecutor(reasoner,planner,ActionFactory::actions());
+  executor = replanner;
+  
+  Observer observer;
+  executor->addExecutionObserver(&observer);
+  replanner->addPlanningObserver(&observer);
 
   Server server(n, "execute_plan", boost::bind(&executePlan, _1, &server), false);
   server.start();
 
   ros::spin();
 
-  server.shutdown();
-
-  delete executor;
-  delete reasoner;
-
+  
   return 0;
 }

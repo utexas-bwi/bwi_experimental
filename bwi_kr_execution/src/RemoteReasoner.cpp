@@ -77,18 +77,8 @@ struct ActionToFluent {
   int counter;
 };
 
-bool RemoteReasoner::isPlanValid(std::list<actasp::Action*> plan, const std::vector<actasp::AspRule>& goal)  const throw() {
-  
-  vector<actasp::AspFluent> fluentVector;
-  transform(plan.begin(),plan.end(),back_inserter(fluentVector),ActionToFluent());
-  
-  actasp::AnswerSet answerSetPlan(true,fluentVector);
-  
-  return this->isPlanValid(answerSetPlan,goal);
-}
 
-
-bool RemoteReasoner::isPlanValid(actasp::AnswerSet plan, const std::vector<actasp::AspRule>& goal)  const throw() {
+bool RemoteReasoner::isPlanValid(const actasp::AnswerSet& plan, const std::vector<actasp::AspRule>& goal)  const throw() {
   NodeHandle n;
   ros::ServiceClient planClient = n.serviceClient<bwi_kr_execution::IsPlanValid> ( "is_plan_valid" );
   planClient.waitForExistence();

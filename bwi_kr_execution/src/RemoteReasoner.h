@@ -13,9 +13,7 @@ namespace bwi_krexec {
   
   bool updateFluents(const std::vector<actasp::AspFluent> &observations) throw();
   
-  bool isPlanValid(std::list<actasp::Action*> plan, const std::vector<actasp::AspRule>& goal)  const throw();
-  
-  bool isPlanValid(actasp::AnswerSet plan, const std::vector<actasp::AspRule>& goal)  const throw();
+  bool isPlanValid(const actasp::AnswerSet& plan, const std::vector<actasp::AspRule>& goal)  const throw();
   
   std::vector< actasp::AnswerSet > computeAllPlans(const std::vector<actasp::AspRule>& goal, double suboptimality) throw (std::logic_error);
 

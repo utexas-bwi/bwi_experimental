@@ -7,6 +7,8 @@
 #include <actasp/Planner.h>
 #include <actasp/Action.h>
 #include <actasp/action_utils.h>
+#include <actasp/ExecutionObserver.h>
+#include <actasp/PlanningObserver.h>
 
 #include <list>
 #include <algorithm>
@@ -25,8 +27,11 @@ ReplanningActionExecutor::ReplanningActionExecutor(actasp::AspKR* reasoner,
   hasFailed(false),
   actionMap(),
   plan(),
+  actionCounter(0),
+  newAction(true),
   kr(reasoner),
-  planner(planner) {
+  planner(planner),
+  executionObservers(){
   if (reasoner == NULL)
     throw invalid_argument("ReplanningActionExecutor: reasoner is NULL");
 
@@ -40,17 +45,60 @@ ReplanningActionExecutor::~ReplanningActionExecutor() {
   for_each(actionMap.begin(),actionMap.end(),ActionMapDelete());
 }
 
+struct NotifyNewPlan {
+  
+  NotifyNewPlan(const AnswerSet& plan) : plan(plan) {}
+  
+  void operator()(PlanningObserver* observer) {
+    observer->planChanged(plan);
+  }
+  
+  AnswerSet plan;
+  
+};
+
+void ReplanningActionExecutor::computePlan() {
+  isGoalReached = kr->currentStateQuery(goalRules).isSatisfied();
+
+  if (!isGoalReached) {
+    plan = planner->computePlan(goalRules).instantiateActions(actionMap);
+    actionCounter = 0;
+  }
+
+  hasFailed = plan.empty();
+  
+  if(!hasFailed)
+    for_each(planningObservers.begin(),planningObservers.end(),NotifyNewPlan(planToAnswerSet(plan)));
+  
+}
 
 void ReplanningActionExecutor::setGoal(const std::vector<actasp::AspRule>& goalRules) throw() {
   this->goalRules = goalRules;
 
-  isGoalReached = kr->currentStateQuery(goalRules).isSatisfied();
-
-  if (!isGoalReached)
-    plan = planner->computePlan(goalRules).instantiateActions(actionMap);
-
-  hasFailed = plan.empty();
+  computePlan();
 }
+
+struct NotifyActionTermination {
+  
+  NotifyActionTermination(const AspFluent& action) : action(action) {}
+  
+  void operator()(ExecutionObserver *observer) {
+    observer->actionTerminated(action);
+  }
+  
+  AspFluent action;
+};
+
+struct NotifyActionStart {
+  
+  NotifyActionStart(const AspFluent& action) : action(action) {}
+  
+  void operator()(ExecutionObserver *observer) {
+    observer->actionStarted(action);
+  }
+  
+  AspFluent action;
+};
 
 
 void ReplanningActionExecutor::executeActionStep() {
@@ -60,41 +108,56 @@ void ReplanningActionExecutor::executeActionStep() {
 
 
   Action *current = plan.front();
+  
+  AspFluent actionFluent(current->toASP(actionCounter));
+  if(newAction) {
+      for_each(executionObservers.begin(),executionObservers.end(),NotifyActionStart(actionFluent));
+      newAction = false;
+  }
+ 
 
   current->run();
 
   if (current->hasFinished()) {
     //destroy the action and pop a new one
+    
+    for_each(executionObservers.begin(),executionObservers.end(),NotifyActionTermination(AspFluent(current->toASP(actionCounter++))));
+    
     delete current;
     plan.pop_front();
+    
+    newAction = true;
 
-    if (plan.empty() || !kr->isPlanValid(plan,goalRules)) {
+    if (plan.empty() || !kr->isPlanValid(planToAnswerSet(plan),goalRules)) {
       
       //if not valid, replan
-      clearPlan();
+      for_each(plan.begin(),plan.end(),ActionDeleter());
+      plan.clear();
 
-      isGoalReached = kr->currentStateQuery(goalRules).isSatisfied();
-
-      if (!isGoalReached)
-        plan = planner->computePlan(goalRules).instantiateActions(actionMap);
-
-      hasFailed = !isGoalReached && plan.empty();
-
-      return;
+      computePlan();
 
     }
 
   }
+  
+  
+  
 }
 
-void ReplanningActionExecutor::clearPlan() throw() {
-  std::list<Action *>::iterator actIt = plan.begin();
-
-  for (; actIt != plan.end(); ++actIt)
-    delete *actIt;
-
-  plan.clear();
+void ReplanningActionExecutor::addExecutionObserver(ExecutionObserver *observer) throw() {
+  executionObservers.push_back(observer);
 }
 
+void ReplanningActionExecutor::removeExecutionObserver(ExecutionObserver *observer) throw() {
+  executionObservers.remove(observer);
+}
+
+void ReplanningActionExecutor::addPlanningObserver(PlanningObserver *observer) throw() {
+  planningObservers.push_back(observer);
+}
+
+void ReplanningActionExecutor::removePlanningObserver(PlanningObserver *observer) throw() {
+  planningObservers.remove(observer);
+}
 
 }

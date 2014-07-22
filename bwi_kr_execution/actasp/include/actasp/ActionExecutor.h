@@ -2,10 +2,11 @@
 #define actasp_ActionExecutor_h__guard
 
 #include <actasp/AspRule.h>
-
 #include <vector>
 
 namespace actasp {
+  
+class ExecutionObserver;
 
 struct ActionExecutor {
 
@@ -21,6 +22,9 @@ struct ActionExecutor {
 	virtual bool failed() const throw() = 0;
 
 	virtual void executeActionStep() = 0;
+  
+  virtual void addExecutionObserver(ExecutionObserver *observer) throw() = 0;
+  virtual void removeExecutionObserver(ExecutionObserver *observer) throw() =0;
 
 	virtual ~ActionExecutor() {}
 };

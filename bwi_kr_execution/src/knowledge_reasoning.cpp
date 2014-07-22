@@ -2,6 +2,7 @@
 #include "actions/ActionFactory.h"
 
 #include "actasp/reasoners/Clingo.h"
+#include "actasp/action_utils.h"
 
 #include "msgs_utils.h"
 #include "bwi_kr_execution/UpdateFluents.h"
@@ -20,7 +21,7 @@ using namespace std;
 using namespace ros;
 using namespace bwi_krexec;
 
-const int MAX_N = 50;
+const int MAX_N = 20;
 const std::string queryDirectory("/tmp/bwi_kr_execution/");
 
 
@@ -66,7 +67,7 @@ int main(int argc, char **argv) {
 
   boost::filesystem::create_directories(queryDirectory);
 
-  reasoner = new Clingo(MAX_N,queryDirectory,domainDirectory,ActionFactory::actions());
+  reasoner = new Clingo(MAX_N,queryDirectory,domainDirectory,actionMapToVector(ActionFactory::actions()));
 
   ros::ServiceServer update_fluents = n.advertiseService("update_fluents", updateFluents);
   ros::ServiceServer current_state_query = n.advertiseService("current_state_query", currentStateQuery);

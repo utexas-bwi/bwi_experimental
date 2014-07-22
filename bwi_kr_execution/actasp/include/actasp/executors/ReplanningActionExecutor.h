@@ -13,6 +13,7 @@ namespace actasp {
 class AspKR;
 class Planner;
 class Action;
+class PlanningObserver;
 
 class ReplanningActionExecutor : public ActionExecutor {
 
@@ -23,6 +24,7 @@ public:
 							 const std::map<std::string, Action * > &actionMap
 							) throw (std::invalid_argument);
 	
+  using ActionExecutor::setGoal;
 	void setGoal(const std::vector<actasp::AspRule>& goalRules) throw();
 
 	bool goalReached() const throw() {
@@ -34,6 +36,12 @@ public:
 	}
 
 	void executeActionStep();
+  
+  void addExecutionObserver(ExecutionObserver *observer) throw();
+  void removeExecutionObserver(ExecutionObserver *observer) throw();
+  
+  void addPlanningObserver(PlanningObserver *observer) throw();
+  void removePlanningObserver(PlanningObserver *observer) throw();
 	
 	~ReplanningActionExecutor();
 	
@@ -45,11 +53,16 @@ private:
 	std::map<std::string, Action * > actionMap;
 	
 	std::list<Action *> plan;
-	
-	void clearPlan() throw();
+  unsigned int actionCounter;
+  bool newAction;
 	
 	AspKR* kr;
 	Planner *planner;
+  
+  std::list<ExecutionObserver*> executionObservers;
+  std::list<PlanningObserver*> planningObservers;
+  
+  void computePlan();
 
 
 };

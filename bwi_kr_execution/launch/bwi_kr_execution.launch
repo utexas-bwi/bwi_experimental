@@ -1,16 +1,21 @@
 <launch>
 
-<node name="bwi_kr" pkg="bwi_kr_execution" type="bwi_knowledge_reasoning_node">
-  <param name="simulation" type="bool" value="true" />
-  <param name="domain_directory" type="str" value="$(find bwi_kr_execution)/domain_simulation/" />
-
-<!-- switch to these parameters for the real robot -->
+ <arg name="simulation" default="true" />
+ <arg name="domain" default="$(find bwi_kr_execution)/domain_simulation/" />
+ 
+ <!-- switch to these parameters for the real robot -->
 <!--  
-      <param name="simulation" type="bool" value="false" />
-      <param name="domain_directory" type="str" value="$(find bwi_kr_execution)/domain/" />
+ <arg name="simulation" default="false" />
+ <arg name="domain" default="$(find bwi_kr_execution)/domain/" />
 -->
+ 
+<node name="bwi_kr" pkg="bwi_kr_execution" type="bwi_knowledge_reasoning_node">
+  <param name="simulation" type="bool" value="$(arg simulation)" />
+  <param name="domain_directory" type="str" value="$(arg domain)" />
 </node>
 
-<node name="bwi_execution_node" pkg="bwi_kr_execution" type="bwi_execution_node" />
+<node name="bwi_execution_node" pkg="bwi_kr_execution" type="bwi_execution_node">
+  <param name="simulation" type="bool" value="$(arg simulation)" />
+</node>
 
 </launch>

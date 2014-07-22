@@ -27,6 +27,8 @@ public:
 
 	std::string toString() const throw();
 	std::string toString(unsigned int timeStep) const throw();
+  
+  operator std::string() const { return this->toString(); } 
 
 private:
 	std::string name;

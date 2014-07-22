@@ -17,9 +17,7 @@ struct AspKR : public actasp::MultiPlanner {
 	//false if the new fluents are incompatible with the KB
 	virtual bool updateFluents(const std::vector<actasp::AspFluent> &observations) throw() = 0;
 	
-	virtual bool isPlanValid(std::list<actasp::Action*> plan, const std::vector<actasp::AspRule>& goal)  const throw() = 0;
-	
-	virtual bool isPlanValid(AnswerSet plan, const std::vector<actasp::AspRule>& goal)  const throw() = 0;
+	virtual bool isPlanValid(const AnswerSet& plan, const std::vector<actasp::AspRule>& goal)  const throw() = 0;
 	
 	virtual ~AspKR() {}
 };

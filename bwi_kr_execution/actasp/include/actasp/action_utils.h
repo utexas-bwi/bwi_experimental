@@ -3,7 +3,9 @@
 #define actasp_action_util_h__guard
 
 #include <actasp/Action.h>
+#include <actasp/AnswerSet.h>
 
+#include <list>
 #include <utility>
 
 namespace actasp {
@@ -28,6 +30,10 @@ struct ActionMapDelete {
 		delete other.second;
 	}
 };
+
+AnswerSet planToAnswerSet(const std::list<Action*>& plan);
+
+std::vector<AspFluent> actionMapToVector(const std::map<std::string, Action *>& actionMap);
 
 }
 
