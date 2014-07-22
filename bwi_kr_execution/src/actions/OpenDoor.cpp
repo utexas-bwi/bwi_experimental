@@ -22,7 +22,9 @@ OpenDoor::OpenDoor() :
             door(),
             done(false),
             asked(false),
-            open(false) {}
+            open(false),
+            failed(false),
+            startTime(){}
 
   
 void OpenDoor::run() {
@@ -30,6 +32,7 @@ void OpenDoor::run() {
     CallGUI askToOpen("askToOpen", CallGUI::DISPLAY,  "Can you open door " + door + ", please?");
     askToOpen.run();
     asked = true;
+    startTime = ros::Time::now();
   }
   
   if(!open) {
@@ -57,6 +60,11 @@ void OpenDoor::run() {
     currentClient.call(csq);
     
     open = csq.response.answer.satisfied;
+    
+    if(!open && (ros::Time::now() - startTime) > ros::Duration(15.0)) {
+      failed = true;
+      done = true;
+    }
     
     ROS_DEBUG_STREAM( "door open: " << open );
   }

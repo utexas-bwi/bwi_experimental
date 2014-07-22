@@ -4,6 +4,8 @@
 
 #include "actasp/Action.h"
 
+#include <ros/ros.h>
+
 #include <string>
 
 namespace bwi_krexec {
@@ -20,6 +22,8 @@ public:
   
   bool hasFinished() const {return done;}
   
+  virtual bool hasFailed() const {return failed;}
+  
   actasp::Action *cloneAndInit(const actasp::AspFluent & fluent) const;
   
   virtual actasp::Action *clone() const {return new OpenDoor(*this);}
@@ -32,6 +36,8 @@ private:
  bool done;
  bool asked;
  bool open;
+ bool failed;
+ ros::Time startTime;
  
 };
 
