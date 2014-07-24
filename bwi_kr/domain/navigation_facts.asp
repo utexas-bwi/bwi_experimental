@@ -4,12 +4,12 @@
 room(l3_414a).
 %room(l3_402).
 %room(l3_404).
-%room(l3_416).
-%room(l3_418).
-%room(l3_420).
+room(l3_416).
+room(l3_418).
+room(l3_420).
 %room(l3_422).
 %room(l3_430).
-%room(l3_432).
+room(l3_432).
 %room(l3_436).
 %room(l3_428).
 %room(l3_426).
@@ -21,7 +21,6 @@ room(l3_414).
 %room(l3_510).
 %room(l3_512).
 room(l3_516).
-room(l3_418).
 
 
 
@@ -50,16 +49,15 @@ door(d3_414a3).
 door(d3_414b1).
 door(d3_414b2).
 door(d3_414b3).
+door(d3_416).
 door(d3_418).
-%door(d3_416).
-%door(d3_418).
-%door(d3_420).
+door(d3_420).
 %door(d3_422).
 
 %door(d3_426).
 %door(d3_428).
 %door(d3_430).
-%door(d3_432).
+door(d3_432).
 %door(d3_436a).
 %door(d3_436b).
 
@@ -92,18 +90,14 @@ hasdoor(l3_400, d3_414b2).
 hasdoor(l3_414b, d3_414b3).
 hasdoor(l3_414, d3_414b3).
 
+hasdoor(l3_416, d3_416).
+hasdoor(l3_400, d3_416).
 hasdoor(l3_418, d3_418).
 hasdoor(l3_400, d3_418).
-
-%hasdoor(l3_416, d3_416).
-%hasdoor(l3_400, d3_416).
-%hasdoor(l3_418, d3_418).
-%hasdoor(l3_400, d3_418).
-%hasdoor(l3_420, d3_420).
-%hasdoor(l3_400, d3_420).
+hasdoor(l3_420, d3_420).
+hasdoor(l3_400, d3_420).
 %hasdoor(l3_422, d3_422).
 %hasdoor(l3_400, d3_422).
-
 
 %hasdoor(l3_426, d3_426).
 %hasdoor(l3_400, d3_426).
@@ -111,8 +105,8 @@ hasdoor(l3_400, d3_418).
 %hasdoor(l3_400, d3_428).
 %hasdoor(l3_430, d3_430).
 %hasdoor(l3_400, d3_430).
-%hasdoor(l3_432, d3_432).
-%hasdoor(l3_400, d3_432).
+hasdoor(l3_432, d3_432).
+hasdoor(l3_400, d3_432).
 %hasdoor(l3_436, d3_436a).
 %hasdoor(l3_400, d3_436a).
 %hasdoor(l3_436, d3_436b).
