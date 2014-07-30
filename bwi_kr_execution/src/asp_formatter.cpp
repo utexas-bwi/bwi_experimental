@@ -70,24 +70,19 @@ struct CreateFluent {
 	}
 };
 
-static std::vector<actasp::AspFluent> parseAnswerSet(const std::string& answerSetContent) {
-	stringstream content(answerSetContent);
+static std::set<actasp::AspFluent> parseAnswerSet(const std::string& answerSetContent) {
 
-	string line;
-	getline(content,line); //the first line contains the sequence number of the answer set.
-	getline(content,line);
+  stringstream predicateLine(answerSetContent);
 
-	stringstream predicateLine(line);
+  set<AspFluent> predicates;
 
-	vector<AspFluent> predicates;
+  //split the line based on spaces
+  transform(istream_iterator<string>(predicateLine),
+            istream_iterator<string>(),
+            inserter(predicates,predicates.begin()),
+            CreateFluent());
 
-	//split the line based on spaces
-	transform(istream_iterator<string>(predicateLine),
-	          istream_iterator<string>(),
-	          back_inserter<vector<AspFluent> >(predicates),
-	          CreateFluent());
-
-	return predicates;
+  return predicates;
 }
 
 static std::vector<actasp::AnswerSet> readAnswerSets(istream &input) {
@@ -116,7 +111,7 @@ static std::vector<actasp::AnswerSet> readAnswerSets(istream &input) {
 			getline(content,firstLine);
 			if (firstLine.find("Answer") != string::npos) {
 				getline(content,eachAnswerset);
-				vector<AspFluent> fluents = parseAnswerSet(eachAnswerset);
+				set<AspFluent> fluents = parseAnswerSet(eachAnswerset);
 				allSets.push_back(AnswerSet(true, fluents));
 			}
 		}
@@ -156,12 +151,12 @@ int main() {
 		
 		
 		//fluents in an answer set are ordered by time step.
-		unsigned int lastTimeStep = sets[i].getFluents().at(sets[i].getFluents().size()-1).getTimeStep();
+		unsigned int lastTimeStep = sets[i].maxTimeStep();
 		
 		for(int t = 0; t < lastTimeStep; ++t) {
 			
-		vector<AspFluent> fluentsAtTimeT = sets[i].getFluentsAtTime(t);
-		vector<AspFluent>::const_iterator flu = fluentsAtTimeT.begin();
+		set<AspFluent> fluentsAtTimeT = sets[i].getFluentsAtTime(t);
+		set<AspFluent>::const_iterator flu = fluentsAtTimeT.begin();
 		
 		
 		for(; flu != fluentsAtTimeT.end(); ++flu)

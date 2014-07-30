@@ -10,9 +10,11 @@
 #include "bwi_kr_execution/ComputePlan.h"
 #include "bwi_kr_execution/ComputeAllPlans.h"
 #include "bwi_kr_execution/IsPlanValid.h"
+#include <bwi_kr/AnswerSetMsg.h>
 
 #include <ros/ros.h>
 #include <ros/package.h>
+#include <std_srvs/Empty.h>
 
 #include <boost/filesystem.hpp>
 
@@ -41,6 +43,9 @@ bool computeAllPlans(bwi_kr_execution::ComputeAllPlans::Request  &req,
 bool isPlanvalid(bwi_kr_execution::IsPlanValid::Request  &req,
                  bwi_kr_execution::IsPlanValid::Response &res);
 
+bool resetState(std_srvs::Empty::Request &,
+                std_srvs::Empty::Response &);
+
 actasp::AspKR *reasoner;
 
 int main(int argc, char **argv) {
@@ -55,7 +60,7 @@ int main(int argc, char **argv) {
   ros::NodeHandle privateNode("~");
   
   string domainDirectory;
-  privateNode.param<std::string>("domain_directory", domainDirectory, ros::package::getPath("bwi_kr_execution")+"/domain/");
+  n.param<std::string>("/bwi_kr_execution/domain_directory", domainDirectory, ros::package::getPath("bwi_kr_execution")+"/domain/");
   
   if(domainDirectory.at(domainDirectory.size()-1) != '/')
     domainDirectory += '/';
@@ -67,13 +72,15 @@ int main(int argc, char **argv) {
 
   boost::filesystem::create_directories(queryDirectory);
 
-  reasoner = new Clingo(MAX_N,queryDirectory,domainDirectory,actionMapToVector(ActionFactory::actions()));
+  reasoner = new Clingo(MAX_N,queryDirectory,domainDirectory,actionMapToSet(ActionFactory::actions()));
+  reasoner->reset();
 
   ros::ServiceServer update_fluents = n.advertiseService("update_fluents", updateFluents);
   ros::ServiceServer current_state_query = n.advertiseService("current_state_query", currentStateQuery);
   ros::ServiceServer compute_plan = n.advertiseService("compute_plan", computePlan);
   ros::ServiceServer compute_all_plans = n.advertiseService("compute_all_plans", computeAllPlans);
   ros::ServiceServer is_plan_valid = n.advertiseService("is_plan_valid", isPlanvalid);
+  ros::ServiceServer reset_state = n.advertiseService("reset_state", isPlanvalid);
 
 
   //TODO make sure clingo can be executed concurrently, or create multiple instances
@@ -148,4 +155,8 @@ bool isPlanvalid(bwi_kr_execution::IsPlanValid::Request& req, bwi_kr_execution::
   res.valid = reasoner->isPlanValid(TranslateAnswerSet()(req.plan), goal);
 
   return true;
+}
+
+bool resetState(std_srvs::Empty::Request &, std_srvs::Empty::Response &) {
+  reasoner->reset();
 }

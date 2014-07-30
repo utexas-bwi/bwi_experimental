@@ -8,19 +8,16 @@ using namespace std;
 
 namespace actasp {
 
-AnswerSet::AnswerSet(bool satisfied,const std::vector<actasp::AspFluent>& fluents) throw () :
+AnswerSet::AnswerSet(bool satisfied,const std::set<actasp::AspFluent>& fluents) throw () :
 	satisfied(satisfied),
-	fluents(fluents)  {
-
-	sort((this->fluents).begin(),(this->fluents).end());
-}
+	fluents(fluents)  {}
 
 bool AnswerSet::isSatisfied() const throw() {
 	return satisfied;
 }
 
 bool AnswerSet::contains(const actasp::AspFluent& fluent) const throw() {
-	return binary_search(fluents.begin(),fluents.end(),fluent);
+	return fluents.find(fluent) != fluents.end();
 }
 
 static void clearPlan(std::list<actasp::Action*>& plan) {
@@ -35,7 +32,7 @@ std::list<Action *> AnswerSet::instantiateActions(const std::map<std::string, ac
 	list<Action *> plan;
 	unsigned int maxTimeStep = 0;
 
-	vector<AspFluent>::const_iterator fluentIt = fluents.begin();
+	set<AspFluent>::const_iterator fluentIt = fluents.begin();
 
 	for (; fluentIt != fluents.end(); ++fluentIt) {
 		
@@ -56,18 +53,20 @@ std::list<Action *> AnswerSet::instantiateActions(const std::map<std::string, ac
 	return plan;
 }
 
-std::vector<actasp::AspFluent> AnswerSet::getFluentsAtTime(unsigned int timeStep) const throw() {
+std::set<actasp::AspFluent> AnswerSet::getFluentsAtTime(unsigned int timeStep) const throw() {
 	
-	//create a fake fluent which would be the first one with that time stemp (fluents are ordered)
-	AspFluent fake("-",vector<string>(),timeStep);
+	//create fake fluents which would be the upper and lower bound for the time step
+	AspFluent fakeLow("-",vector<string>(),timeStep);
+  AspFluent fakeUp("-",vector<string>(),timeStep+1);
 	
-	std::vector<actasp::AspFluent>::const_iterator element =  lower_bound(fluents.begin(),fluents.end(),fake);
+	std::set<actasp::AspFluent>::const_iterator lb =  fluents.lower_bound(fakeLow);
+  std::set<actasp::AspFluent>::const_iterator ub =  fluents.lower_bound(fakeUp);
 	
-	vector<AspFluent> target;
-	for(; element != fluents.end() && element->getTimeStep() == timeStep; ++element)
-		target.push_back(*element);
-	
-	return target;
+	return set<AspFluent>(lb,ub);
+}
+
+unsigned int AnswerSet::maxTimeStep() const throw() {
+  return fluents.rbegin()->getTimeStep();
 }
 
 bool AnswerSet::operator<(const AnswerSet &other) const throw() {
@@ -75,8 +74,8 @@ bool AnswerSet::operator<(const AnswerSet &other) const throw() {
 		return this->fluents.size() < other.fluents.size();
 	
 	//they have the same number of fluents
-	vector<AspFluent>::const_iterator thisV = this->fluents.begin();
-	vector<AspFluent>::const_iterator otherV = other.fluents.begin();
+	set<AspFluent>::const_iterator thisV = this->fluents.begin();
+	set<AspFluent>::const_iterator otherV = other.fluents.begin();
 	
 	for(; thisV != fluents.end(); ++thisV, ++otherV) {
 		//this comparison is costly, so I'm using this unelegant expression to minimize the calls to it.

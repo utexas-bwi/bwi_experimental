@@ -5,81 +5,137 @@
 #include <actasp/AspRule.h>
 #include <actasp/ActionSelector.h>
 #include <actasp/Action.h>
-
+#include <actasp/execution_observer_utils.h>
+#include <actasp/action_utils.h>
 
 #include <algorithm>
+#include <iterator>
 
 using namespace std;
 
 namespace actasp {
 
+MultiPolicyExecutor::MultiPolicyExecutor(AspKR* kr, MultiPlanner *planner, ActionSelector *selector, 
+                      const std::map<std::string, Action * >& actionMap, double suboptimality) :
+                    
+                    isGoalReached(false),
+                    hasFailed(false),
+                    actionCounter(0),
+                    newAction(true),
+                    active(NULL),
+                    kr(kr),
+                    planner(planner),
+                    goalRules(),
+                    policy(actionMapToSet(actionMap)),
+                    suboptimality(suboptimality),
+                    selector(selector),
+                    actionMap(),
+                    executionObservers() {
+
+  transform(actionMap.begin(),actionMap.end(),inserter(this->actionMap,this->actionMap.end()),ActionMapDeepCopy());
+}
+
+MultiPolicyExecutor::~MultiPolicyExecutor() {
+  delete active;
+  for_each(actionMap.begin(),actionMap.end(),ActionMapDelete());
+}
+  
+  
 void  MultiPolicyExecutor::setGoal(const std::vector<actasp::AspRule>& goalRules) throw() {
 
-	this->goalRules = goalRules;
+  this->goalRules = goalRules;
 
-	isGoalReached = kr->currentStateQuery(goalRules).isSatisfied();
+  isGoalReached = kr->currentStateQuery(goalRules).isSatisfied();
 
-	if (!isGoalReached)
-		policy = planner->computePolicy(goalRules,suboptimality);
+  if (!isGoalReached)
+    policy = planner->computePolicy(goalRules,suboptimality);
 
-	hasFailed = policy.empty();
-	delete active;
-	active = NULL;
+  hasFailed = policy.empty();
+  delete active;
+  active = NULL;
+  actionCounter = 0;
+  newAction = true;
 
 }
 
 bool MultiPolicyExecutor::goalReached() const throw() {
-	return isGoalReached;
+  return isGoalReached;
 }
 bool MultiPolicyExecutor::failed() const throw() {
-	return hasFailed;
+  return hasFailed;
 }
 
+static Action *instantiateAction(const std::map<std::string, Action * >& actionMap, const AspFluent &actionFluent) {
+  map<string, Action * >::const_iterator action = actionMap.find(actionFluent.getName());
+  
+  if(action == actionMap.end())
+    throw logic_error("MultiPolicyExecutor: no action with name " + actionFluent.getName());
+  
+  return action->second->cloneAndInit(actionFluent);
+}
 
 
 void MultiPolicyExecutor::executeActionStep() {
-	if (isGoalReached || hasFailed)
-		return;
-	
-	if(active != NULL && !active->hasFinished())
-		active->run();
-	else {
-		AnswerSet currentState = kr->currentStateQuery(vector<AspRule>());
+  if (isGoalReached || hasFailed)
+    return;
+  
+  if (active != NULL && !active->hasFinished()) {
+    
+  if (newAction) {
+    for_each(executionObservers.begin(),executionObservers.end(),NotifyActionStart(active->toFluent(actionCounter)));
+    newAction = false;
+  } 
+  
+  active->run();
 
-		//let the chooser know that the action has finished
-		//and what it led to
-		if(active != NULL)
-			selector->actionOutcome(active,currentState);
-		
-		isGoalReached = kr->currentStateQuery(goalRules).isSatisfied();
-		
-		if(isGoalReached) //well done!
-			return;
-		
-		//choose the next action
-		vector<Action*> options = policy.actions(currentState);
-		
-		if(options.empty()) {
-			//there's no action for this state, computing more plans
-			//TODO using only optimal plans for now, consider using suboptimal ones too
-			MultiPolicy otherPolicy = planner->computePolicy(goalRules,1);
-			policy.merge(otherPolicy);
-			
-			options = policy.actions(currentState);
-			if(options.empty()) {//no actions available from here!
-				hasFailed = true;
-				return;
-			}
-		}		
-		vector<Action *>::iterator chosen = selector->choose(currentState,options);
-		
-		delete active;
-		active = *chosen;
-		
-		options.erase(chosen);
-		for_each(options.begin(),options.end(),ActionDeleter());
-	}
-	
+  } else {
+    
+
+    if (active != NULL) {
+      for_each(executionObservers.begin(),executionObservers.end(),NotifyActionTermination(active->toFluent(actionCounter++)));
+    }
+
+    isGoalReached = kr->currentStateQuery(goalRules).isSatisfied();
+
+    if (isGoalReached) //well done!
+      return;
+
+    //choose the next action
+    AnswerSet currentState = kr->currentStateQuery(vector<AspRule>());
+    ActionSet options = policy.actions(currentState.getFluents());
+
+    if (options.empty()) {
+      //there's no action for this state, computing more plans
+      //TODO using only optimal plans for now, consider using suboptimal ones too
+
+      MultiPolicy otherPolicy = planner->computePolicy(goalRules,suboptimality);
+      policy.merge(otherPolicy);
+
+      options = policy.actions(currentState.getFluents());
+      if (options.empty()) { //no actions available from here!
+        hasFailed = true;
+        return;
+      }
+    }
+
+    set<AspFluent>::const_iterator chosen = selector->choose(options);
+
+    delete active;
+    active = instantiateAction(actionMap,*chosen);
+    actionCounter++;
+    newAction = true;
+
+
+  }
+
+}
+
+void MultiPolicyExecutor::addExecutionObserver(ExecutionObserver *observer) throw() {
+  executionObservers.push_back(observer);
+}
+
+void MultiPolicyExecutor::removeExecutionObserver(ExecutionObserver *observer) throw() {
+  executionObservers.remove(observer);
 }
 
 }

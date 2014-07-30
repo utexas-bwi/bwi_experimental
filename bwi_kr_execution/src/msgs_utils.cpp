@@ -44,8 +44,8 @@ bwi_kr_execution::AspRule TranslateRule::operator()(const actasp::AspRule& actas
 }
 
 actasp::AnswerSet TranslateAnswerSet::operator()(const bwi_kr_execution::AnswerSet& bwiAnswerSet) {
-  vector<actasp::AspFluent> fluents;
-  transform(bwiAnswerSet.fluents.begin(), bwiAnswerSet.fluents.end(), back_inserter(fluents), TranslateFluent());
+  set<actasp::AspFluent> fluents;
+  transform(bwiAnswerSet.fluents.begin(), bwiAnswerSet.fluents.end(), inserter(fluents,fluents.begin()), TranslateFluent());
   return actasp::AnswerSet(bwiAnswerSet.satisfied, fluents);
 }
 

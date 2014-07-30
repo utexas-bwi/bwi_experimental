@@ -10,7 +10,7 @@ typedef actionlib::SimpleActionClient<bwi_kr_execution::ExecutePlanAction> Clien
 using namespace std;
 
 int main(int argc, char**argv) {
-  ros::init(argc, argv, "bwi_go_to_location");
+  ros::init(argc, argv, "go_to_location");
   ros::NodeHandle n;
   
   ros::NodeHandle privateNode("~");
@@ -19,7 +19,7 @@ int main(int argc, char**argv) {
   
   ROS_INFO_STREAM("going to " << location);
   
-  Client client("execute_plan", true);
+  Client client("/action_executor/execute_plan", true);
   client.waitForServer();
   
   bwi_kr_execution::ExecutePlanGoal goal;

@@ -115,42 +115,43 @@ set( actasp_SRC)
 add_subdirectory(actasp/src/)
 ## Declare a cpp library
  add_library(actasp ${actasp_SRC})
+ target_link_libraries(actasp ${catkin_LIBRARIES})
 
  set( kractions_SRC)
  add_subdirectory(src/actions/)
  add_library(kractions ${kractions_SRC})
- target_link_libraries(kractions actasp)
+ add_dependencies(kractions bwi_kr_execution_generate_messages_cpp)
+ target_link_libraries(kractions actasp )
 
 ## Declare a cpp executable
 
 
-set(krexec_SRC)
+set(spexec_SRC)
+set(lexec_SRC)
 set(krreasoner_SRC)
 
 add_subdirectory(src)
-add_executable(bwi_execution_node ${krexec_SRC})
+add_executable(single_plan_executor_node ${spexec_SRC})
+target_link_libraries(single_plan_executor_node ${catkin_LIBRARIES} actasp kractions )
 
-add_executable(bwi_knowledge_reasoning_node  ${krreasoner_SRC})
+add_executable(learning_executor_node ${lexec_SRC})
+target_link_libraries(learning_executor_node ${catkin_LIBRARIES} actasp kractions )
+ 
+add_executable(knowledge_reasoning_node  ${krreasoner_SRC})
+target_link_libraries( knowledge_reasoning_node ${catkin_LIBRARIES} actasp kractions )
 
 add_executable(asp_formatter src/asp_formatter.cpp)
 target_link_libraries(asp_formatter actasp)
+
+
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 # add_dependencies(bwi_kr_execution_node bwi_kr_execution_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(bwi_execution_node
-  ${catkin_LIBRARIES}
-  actasp
-  kractions
-)
+
  
-target_link_libraries( bwi_knowledge_reasoning_node
-  ${catkin_LIBRARIES}
-  actasp
-  kractions
-)
 
 #############
 ## Install ##

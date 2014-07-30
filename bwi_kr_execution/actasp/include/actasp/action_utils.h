@@ -7,6 +7,8 @@
 
 #include <list>
 #include <utility>
+#include <set>
+#include <functional>
 
 namespace actasp {
 	
@@ -31,9 +33,18 @@ struct ActionMapDelete {
 	}
 };
 
+struct IsAnAction : public std::unary_function<const AspFluent&,bool>{
+  
+  IsAnAction(const ActionSet& actions);
+  
+  bool operator()(const AspFluent& fluent) const;
+  
+  std::set<std::string> actionNames;
+};
+
 AnswerSet planToAnswerSet(const std::list<Action*>& plan);
 
-std::vector<AspFluent> actionMapToVector(const std::map<std::string, Action *>& actionMap);
+ActionSet actionMapToSet(const std::map<std::string, Action *>& actionMap);
 
 }
 

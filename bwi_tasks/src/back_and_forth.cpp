@@ -10,7 +10,7 @@ typedef actionlib::SimpleActionClient<bwi_kr_execution::ExecutePlanAction> Clien
 using namespace std;
 
 int main(int argc, char**argv) {
-  ros::init(argc, argv, "bwi_back_and_forth");
+  ros::init(argc, argv, "back_and_forth");
   ros::NodeHandle n;
 
   ros::NodeHandle privateNode("~");
@@ -22,7 +22,7 @@ int main(int argc, char**argv) {
 
 
 
-  Client client("execute_plan", true);
+  Client client("/action_executor/execute_plan", true);
   client.waitForServer();
 
   bool fromAtoB = true;

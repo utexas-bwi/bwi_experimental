@@ -55,7 +55,6 @@ facing(D,I+1) :- facing(D,I), not -facing(D,I+1), I=0..n-1.
 open(D,I+1) :- open(D,I), not -open(D,I+1), I=0..n-1.
 -open(D,I+1) :- -open(D,I), not open(D,I+1), I=0..n-1.
 
-
 %hide fluents implied by others
 #hide -at/2.
 #hide -facing/2.

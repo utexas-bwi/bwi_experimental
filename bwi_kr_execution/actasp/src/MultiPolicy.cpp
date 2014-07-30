@@ -1,98 +1,89 @@
 #include <actasp/MultiPolicy.h>
 
 #include <actasp/Action.h>
+#include <actasp/action_utils.h>
 
 #include <algorithm>
+#include <iterator>
 
 using namespace std;
 
 namespace actasp {
-
-struct ActionCloner {
+  
+MultiPolicy::MultiPolicy(const ActionSet& actions) : policy(), allActions(actions) {}
 	
-	Action * operator()(const Action *other) const throw() {
-		return other->clone();
-	}
-};
+ActionSet MultiPolicy::actions(const std::set<AspFluent>& state) const throw() {
 	
-std::vector<Action*> MultiPolicy::actions(const AnswerSet& state) const throw() {
-	
-	std::map<AnswerSet, std::vector<Action *> >::const_iterator acts = policy.find(state);
-	
-	vector<Action *> result;
-	
+	std::map<set<AspFluent>, ActionSet >::const_iterator acts = policy.find(state);
+		
 	if(acts != policy.end()) {
-		//clone all the actions
-		transform(acts->second.begin(), acts->second.end(), back_inserter(result), ActionCloner());
+		return acts->second;
 	}
 	
-	return result;
+	return ActionSet();
 }
 
-struct CompareActions {
-	
-	CompareActions(Action *first) : first(first) {}
-	
-	bool operator()(Action *second) {
-		return first->operator==(second);
-	}
-	
-	Action *first;
-};
+void MultiPolicy::merge(const AnswerSet& plan) throw(logic_error) {
 
-struct SetTimeStepToZero {
-	void operator()(AspFluent &fluent) {
-		fluent.setTimeStep(0);
-	}
+
+  //ignore the last time step becuase it's the final state and has no actions
+  unsigned int planLength = plan.maxTimeStep()-1;
+    
+
+	for (int timeStep = 0; timeStep <= planLength; ++timeStep) {
 		
-};
-
-void MultiPolicy::merge(const AnswerSet& plan,const std::map<std::string, Action * >&actionMap) throw(logic_error) {
-	
-	list<Action *> allActions = plan.instantiateActions(actionMap);
-
-	list<Action *>::const_iterator actIt = allActions.begin();
-
-	for (int timeStep = 0; actIt != allActions.end(); ++actIt, ++timeStep) {
-		
-		vector<AspFluent> fluents = plan.getFluentsAtTime(timeStep);
+		set<AspFluent> fluents = plan.getFluentsAtTime(timeStep);
+    
+    //find the action
+    set<AspFluent>::iterator actionIt = find_if(fluents.begin(),fluents.end(),IsAnAction(allActions));
+    
+    if(actionIt == fluents.end())
+      throw logic_error("MultiPolicy: no action for some state");
+    
+    AspFluent action = *actionIt;
 		
 		//remove the action from there
+		fluents.erase(actionIt);
 		
-		AspFluent actionFluent((*actIt)->toASP(timeStep));
-		vector<AspFluent>::iterator newEnd = remove(fluents.begin(),fluents.end(),actionFluent);
-		fluents.erase(newEnd,fluents.end());
+		ActionSet &stateActions = policy[fluents]; //creates an empty vector if not present
 
-		for_each(fluents.begin(),fluents.end(),SetTimeStepToZero());
-		
-		AnswerSet state(true,fluents);
-		
-		vector<Action *> &stateActions = policy[state]; //creates an empty vector if not present
-		
-		if( find_if(stateActions.begin(), stateActions.end(),CompareActions(*actIt)) == stateActions.end() )
-			stateActions.push_back((*actIt)->clone());
+		stateActions.insert(action);
 	}
-	
-	list<Action *>::iterator eraser = allActions.begin();
-	for(; eraser != allActions.end(); ++eraser)
-		delete *eraser;
 
+}
+
+struct MergeActions {
+  MergeActions( std::map<std::set<AspFluent>, ActionSet, StateComparator > &policy) : policy(policy) {}
+ 
+ void operator()(const std::pair<set<AspFluent>, ActionSet >& stateActions) {
+  
+   map<set<AspFluent>, ActionSet >::iterator found = policy.find(stateActions.first);
+   if(found == policy.end())
+     policy.insert(stateActions);
+   
+   else {
+     found->second.insert(stateActions.second.begin(),stateActions.second.end());
+   }
+     
+   
+ }
+ 
+  std::map<std::set<AspFluent>, ActionSet, StateComparator > &policy;
+};
+
+void MultiPolicy::merge(const MultiPolicy& otherPolicy) {
+  
+  set_union(otherPolicy.allActions.begin(),otherPolicy.allActions.end(),
+                 allActions.begin(),allActions.end(),
+                 inserter(allActions,allActions.begin()));
+  
+  for_each(otherPolicy.policy.begin(),otherPolicy.policy.end(),MergeActions(policy));
 }
 
 bool MultiPolicy::empty() const throw() {
 	return policy.empty();
 }
 
-MultiPolicy::~MultiPolicy() {
-	//delete all actions
-	map<AnswerSet, vector<Action *> >::iterator policyIt = policy.begin();
-	
-	for(; policyIt != policy.end(); ++policyIt) {
-		vector<Action *>::iterator actIt = policyIt->second.begin();
-		
-		for(; actIt != policyIt->second.end(); ++actIt)
-			delete (*actIt);
-	}
-}
+
 
 }

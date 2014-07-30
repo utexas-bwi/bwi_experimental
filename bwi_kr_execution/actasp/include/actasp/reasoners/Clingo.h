@@ -10,6 +10,7 @@
 #include <map>
 #include <memory>
 #include <stdexcept>
+#include <set>
 
 namespace actasp {
 
@@ -21,19 +22,21 @@ public:
 	Clingo(unsigned int max_n,
 	       const std::string& queryDir,
 	       const std::string& domainDir,
-	       const std::vector<AspFluent>& actions) throw();
+	       const ActionSet& actions) throw();
 
 	AnswerSet currentStateQuery(const std::vector<actasp::AspRule>& query) const throw();
 	
 	bool updateFluents(const std::vector<actasp::AspFluent> &observations) throw();
 	
 	bool isPlanValid(const AnswerSet& plan, const std::vector<actasp::AspRule>& goal)  const throw();
+  
+  void reset() throw();
 
-	AnswerSet computePlan(const std::vector<actasp::AspRule>& goal) throw ();
+	AnswerSet computePlan(const std::vector<actasp::AspRule>& goal) const throw ();
 	
-	std::vector< AnswerSet> computeAllPlans(const std::vector<actasp::AspRule>& goal, double suboptimality) throw ();
+	std::vector< AnswerSet> computeAllPlans(const std::vector<actasp::AspRule>& goal, double suboptimality) const throw ();
 	
-	MultiPolicy computePolicy(const std::vector<actasp::AspRule>& goal, double suboptimality) throw (std::logic_error);
+	MultiPolicy computePolicy(const std::vector<actasp::AspRule>& goal, double suboptimality) const throw (std::logic_error);
 	
 	void setMaxTimeStep(unsigned int max_n) throw() {
 		this->max_n = max_n;
@@ -44,7 +47,8 @@ private:
 	unsigned int max_n;
 	std::string queryDir;
 	std::string domainDir;
-  std::vector<AspFluent> allActions;
+  ActionSet allActions;
+  std::string actionFilter;
 
 	std::string generatePlanQuery(	const std::vector<actasp::AspRule>& goalRules, 
 									unsigned int timeStep, 

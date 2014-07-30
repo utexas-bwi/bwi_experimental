@@ -4,10 +4,14 @@
 #include <string>
 #include <vector>
 #include <stdexcept>
+#include <set>
+#include <functional>
 
 namespace actasp {
 
-
+class ActionComparator;
+class ActionEquality;
+  
 class AspFluent {
 public:
 
@@ -34,9 +38,26 @@ private:
 	std::string name;
 	std::vector<std::string> variables;
 	unsigned int timeStep;
-	std::string cachedString; //cached for optimization
+	std::string cachedBase; //cached for optimization
+	
+	friend class ActionComparator;
+  friend class ActionEquality;
 
 };
+
+struct ActionComparator : public std::binary_function<const AspFluent&, const AspFluent&, bool>{
+ bool operator()(const AspFluent& first, const AspFluent& second) const {
+   return first.cachedBase < second.cachedBase;
+ }
+};
+
+struct ActionEquality : public std::binary_function<const AspFluent&, const AspFluent&, bool>{
+ bool operator()(const AspFluent& first, const AspFluent& second) const {
+   return first.cachedBase == second.cachedBase;
+ }
+};
+
+typedef std::set<AspFluent, ActionComparator> ActionSet;
 
 }
 #endif

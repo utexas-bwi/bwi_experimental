@@ -4,7 +4,7 @@
 #include <actasp/AspFluent.h>
 
 #include <string>
-#include <vector>
+#include <set>
 #include <list>
 #include <map>
 #include <stdexcept>
@@ -17,7 +17,7 @@ class AnswerSet {
 
 public:
 	
-	explicit AnswerSet(bool satisfied,const std::vector<actasp::AspFluent>& fluents = std::vector<AspFluent>()) throw();
+	explicit AnswerSet(bool satisfied,const std::set<actasp::AspFluent>& fluents = std::set<AspFluent>()) throw();
 	
 	bool isSatisfied() const throw();
 	
@@ -25,15 +25,17 @@ public:
 	
 	std::list<Action *> instantiateActions(const std::map<std::string, actasp::Action*> &actionMap) const throw(std::logic_error);
 	
-	const std::vector<actasp::AspFluent>& getFluents() const throw() { return fluents;}
+	const std::set<actasp::AspFluent>& getFluents() const throw() { return fluents;}
 	
-	std::vector<actasp::AspFluent> getFluentsAtTime(unsigned int timeStep) const throw();
+	std::set<actasp::AspFluent> getFluentsAtTime(unsigned int timeStep) const throw();
+  
+  unsigned int maxTimeStep() const throw();
 	
 	bool operator<(const AnswerSet &other) const throw();
 	
 private:
 	bool satisfied;
-	std::vector<actasp::AspFluent> fluents;
+	std::set<actasp::AspFluent> fluents;
 };
 	
 }

@@ -14,7 +14,7 @@ class Action;
 
 struct Planner {
 
-	virtual AnswerSet computePlan(const std::vector<actasp::AspRule>& goal) throw (std::logic_error) =0;
+	virtual AnswerSet computePlan(const std::vector<actasp::AspRule>& goal) const throw (std::logic_error) =0;
 
 	virtual ~Planner() {}
 };

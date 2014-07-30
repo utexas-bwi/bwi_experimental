@@ -26,46 +26,72 @@ static vector<string> tokenizeCommas(string input) {
 
 
 AspFluent::AspFluent(const std::string& formula) throw (std::invalid_argument) :
-			cachedString(){
+      name(),
+      variables(),
+      timeStep(),
+			cachedBase(){
+        
+  //this used to be nice, but it turned out to be a major bottleneck, so I had to reimplement it for efficiency.
+   
+   bool inName = true;   
+   bool valid = false;
+   string current;
+   current.reserve(100);
+   cachedBase.reserve(100);
+   
+   for(int i=0, size = formula.length(); i < size; ++i) {
+     
+     if(inName) {
+       if(formula.at(i) != '(')
+         name += formula.at(i);
+       else {
+         cachedBase += name;
+         cachedBase += '(';
+         inName = false;
+       }
+     }
+     else {
+       if(formula.at(i) == ')') {
+         timeStep = atoi(current.c_str());
 
-	size_t start = formula.find("(");
+           
+         valid = true;
+         break; //ignore anything else
+       }
+       if(formula.at(i) != ',')
+         current += formula.at(i);
+       else {
+         variables.push_back(current);
+         cachedBase += current;
+         cachedBase += ',';
+         current.clear();
+       }
+     }
+   }
 
-	if (start == string::npos)
-		throw std::invalid_argument("AspFluent: The string " + formula + " does not contain a '(', therefore is not a valid fluent");
-
-	this->name = formula.substr(0,start);
-
-	size_t end = formula.find_last_of(",");
-
-	//if there is no comma, the action has only one parameter, which must be the time step
-	string paramString = (end == string::npos)? "" : formula.substr(start+1,end-(start+1));
-
-	this->variables = tokenizeCommas(paramString);
-
-	//if there is no comma, consider the parenthesis
-	if(end != string::npos)
-		start = end + 1;
-	else
-		start = start + 1;
-	
-	end = formula.find_last_of(")");
-
-	if (end == string::npos)
-		throw std::invalid_argument("The string " + formula + " does not contain a ')', therefore is not a valid fluent");
-
-	//assumes zero if it fails
-	timeStep = atoi((formula.substr(start,end-start)).c_str());
-	
-	cachedString = this->toString(this->timeStep);
+   if(inName)
+     throw std::invalid_argument("AspFluent: The string " + formula + " does not contain a '(', therefore is not a valid fluent");
+   
+   if(!valid)
+     throw std::invalid_argument("The string " + formula + " does not contain a ')', therefore is not a valid fluent");
 }
 
 AspFluent::AspFluent(const std::string &name, const std::vector<std::string> &variables, unsigned int timeStep) throw () : 
 		name(name),
 		variables(variables),
 		timeStep(timeStep),
-		cachedString(){
-			cachedString = this->toString(this->timeStep);
-		}
+		cachedBase() {
+  stringstream ss;
+
+  ss << name << "(";
+
+  int i=0;
+  for (int size = variables.size(); i<size; ++i)
+    ss << variables[i] << ",";
+
+  cachedBase = ss.str();
+
+}
 
 unsigned int AspFluent::arity() const  throw() {
 	return this->variables.size() + 1;
@@ -73,11 +99,7 @@ unsigned int AspFluent::arity() const  throw() {
 
 void AspFluent::setTimeStep(unsigned int timeStep) throw() {
 	
-	//may invalidate the cached string
-	
-	if(timeStep != this->timeStep)
-		cachedString = toString(timeStep);
-	
+
 	this->timeStep = timeStep;
 	
 }
@@ -101,37 +123,25 @@ bool AspFluent::operator<(const AspFluent& other) const throw(){
 	if(this->timeStep > other.timeStep)
 		return false;
 
-	return  this->toString() < other.toString();
+	return  this->cachedBase < other.cachedBase;
 }
 
 bool AspFluent::operator==(const AspFluent& other) const throw() {
 	if(this->timeStep != other.timeStep)
 		return false;
 	
-	return this->toString() == other.toString();
+	return this->cachedBase == other.cachedBase;
 }
 
 std::string AspFluent::toString(unsigned int timeStep) const throw() {
-	
-	if(timeStep == this->timeStep && !cachedString.empty())
-		return cachedString;
-
-	stringstream ss;
-
-	ss << name << "(";
-
-	int i=0;
-	for (int size = variables.size(); i<size; ++i)
-		ss << variables[i] << ",";
-
-	ss << timeStep << ")";
-
-	return ss.str();
-
+    
+  stringstream ss;
+  ss << timeStep << ")";
+  return cachedBase + ss.str();
 }
 
 std::string AspFluent::toString() const throw () {
-	return cachedString;
+	return this->toString(this->timeStep);
 }
 
 

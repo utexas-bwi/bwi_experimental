@@ -9,6 +9,7 @@
 #include <actasp/action_utils.h>
 #include <actasp/ExecutionObserver.h>
 #include <actasp/PlanningObserver.h>
+#include <actasp/execution_observer_utils.h>
 
 #include <list>
 #include <algorithm>
@@ -78,27 +79,7 @@ void ReplanningActionExecutor::setGoal(const std::vector<actasp::AspRule>& goalR
   computePlan();
 }
 
-struct NotifyActionTermination {
-  
-  NotifyActionTermination(const AspFluent& action) : action(action) {}
-  
-  void operator()(ExecutionObserver *observer) {
-    observer->actionTerminated(action);
-  }
-  
-  AspFluent action;
-};
 
-struct NotifyActionStart {
-  
-  NotifyActionStart(const AspFluent& action) : action(action) {}
-  
-  void operator()(ExecutionObserver *observer) {
-    observer->actionStarted(action);
-  }
-  
-  AspFluent action;
-};
 
 
 void ReplanningActionExecutor::executeActionStep() {
@@ -108,10 +89,9 @@ void ReplanningActionExecutor::executeActionStep() {
 
 
   Action *current = plan.front();
-  
-  AspFluent actionFluent(current->toASP(actionCounter));
+
   if(newAction) {
-      for_each(executionObservers.begin(),executionObservers.end(),NotifyActionStart(actionFluent));
+      for_each(executionObservers.begin(),executionObservers.end(),NotifyActionStart(current->toFluent(actionCounter)));
       newAction = false;
   }
  
@@ -121,7 +101,7 @@ void ReplanningActionExecutor::executeActionStep() {
   if (current->hasFinished()) {
     //destroy the action and pop a new one
     
-    for_each(executionObservers.begin(),executionObservers.end(),NotifyActionTermination(AspFluent(current->toASP(actionCounter++))));
+    for_each(executionObservers.begin(),executionObservers.end(),NotifyActionTermination(current->toFluent(actionCounter++)));
     
     delete current;
     plan.pop_front();

@@ -2,27 +2,30 @@
 #define actasp_MultiPolicy_h__guard
 
 #include <actasp/AnswerSet.h>
+#include <actasp/AspFluent.h>
+#include <actasp/state_utils.h>
 
-#include <vector>
+#include <set>
 #include <map>
 #include <stdexcept>
 
 namespace actasp {
-
-class Action;
-
+  
 class MultiPolicy {
 public:
-	std::vector<Action *> actions(const AnswerSet& state)const throw();
+  
+  MultiPolicy(const ActionSet& actions);
+  
+	ActionSet actions(const std::set<AspFluent>& state) const throw();
 	
-	void merge(const AnswerSet& plan,const std::map<std::string, Action * >&actionMap) throw(std::logic_error);
+	void merge(const AnswerSet& plan) throw(std::logic_error);
+  void merge(const MultiPolicy& otherPolicy);
 	
 	bool empty()const throw();
 	
-	~MultiPolicy();
-	
 private:
-	std::map<AnswerSet, std::vector<Action *> > policy;
+	std::map<std::set<AspFluent>, ActionSet, StateComparator > policy;
+  ActionSet allActions;
 	
 };
 	

@@ -18,6 +18,8 @@ struct AspKR : public actasp::MultiPlanner {
 	virtual bool updateFluents(const std::vector<actasp::AspFluent> &observations) throw() = 0;
 	
 	virtual bool isPlanValid(const AnswerSet& plan, const std::vector<actasp::AspRule>& goal)  const throw() = 0;
+  
+  virtual void reset() throw() = 0;
 	
 	virtual ~AspKR() {}
 };

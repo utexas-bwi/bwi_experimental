@@ -1,17 +1,15 @@
 
-
 #include "msgs_utils.h"
 #include "RemoteReasoner.h"
 
-#include "bwi_kr_execution/ExecutePlanAction.h"
-
-#include "actasp/reasoners/Clingo.h"
+#include "actasp/action_utils.h"
 #include "actasp/executors/ReplanningActionExecutor.h"
-#include "actasp/ActionExecutor.h"
-#include "actasp/AspFluent.h"
-#include "actasp/planners/AnyPlan.h"
 #include "actasp/ExecutionObserver.h"
 #include "actasp/PlanningObserver.h"
+#include "actasp/AnswerSet.h"
+
+
+#include "bwi_kr_execution/ExecutePlanAction.h"
 
 #include "actions/ActionFactory.h"
 #include "actions/LogicalNavigation.h"
@@ -19,11 +17,15 @@
 #include <actionlib/server/simple_action_server.h>
 
 #include <ros/ros.h>
+#include <ros/package.h>
 #include <ros/console.h>
 
 #include <boost/filesystem.hpp>
 
 #include <string>
+
+const int MAX_N = 20;
+const std::string queryDirectory("/tmp/bwi_action_execution/");
 
 
 using namespace std;
@@ -73,7 +75,6 @@ struct Observer : public ExecutionObserver, public PlanningObserver {
 
 void executePlan(const bwi_kr_execution::ExecutePlanGoalConstPtr& plan, Server* as) {
 
-  ROS_INFO("Invoked");
   vector<AspRule> goalRules;
 
   transform(plan->aspGoal.begin(),plan->aspGoal.end(),back_inserter(goalRules),TranslateRule());
@@ -110,34 +111,42 @@ void executePlan(const bwi_kr_execution::ExecutePlanGoalConstPtr& plan, Server* 
 }
 
 int main(int argc, char**argv) {
-  ros::init(argc, argv, "bwi_action_execution");
+  ros::init(argc, argv, "action_executor");
   ros::NodeHandle n;
 
-  if (ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug)) {
-    ros::console::notifyLoggerLevelsChanged();
-  }
+//   if (ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug)) {
+//     ros::console::notifyLoggerLevelsChanged();
+//   }
+  
+  ros::NodeHandle privateNode("~");
+  string domainDirectory;
+  n.param<std::string>("/bwi_kr_execution/domain_directory", domainDirectory, ros::package::getPath("bwi_kr_execution")+"/domain/");
+  
+  if(domainDirectory.at(domainDirectory.size()-1) != '/')
+    domainDirectory += '/';
 
 //  create initial state
   LogicalNavigation setInitialState("noop");
   setInitialState.run();
 
-  ros::NodeHandle privateNode("~");
+
   bool simulating;
   privateNode.param<bool>("simulation",simulating,false);
-  ActionFactory::setSimulation(simulating); //parametrize this
+  ActionFactory::setSimulation(simulating); 
+  
+  boost::filesystem::create_directories(queryDirectory);
 
-  AspKR *reasoner = new RemoteReasoner();
-  Planner *planner = new AnyPlan(reasoner,1.5);
+  AspKR *reasoner = new RemoteReasoner(MAX_N,queryDirectory,domainDirectory,actionMapToSet(ActionFactory::actions()));
   
   //need a pointer to the specific type for the observer
-  ReplanningActionExecutor *replanner = new ReplanningActionExecutor(reasoner,planner,ActionFactory::actions());
+  ReplanningActionExecutor *replanner = new ReplanningActionExecutor(reasoner,reasoner,ActionFactory::actions());
   executor = replanner;
   
   Observer observer;
   executor->addExecutionObserver(&observer);
   replanner->addPlanningObserver(&observer);
 
-  Server server(n, "execute_plan", boost::bind(&executePlan, _1, &server), false);
+  Server server(privateNode, "execute_plan", boost::bind(&executePlan, _1, &server), false);
   server.start();
 
   ros::spin();

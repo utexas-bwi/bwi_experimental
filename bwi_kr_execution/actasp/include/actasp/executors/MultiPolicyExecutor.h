@@ -6,32 +6,59 @@
 #include <actasp/AspRule.h>
 
 #include <vector>
+#include <list>
 
 namespace actasp {
 	
 class AspKR;
 class MultiPlanner;
 class ActionSelector;
+class ExecutionObserver;
+class PlanningObserver;
 
 class MultiPolicyExecutor : public ActionExecutor {
 public:
-	void setGoal(const std::vector<actasp::AspRule>& goalRules) throw() = 0;
-
-	bool goalReached() const throw() =0;
-	bool failed() const throw() = 0;
-
-	void executeActionStep() = 0;
-private:
-	bool isGoalReached;
-	bool hasFailed;
-	std::vector<actasp::AspRule> goalRules;
-	AspKR* kr;
-	MultiPlanner *planner;
-	MultiPolicy policy;
-	double suboptimality;
-	Action *active;
-	ActionSelector *selector;
 	
+  MultiPolicyExecutor(AspKR* kr, MultiPlanner *planner, ActionSelector *selector, 
+                      const std::map<std::string, Action * >& actionMap, double suboptimality);
+  
+  using ActionExecutor::setGoal;
+  void setGoal(const std::vector<actasp::AspRule>& goalRules) throw();
+
+	bool goalReached() const throw();
+	bool failed() const throw();
+
+	void executeActionStep();
+  
+  void addExecutionObserver(ExecutionObserver *observer) throw();
+  void removeExecutionObserver(ExecutionObserver *observer) throw();
+  
+  ~MultiPolicyExecutor();
+ 
+private:
+  
+	//state
+  bool isGoalReached;
+	bool hasFailed;
+  unsigned int actionCounter;
+  bool newAction;
+  Action *active;
+  
+  //KR stuff
+  AspKR* kr;
+  MultiPlanner *planner;
+	std::vector<actasp::AspRule> goalRules;
+  
+	MultiPolicy policy;
+
+  //customization
+  double suboptimality;
+  ActionSelector *selector;
+  std::map<std::string, Action * > actionMap;
+  
+  //observers
+  std::list<ExecutionObserver*> executionObservers;
+
 };
 
 }

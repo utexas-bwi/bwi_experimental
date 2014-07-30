@@ -3,17 +3,13 @@
 
 #include <actasp/AnswerSet.h>
 
-#include <vector>
+#include <set>
 
 namespace actasp {
-	
-class Action;
 
-struct ActionSelector {
+struct ActionSelector  {
 
-	virtual std::vector<Action*>::iterator choose(const actasp::AnswerSet& currentState,std::vector<Action*> options) = 0;
-	
-	virtual void actionOutcome(Action *last,const actasp::AnswerSet& nextState) = 0;
+	virtual ActionSet::const_iterator choose(const ActionSet &options) throw() = 0;
 
 	virtual ~ActionSelector() {}
 };

@@ -15,9 +15,9 @@ class Action;
 
 struct MultiPlanner : public actasp::Planner {
 
-virtual std::vector< AnswerSet > computeAllPlans(const std::vector<actasp::AspRule>& goal, double suboptimality) throw (std::logic_error)=0;
+virtual std::vector< AnswerSet > computeAllPlans(const std::vector<actasp::AspRule>& goal, double suboptimality) const throw (std::logic_error)=0;
 
-virtual MultiPolicy computePolicy(const std::vector<actasp::AspRule>& goal, double suboptimality) throw (std::logic_error)=0;
+virtual MultiPolicy computePolicy(const std::vector<actasp::AspRule>& goal, double suboptimality) const throw (std::logic_error)=0;
 
 virtual ~MultiPlanner(){}
 

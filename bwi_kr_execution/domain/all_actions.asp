@@ -12,5 +12,5 @@
 %removes the warning about noop not being defined, shouldn't have any consequences
 noop(n).
 
-
+#hide noop/1.
 
