@@ -42,7 +42,37 @@ QLearningActionSelector::QLearningActionSelector(double alpha, RewardFunction<St
   count(0)  {}
 
 
+struct CompareSecond {
+  bool operator()(const pair<AspFluent, double>& first, const pair<AspFluent, double>& second) {
+    return first.second < second.second;
+  }
+};
+
 actasp::ActionSet::const_iterator QLearningActionSelector::choose(const actasp::ActionSet& options) throw() {
+
+  if (!(initial.empty() || final.empty())) {
+
+    ActionValueMap::const_iterator bestValuePair = max_element(value[final].begin(), value[final].end(),CompareSecond());
+    
+    double bestValue = 0;
+    if(bestValuePair != value[final].end())
+      bestValue = bestValuePair->second;
+
+    double rew = reward->r(initial,previousAction,final);
+
+
+    ROS_INFO_STREAM("old value: " << value[initial][previousAction]);
+    ROS_INFO_STREAM("reward: " << rew);
+
+    value[initial][previousAction] = (1 - alpha) * value[initial][previousAction] + alpha * (rew + bestValue);
+
+    ROS_INFO_STREAM("new value: " << value[initial][previousAction]);
+
+    initial.clear();
+    final.clear();
+
+  }
+
 
   stringstream ss;
   ss << "Evaluating options: ";
@@ -72,30 +102,7 @@ actasp::ActionSet::const_iterator QLearningActionSelector::choose(const actasp::
 
 }
 
-struct CompareSecond {
-  bool operator()(const pair<AspFluent, double>& first, const pair<AspFluent, double>& second) {
-    return first.second < second.second;
-  }
-};
-
 void QLearningActionSelector::actionStarted(const AspFluent&) throw() {
-
-  if (!(initial.empty() || final.empty())) {
-
-    ActionValueMap::const_iterator bestValuePair = max_element(value[final].begin(), value[final].end(),CompareSecond());
-    double bestValue = bestValuePair->second;
-
-    double rew = reward->r(initial,previousAction,final);
-
-
-    ROS_INFO_STREAM("old value: " << value[initial][previousAction]);
-    ROS_INFO_STREAM("reward: " << rew);
-
-    value[initial][previousAction] = (1 - alpha) * value[initial][previousAction] + alpha * (rew + bestValue);
-
-    ROS_INFO_STREAM("new value: " << value[initial][previousAction]);
-
-  }
 
   initial = reasoner->currentStateQuery(vector<AspRule>()).getFluents();
 }
@@ -120,7 +127,7 @@ void QLearningActionSelector::episodeEnded() {
 void QLearningActionSelector::readFrom(std::istream & fromStream) throw() {
 
   ROS_DEBUG("Loading value function");
-  
+
   const string whiteSpaces(" \t");
 
   value.clear();
@@ -135,10 +142,10 @@ void QLearningActionSelector::readFrom(std::istream & fromStream) throw() {
     stateLine = stateLine.substr(firstChar,lastChar-firstChar+1);
 
     stringstream stateStream(stateLine);
-    
-    
-    
-    if(stateLine.empty())
+
+
+
+    if (stateLine.empty())
       return;
 
     State state;
@@ -153,14 +160,14 @@ void QLearningActionSelector::readFrom(std::istream & fromStream) throw() {
       size_t firstChar = min(actionLine.find_first_of(whiteSpaces), static_cast<size_t>(0));
       size_t lastChar = min(actionLine.find_last_not_of(whiteSpaces),actionLine.size());
       actionLine = actionLine.substr(firstChar,lastChar-firstChar+1);
-      
+
       stringstream actionStream(actionLine);
 
       double actionValue;
       string fluentString;
 
       actionStream >> actionValue >> fluentString;
-      
+
       AspFluent action(fluentString);
 
       value[state].insert(make_pair(action,actionValue));
@@ -175,7 +182,7 @@ void QLearningActionSelector::readFrom(std::istream & fromStream) throw() {
 void QLearningActionSelector::writeTo(std::ostream & toStream) throw() {
 
   ROS_DEBUG("Storing value function");
-  
+
   StateActionMap::const_iterator stateIt = value.begin();
   //for each state
   for (; stateIt != value.end(); ++stateIt) {
