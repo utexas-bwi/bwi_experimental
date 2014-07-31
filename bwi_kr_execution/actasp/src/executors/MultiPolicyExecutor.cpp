@@ -104,9 +104,11 @@ void MultiPolicyExecutor::executeActionStep() {
     AnswerSet currentState = kr->currentStateQuery(vector<AspRule>());
     ActionSet options = policy.actions(currentState.getFluents());
 
-    if (options.empty()) {
+    if (options.empty() || (active != NULL &&  active->hasFailed())) {
       //there's no action for this state, computing more plans
-      //TODO using only optimal plans for now, consider using suboptimal ones too
+
+      //if the last action failed, we may want to have some more options
+      
 
       MultiPolicy otherPolicy = planner->computePolicy(goalRules,suboptimality);
       policy.merge(otherPolicy);

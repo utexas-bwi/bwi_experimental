@@ -11,8 +11,6 @@
 #include <fstream>
 #include <cmath> //for floor
 
-#include <ros/console.h>
-
 #define CURRENT_STATE_FILE "current.asp"
 
 using namespace std;
@@ -360,7 +358,7 @@ MultiPolicy Clingo::computePolicy(const std::vector<actasp::AspRule>& goal, doub
     MultiPolicy policy(allActions);
 
   for_each(answerSets.begin(),answerSets.end(),PolicyMerger(policy));
-  ROS_DEBUG_STREAM(" plan length: " << shortestLength << " # of plans: " << answerSets.size());
+  
   list< list <AspFluent> > allPlans;
   
   //remove the states from the plans
@@ -372,7 +370,7 @@ MultiPolicy Clingo::computePolicy(const std::vector<actasp::AspRule>& goal, doub
 
     string query = generatePlanQuery(goal,i,false);
     answerSets = krQuery(query,i,"planQuery.asp",0);
-    ROS_DEBUG_STREAM(" plan length: " << i << " # of plans: " << answerSets.size());
+    
     vector<AnswerSet>::iterator newEnd = remove_if(answerSets.begin(),answerSets.end(),IsNotLocallyOptimalSubPlanCheck(allPlans,allActions));
 
     transform(answerSets.begin(),answerSets.end(),back_inserter(allPlans), CleanPlan(allActions));
