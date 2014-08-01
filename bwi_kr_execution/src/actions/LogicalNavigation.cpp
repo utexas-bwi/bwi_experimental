@@ -75,7 +75,7 @@ Action *LogicalNavigation::cloneAndInit(const actasp::AspFluent & fluent) const 
 
 
 
-static ActionFactory gothroughFactory(new LogicalNavigation("gothrough"));
-static ActionFactory approachFactory(new LogicalNavigation("approach"));
+// static ActionFactory gothroughFactory(new LogicalNavigation("gothrough"));
+// static ActionFactory approachFactory(new LogicalNavigation("approach"));
 	
 } //namespace

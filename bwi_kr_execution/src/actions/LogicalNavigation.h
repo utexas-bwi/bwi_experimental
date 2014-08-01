@@ -15,15 +15,17 @@ public:
 	
 	std::string getName() const {return name;}
 	
-	void run();
+	virtual void run();
 	
 	bool hasFinished() const {return done;}
 	
-	Action *cloneAndInit(const actasp::AspFluent & fluent) const;
+	virtual Action *cloneAndInit(const actasp::AspFluent & fluent) const;
 	
-	Action *clone() const {return new LogicalNavigation(*this);}
+	virtual Action *clone() const {return new LogicalNavigation(*this);}
 	
-private:
+  virtual ~LogicalNavigation() {}
+	
+protected:
 	
 	virtual std::vector<std::string> getParameters() const {return parameters;}
 	
