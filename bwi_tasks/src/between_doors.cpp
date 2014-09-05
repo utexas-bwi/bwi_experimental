@@ -10,15 +10,15 @@ typedef actionlib::SimpleActionClient<bwi_kr_execution::ExecutePlanAction> Clien
 using namespace std;
 
 int main(int argc, char**argv) {
-  ros::init(argc, argv, "back_and_forth");
+  ros::init(argc, argv, "between_doors");
   ros::NodeHandle n;
 
   ros::NodeHandle privateNode("~");
   string locationA;
-  privateNode.param<string>("a",locationA,"l3_414b");
+  privateNode.param<string>("a",locationA,"d3_414b1");
 
   string locationB;
-  privateNode.param<string>("b",locationB,"l3_516");
+  privateNode.param<string>("b",locationB,"d3_414b2");
 
 
 
@@ -39,7 +39,7 @@ int main(int argc, char**argv) {
 
     bwi_kr_execution::AspRule rule;
     bwi_kr_execution::AspFluent fluent;
-    fluent.name = "not at";
+    fluent.name = "not facing";
 
     fluent.variables.push_back(location);
 

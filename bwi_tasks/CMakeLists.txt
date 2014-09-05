@@ -105,13 +105,17 @@ include_directories(
 # )
 
 ## Declare a cpp executable
-add_executable(bwi_go_to_location_node src/go_to_location.cpp)
-add_dependencies(bwi_go_to_location_node ${catkin_EXPORTED_TARGETS})
-target_link_libraries(bwi_go_to_location_node ${catkin_LIBRARIES})
+add_executable(go_to_location_node src/go_to_location.cpp)
+add_dependencies(go_to_location_node ${catkin_EXPORTED_TARGETS})
+target_link_libraries(go_to_location_node ${catkin_LIBRARIES})
 
-add_executable(bwi_back_and_forth_node src/back_and_forth.cpp)
-add_dependencies(bwi_back_and_forth_node ${catkin_EXPORTED_TARGETS})
-target_link_libraries(bwi_back_and_forth_node ${catkin_LIBRARIES})
+add_executable(back_and_forth_node src/back_and_forth.cpp)
+add_dependencies(back_and_forth_node ${catkin_EXPORTED_TARGETS})
+target_link_libraries(back_and_forth_node ${catkin_LIBRARIES})
+
+add_executable(between_doors src/between_doors.cpp)
+add_dependencies(between_doors ${catkin_EXPORTED_TARGETS})
+target_link_libraries(between_doors ${catkin_LIBRARIES})
 
 #############
 ## Install ##
