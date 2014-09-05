@@ -153,7 +153,7 @@ int main() {
 		//fluents in an answer set are ordered by time step.
 		unsigned int lastTimeStep = sets[i].maxTimeStep();
 		
-		for(int t = 0; t < lastTimeStep; ++t) {
+		for(int t = 0; t <= lastTimeStep; ++t) {
 			
 		set<AspFluent> fluentsAtTimeT = sets[i].getFluentsAtTime(t);
 		set<AspFluent>::const_iterator flu = fluentsAtTimeT.begin();
