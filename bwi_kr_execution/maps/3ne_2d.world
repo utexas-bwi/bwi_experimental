@@ -1,0 +1,26 @@
+include "include/hokuyo.inc"
+include "include/crobot.inc"
+include "include/door.inc"
+include "include/floorplan.inc"
+
+window( 
+  size [ 945 507 1] 		# Window size
+  rotate [ 0.000 0.000 ]	# Map rottion
+  center [16.263 10.301]	# Metric coordinates of the central point of the window
+  scale 15.455 			# zoom scale
+  show_data 0 
+)
+
+# load an environment bitmap
+floorplan (
+  size [58.45 25.85 1]	# size of the map (meters)
+  pose [16.075 10.925 0 0] # coordinates of the center of the map
+  bitmap "3ne.pgm"
+)
+
+crobot( pose [ 22.0  11.5  0  0 ]   name "robot0"  color "blue")
+
+largedoor( pose [ 22.5 9.3 0  0 ] name "door1")
+door( pose [ 25.4 6.8 0  0 ] name "door2")
+largedoor( pose [ 19.3 4.8 0 90 ] name "door3")
+

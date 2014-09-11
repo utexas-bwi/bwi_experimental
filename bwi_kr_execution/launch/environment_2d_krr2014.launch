@@ -1,18 +1,18 @@
 <launch>
 
   <arg name="dir_path" default="$(find bwi_kr)/config/simulation" />
-  <arg name="map_file" default="$(find utexas_gdc)/maps/3ne.yaml" />
+  <arg name="map_file" default="$(find bwi_kr_execution)/maps/3ne.yaml" />
   <arg name="location_file" default="$(arg dir_path)/locations.yaml" />
   <arg name="door_file" default="$(arg dir_path)/doors.yaml" />
 
-  <!-- launch gazebo simulation environment and map server -->
-  <include file="$(find utexas_gdc)/launch/3ne.launch" />
+  <!-- launch 2D stage simulation environment and map server -->
+  <include file="$(find bwi_kr_execution)/launch/3ne_2d.launch" />
   <include file="$(find utexas_gdc)/launch/3ne_map.launch" />
 
   <!-- launch the base robot + autonomous navigation -->
   <include file="$(find segbot_gazebo)/launch/segbot_mobile_base.launch">
     <arg name="launch_localization" value="true" />
-    <arg name="use_fake_localization" value="true" />
+    <arg name="use_fake_localization" value="false" />
     <arg name="launch_move_base" value="true" />
     <arg name="use_full_gazebo_model" value="false" />
     <arg name="x" value="22" />
@@ -28,9 +28,9 @@
   </node>
 
   <!-- launch the simulation door handler -->
-  <include file="$(find segbot_simulation_apps)/launch/door_handler.launch">
+  <!-- include file="$(find segbot_simulation_apps)/launch/door_handler.launch">
     <arg name="door_file" value="$(arg door_file)" />
-  </include>
+  </include -->
 
   <!-- launch rviz for navigation visualization -->
   <include file="$(find segbot_navigation)/launch/rviz.launch" />

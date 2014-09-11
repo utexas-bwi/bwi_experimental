@@ -1,0 +1,16 @@
+<launch>
+
+  <arg name="use_sim_time" default="true" />
+  <arg name="debug" default="false" />
+
+  <!-- set use_sim_time flag -->
+  <group if="$(arg use_sim_time)">
+    <param name="/use_sim_time" value="true" />
+  </group>
+
+  <!-- start world -->
+  <node name="stage" pkg="stage_ros" type="stageros" args="$(find bwi_kr_execution)/maps/3ne_2d.world" respawn="false" output="screen">
+	<remap from="base_scan" to="scan"/>
+  </node>
+
+</launch>
