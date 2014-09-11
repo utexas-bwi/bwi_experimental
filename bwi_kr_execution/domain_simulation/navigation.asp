@@ -1,1 +1,1 @@
-/home/matish/programmi/ros/bwi/src/bwi_experimental/bwi_kr_execution/domain/navigation.asp
+../domain/navigation.asp
