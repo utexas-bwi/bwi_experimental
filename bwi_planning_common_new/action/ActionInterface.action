@@ -1,9 +1,0 @@
-# Define the goal
-bwi_planning_common/PlannerAtom command
----
-# Define the result
-bool success
-bwi_planning_common/PlannerAtom[] observations
----
-# Define a feedback message
-string status
