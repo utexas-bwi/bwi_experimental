@@ -35,5 +35,7 @@
   <!-- launch the sound play node -->
   <node name="soundplay" pkg="sound_play" type="soundplay_node.py" />
 
+  <!-- logging node-->
+  <include file="$(find bwi_logging)/launch/record.launch"> </include>
 
 </launch>
