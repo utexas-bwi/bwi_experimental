@@ -117,6 +117,10 @@ add_executable(between_doors src/between_doors.cpp)
 add_dependencies(between_doors ${catkin_EXPORTED_TARGETS})
 target_link_libraries(between_doors ${catkin_LIBRARIES})
 
+add_executable(visit_door_list src/visit_door_list.cpp)
+add_dependencies(visit_door_list ${catkin_EXPORTED_TARGETS})
+target_link_libraries(visit_door_list ${catkin_LIBRARIES})
+
 #############
 ## Install ##
 #############
