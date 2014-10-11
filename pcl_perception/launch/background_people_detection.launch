@@ -1,6 +1,6 @@
 <launch>
 
-<node pkg="pcl_perception" type="background_person_detector" name="background_person_detector" output="screen">
+<node pkg="pcl_perception" type="background_person_detector" name="background_person_detector" output="log">
 
 	<param name="visualize" value="true" />
 	<param name="rate" value="4.0" />
