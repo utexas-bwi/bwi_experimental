@@ -24,6 +24,8 @@
 #include <tf/transform_listener.h>
 #include <tf/tf.h>
 
+#include <pcl_ros/impl/transforms.hpp>
+
 // PCL specific includes
 #include <pcl/conversions.h>
 #include <pcl_conversions/pcl_conversions.h>
@@ -35,7 +37,7 @@
 #include <pcl/sample_consensus/sac_model_plane.h>
 #include <pcl/people/ground_based_people_detection_app.h>
 #include <pcl/common/time.h>
-
+#include <pcl/filters/crop_box.h>
 
 using namespace std;
 
@@ -45,6 +47,7 @@ typedef pcl::PointCloud<PointT> PointCloudT;
 //some custom functions
 #include "utils/file_io.h"
 #include "utils/viz_utils.h" 
+#include "utils/pcl_utils.h"
  
 
  
@@ -72,8 +75,8 @@ boost::mutex cloud_mutex;
 
 bool new_cloud_available_flag = false;
 PointCloudT::Ptr cloud (new PointCloudT);
-
-enum { COLS = 640, ROWS = 480 };
+PointCloudT::Ptr person_cloud (new PointCloudT);
+sensor_msgs::PointCloud2 person_cloud_ros;
 
 void sig_handler(int sig)
 {
@@ -132,8 +135,9 @@ int main (int argc, char** argv)
 	
 	
 	//initialize marker publisher
-	ros::Publisher marker_pub = nh.advertise<visualization_msgs::Marker>("segbot_pcl_person_detector/marker", 1000);
-	ros::Publisher pose_pub = nh.advertise<geometry_msgs::PoseStamped>("segbot_pcl_person_detector/human_poses", 1000);
+	ros::Publisher marker_pub = nh.advertise<visualization_msgs::Marker>("segbot_pcl_person_detector/marker", 10);
+	ros::Publisher pose_pub = nh.advertise<geometry_msgs::PoseStamped>("segbot_pcl_person_detector/human_poses", 10);
+	ros::Publisher cloud_pub = nh.advertise<sensor_msgs::PointCloud2>("segbot_pcl_person_detector/human_clouds", 10);
 	  
 	// Create a ROS subscriber for the input point cloud
 	ros::Subscriber sub = nh.subscribe (param_topic, 1, cloud_cb);
@@ -278,6 +282,46 @@ int main (int argc, char** argv)
 						// draw theoretical person bounding box in the PCL viewer:
 						if (visualize)
 							it->drawTBoundingBox(*viewer_display, k);
+						
+						//get just the person out of the whole cloud
+						pcl_utils::applyBoxFilter(it->getMin(), it->getMax(),cloud,person_cloud);
+						
+						//publish person cloud
+						pcl::toROSMsg(*person_cloud,person_cloud_ros);
+						person_cloud_ros.header.frame_id = param_sensor_frame_id;
+						
+						
+						cloud_pub.publish(person_cloud_ros);
+						
+						pcl::io::savePCDFileASCII (ros::package::getPath("pcl_perception")+"/data/human_cloud.pcd", *person_cloud);
+						
+						//demean
+						/*Eigen::Vector4f centroid;
+						pcl::compute3DCentroid (*person_cloud, centroid);
+						pcl::PointCloud<PointT>::Ptr cloud_demean (new pcl::PointCloud<PointT>);
+						pcl::demeanPointCloud<PointT> (*cloudOut, centroid, *cloud_demean);
+						
+							
+						pcl::io::savePCDFileASCII (ros::package::getPath("pcl_perception")+"/data/cropbox.pcd", *cloud_demean);*/
+						
+						//extract point cloud
+						/*pcl::PointIndices inliers = it->getIndices();
+						pcl::ExtractIndices<PointT> extract;
+						
+						extract.setInputCloud (people_detector.getFilteredCloud());
+						extract.setIndices ( boost::shared_ptr<pcl::PointIndices>( 
+																		new pcl::PointIndices( inliers ) ) );
+							
+						extract.setNegative (true);
+						
+						//this cloud will now contain everything but the person
+						pcl::PointCloud<PointT>::Ptr cloud_p (new pcl::PointCloud<PointT>);
+						extract.filter (*cloud_p);
+						
+						pcl::io::savePCDFileASCII (ros::package::getPath("pcl_perception")+"/data/filtered_negative.pcd", *cloud_p);
+				*/
+				
+				
 				
 						//ROS_INFO("%f, %f, %f",centroid_k(0),centroid_k(1),centroid_k(2));
 						//ROS_INFO("%f",dist_to_ground);
@@ -299,6 +343,18 @@ int main (int argc, char** argv)
 						geometry_msgs::PoseStamped stampOut;
 						listener.waitForTransform(param_sensor_frame_id, "/map", ros::Time(0), ros::Duration(3.0)); 
 						listener.transformPose("/map", stampedPose, stampOut);
+						
+						
+						//transform the human point cloud
+						pcl_ros::transformPointCloud ("/map", person_cloud_ros, person_cloud_ros, listener);
+						
+						//get the actual transform
+						/*tf::StampedTransform transform_to_map;
+						listener.lookupTransform ("/map", param_sensor_frame_id,  ros::Time(0), transform_to_map);
+						geometry_msgs::TransformStamped transform_to_map_msg;
+						tf::transformStampedTFToMsg (transform_to_map, transform_to_map_msg)
+						
+						transformPointCloud ("/map", const tf::Transform &net_transform, const sensor_msgs::PointCloud2 &in, sensor_msgs::PointCloud2 &out)*/
 						
 						stampOut.pose.position.z = 0.7;
 						stampOut.header.stamp = ros::Time::now();
