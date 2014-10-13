@@ -293,7 +293,11 @@ int main (int argc, char** argv)
 						
 						cloud_pub.publish(person_cloud_ros);
 						
-						pcl::io::savePCDFileASCII (ros::package::getPath("pcl_perception")+"/data/human_cloud.pcd", *person_cloud);
+						
+						stringstream ss;
+						ss << ros::package::getPath("pcl_perception") << "/data/human_cloud" << count << ".pcd";
+						pcl::io::savePCDFileASCII (ss.str(), *person_cloud);
+						count ++;
 						
 						//demean
 						/*Eigen::Vector4f centroid;
