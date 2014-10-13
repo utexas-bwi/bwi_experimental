@@ -23,10 +23,12 @@ int main(int argc, char**argv) {
   privateNode.param<string>("b",locationB,"d3_414b2");*/
   
   std::vector<string> doors;
-  doors.push_back("d3_414a1");
-  doors.push_back("d3_414a2");
+
   doors.push_back("d3_414b1");
   doors.push_back("d3_414b2");
+  doors.push_back("d3_414a1");
+  doors.push_back("d3_414a2");
+
   doors.push_back("d3_418");
   int current_door = 0;
 
