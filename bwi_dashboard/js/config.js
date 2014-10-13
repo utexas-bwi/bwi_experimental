@@ -5,8 +5,21 @@ var connectionConfig = {
   "nibbler" : createConnectionConfig("nibbler.csres.utexas.edu", 9090, 8080),
   "kif" : createConnectionConfig("kif.csres.utexas.edu", 9090, 8080),
   "scruffy" : createConnectionConfig("scruffy.csres.utexas.edu", 9090, 8080)
-
 }
+
+$(document).ready(function() {
+  var server = "";
+  if (server == "") {
+    console.log("Warning: No DNS server set, will not be able to dynamically load robot's IP addresses");
+    return;
+  }
+  $.getJSON(server, function(data) {
+    $.each(data, function(key, val) {
+      connectionConfig[key] = createConnectionConfig(val, 9090, 8080)
+      $('#connectionSelect').append('<option value="' + key + '">' + key + '</option>');
+    });
+  });
+});
 
 var subscriptionConfig = {
   "driving" : {
