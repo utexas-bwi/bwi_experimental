@@ -27,7 +27,5 @@ noop(0).
 #show -open/2.
 #show waiting/2.
 #show -waiting/2.
-#show choosefloor/2.
-#show -choosefloor/2.
 
 

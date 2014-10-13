@@ -11,13 +11,12 @@
     <!--<arg name="query_file" value="$(find bwi_coffee)/domain/multi_map_query.asp" />-->
   <!--</include>-->
   
-  <!--launch the planner -->
-  <include file="$(find bwi_kr)/launch/multi_map_elevator_demo.launch"> </include>
-
   <node name="bwi_kr" pkg="bwi_kr" type="bwi_kr_node" output="screen">
   </node>
 
   <node name="bwi_action_executor" pkg="bwi_action_executor" type="bwi_action_executor_node" output="screen">
+    <!--<param name="goal" value=":- not at(f3_410,n)." />-->
+    <param name="goal" value=":- not served(alice,coffee,n)." />
   </node>
 
   <!-- launch the gui -->
@@ -27,3 +26,5 @@
   <node name="soundplay" pkg="sound_play" type="soundplay_node.py" />
 </launch>
 
+  <!--Multi map node-->
+  <!--<include file="$(find bwi_kr)/launch/multi_map_elevator_demo.launch"> </include>-->

@@ -108,15 +108,17 @@ include_directories(
 set(ACTEXEC_SRC)
 add_subdirectory(src)
 add_executable(bwi_action_executor_node ${ACTEXEC_SRC} )
+add_dependencies(bwi_action_executor_node ${catkin_EXPORTED_TARGETS})
+target_link_libraries(bwi_action_executor_node ${catkin_LIBRARIES})
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 # add_dependencies(bwi_action_executor_node bwi_action_executor_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
- target_link_libraries(bwi_action_executor_node
-   ${catkin_LIBRARIES}
- )
+# target_link_libraries(bwi_action_executor_node
+#   ${catkin_LIBRARIES}
+# )
 
 #############
 ## Install ##

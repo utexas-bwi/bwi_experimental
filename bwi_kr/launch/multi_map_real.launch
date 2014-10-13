@@ -4,14 +4,15 @@
   <arg name="map_file"  default="$(find map_mux)/maps/map_whole2_with_elevators.yaml" />
   <arg name="location_file" default="$(arg dir_path)/3ne_locations.yaml" />
   <arg name="door_file" default="$(arg dir_path)/3ne_doors.yaml" />
-  <arg name="object_file" default="$(arg dir_path)/objects.yaml" />
+  <arg name="object_file" default="$(arg dir_path)/3ne_objects.yaml" />
 
   <!--<arg name="dir_path" default="$(find bwi_kr)/config/multi_map" />-->
   <!--<arg name="map_file"  default="$(find map_mux)/maps/atrium_with_elevators.yaml" />-->
   <!--<arg name="location_file" default="$(arg dir_path)/atrium_locations.yaml" />-->
   <!--<arg name="door_file" default="$(arg dir_path)/atrium_doors.yaml" />-->
-  <!--<arg name="object_file" default="$(arg dir_path)/objects.yaml" />-->
+  <!--<arg name="object_file" default="$(arg dir_path)/atrium_objects.yaml" />-->
 
+  <!--Multi map node-->
   <include file="$(find bwi_kr)/launch/multi_map_elevator_demo.launch"> </include>
 
   <!-- launch real world robot with map file and navigation -->
@@ -33,5 +34,6 @@
 
   <!-- launch the sound play node -->
   <node name="soundplay" pkg="sound_play" type="soundplay_node.py" />
+
 
 </launch>
