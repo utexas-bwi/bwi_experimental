@@ -1,0 +1,13 @@
+<launch>
+
+<param name="launch_pcl_viewer" value="true" />
+<param name="calibrate_ground_plane"  value="false" />
+
+
+<node pkg="pcl_perception" type="main_ground_based_people_detection" name="main_ground_based_people_detection" 
+output="screen">
+
+
+</node>
+
+</launch>

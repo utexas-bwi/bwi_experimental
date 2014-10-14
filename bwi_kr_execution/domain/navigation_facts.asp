@@ -164,7 +164,8 @@ acc(l3_518,l3_500).
 
 
 
-dooracc(R1,D,R2) :- hasdoor(R1,D), hasdoor(R2,D), R1 != R2, door(D), room(R1), location(R2).
+dooracc(R1,D,R2) :- hasdoor(R1,D), hasdoor(R2,D), R1 != R2, door(D), room(R1),
+location(R2).
 dooracc(R1,D,R2) :- dooracc(R2,D,R1).
 
 acc(L1,L1) :- location(L1).
