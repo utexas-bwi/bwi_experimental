@@ -42,9 +42,9 @@
   <include file="$(find bwi_logging)/launch/record.launch"> </include>
 
   <param name="/move_base/TrajectoryPlannerROS/max_vel_x" value="0.15"/>
-  <param name="/amcl/recovery_alpha_slow" value="0.005">
-  <param name="/amcl/recovery_alpha_fast" value="0.1">
-  <param name="/amcl/min_particles" value="5000">
-  <param name="/amcl/max_particles" value="20000">
+  <param name="/amcl/recovery_alpha_slow" value="0.005"/>
+  <param name="/amcl/recovery_alpha_fast" value="0.1"/>
+  <param name="/amcl/min_particles" value="5000"/>
+  <param name="/amcl/max_particles" value="20000"/>
 
 </launch>
