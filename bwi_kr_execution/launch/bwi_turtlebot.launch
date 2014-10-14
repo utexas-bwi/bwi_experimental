@@ -14,9 +14,6 @@
   <!--<arg name="door_file" default="$(arg dir_path)/atrium_doors.yaml" />-->
   <!--<arg name="object_file" default="$(arg dir_path)/atrium_objects.yaml" />-->
 
-  <!-- Multi map node-->
-  <include file="$(find bwi_kr)/launch/multi_map_elevator_demo.launch"> </include>
-
   <!-- launch rviz -->
   <include file="$(find turtlebot_rviz_launchers)/launch/view_navigation.launch"> </include>
 
