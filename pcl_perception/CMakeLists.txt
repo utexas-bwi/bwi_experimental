@@ -134,6 +134,8 @@ target_link_libraries(main_ground_based_people_detection ${catkin_LIBRARIES} ${P
 
 
 add_executable(general_perception src/general_perception.cpp)
+#makes sure messages are generated before this is compiled
+add_dependencies(general_perception ${catkin_EXPORTED_TARGETS})
 target_link_libraries(general_perception ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 
 
