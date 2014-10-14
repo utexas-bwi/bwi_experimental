@@ -1,7 +1,5 @@
 <launch>
   
-  <param name="/move_base/TrajectoryPlannerROS/max_vel_x" value="0.15"/>
-
   <arg name="dir_path" default="$(find bwi_kr)/config/real3ne" />
   <arg name="map_file"  default="$(find bwi_kr)/maps/map_whole2_with_elevators_new.yaml" />
   <arg name="location_file" default="$(arg dir_path)/locations.yaml" />
@@ -42,5 +40,11 @@
 
   <!-- logging node -->
   <include file="$(find bwi_logging)/launch/record.launch"> </include>
+
+  <param name="/move_base/TrajectoryPlannerROS/max_vel_x" value="0.15"/>
+  <param name="/amcl/recovery_alpha_slow" value="0.005">
+  <param name="/amcl/recovery_alpha_fast" value="0.1">
+  <param name="/amcl/min_particles" value="5000">
+  <param name="/amcl/max_particles" value="20000">
 
 </launch>
