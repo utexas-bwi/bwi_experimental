@@ -196,7 +196,7 @@ int main(int argc, char**argv) {
   
   
 
-  AspKR *reasoner = new RemoteReasoner(MAX_N,queryDirectory,domainDirectory,actionMapToSet(ActionFactory::actions()));
+  AspKR *reasoner = new RemoteReasoner(MAX_N,queryDirectory,domainDirectory,actionMapToSet(ActionFactory::actions()),5);
 
   TimeReward<QLearningActionSelector::State> *reward = new TimeReward<QLearningActionSelector::State>();
 
