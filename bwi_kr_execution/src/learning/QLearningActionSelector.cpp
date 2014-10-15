@@ -38,7 +38,7 @@ QLearningActionSelector::QLearningActionSelector(double alpha, RewardFunction<St
   value(),
   initial(),
   final(),
-  previousAction("noop(0)"),
+  previousAction("noaction(0)"),
   count(0)  {}
 
 
@@ -114,6 +114,9 @@ void QLearningActionSelector::actionTerminated(const AspFluent& action) throw() 
 }
 
 void QLearningActionSelector::episodeEnded() {
+  if(initial.empty())
+    return;
+    
   ROS_INFO_STREAM("old value: " << value[initial][previousAction]);
   value[initial][previousAction] = (1 - alpha) * value[initial][previousAction] + alpha * reward->r(initial,previousAction,final);
   ROS_INFO_STREAM("new value: " << value[initial][previousAction]);
