@@ -1,0 +1,1 @@
+:- not facing(d3_414b1, n).
