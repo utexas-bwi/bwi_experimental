@@ -1,7 +1,7 @@
 
-import time
-import rosbag
 import rospy
+import rosbag
+import time
 import datetime
 
 if rospy.has_param('bag_file'):
