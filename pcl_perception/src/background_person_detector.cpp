@@ -116,6 +116,9 @@ int main (int argc, char** argv)
 	nh.param<bool>("background_person_detector/visualize", visualize, false);
 	nh.param<double>("background_person_detector/rate", ros_rate, 10.0);
 	
+	string param_out_frame_id;
+	nh.param<std::string>(std::string("background_person_detector/out_frame_id"), param_out_frame_id, "/map");
+
 	string param_topic;
 	nh.param<std::string>(std::string("background_person_detector/rgbd_topic"), param_topic, data_topic);
 	
@@ -289,47 +292,8 @@ int main (int argc, char** argv)
 						//publish person cloud
 						pcl::toROSMsg(*person_cloud,person_cloud_ros);
 						person_cloud_ros.header.frame_id = param_sensor_frame_id;
-						
-						
-						cloud_pub.publish(person_cloud_ros);
-						
-						
-						stringstream ss;
-						ss << ros::package::getPath("pcl_perception") << "/data/human_cloud" << count << ".pcd";
-						pcl::io::savePCDFileASCII (ss.str(), *person_cloud);
-						count ++;
-						
-						//demean
-						/*Eigen::Vector4f centroid;
-						pcl::compute3DCentroid (*person_cloud, centroid);
-						pcl::PointCloud<PointT>::Ptr cloud_demean (new pcl::PointCloud<PointT>);
-						pcl::demeanPointCloud<PointT> (*cloudOut, centroid, *cloud_demean);
-						
-							
-						pcl::io::savePCDFileASCII (ros::package::getPath("pcl_perception")+"/data/cropbox.pcd", *cloud_demean);*/
-						
-						//extract point cloud
-						/*pcl::PointIndices inliers = it->getIndices();
-						pcl::ExtractIndices<PointT> extract;
-						
-						extract.setInputCloud (people_detector.getFilteredCloud());
-						extract.setIndices ( boost::shared_ptr<pcl::PointIndices>( 
-																		new pcl::PointIndices( inliers ) ) );
-							
-						extract.setNegative (true);
-						
-						//this cloud will now contain everything but the person
-						pcl::PointCloud<PointT>::Ptr cloud_p (new pcl::PointCloud<PointT>);
-						extract.filter (*cloud_p);
-						
-						pcl::io::savePCDFileASCII (ros::package::getPath("pcl_perception")+"/data/filtered_negative.pcd", *cloud_p);
-				*/
+						cloud_pub.publish(person_cloud_ros);	
 				
-				
-				
-						//ROS_INFO("%f, %f, %f",centroid_k(0),centroid_k(1),centroid_k(2));
-						//ROS_INFO("%f",dist_to_ground);
-
 						//transforms the pose into /map frame
 						geometry_msgs::Pose pose_i;
 						pose_i.position.x=centroid_k(0);
@@ -345,12 +309,24 @@ int main (int argc, char** argv)
 						stampedPose.pose = pose_i;
 						
 						geometry_msgs::PoseStamped stampOut;
-						listener.waitForTransform(param_sensor_frame_id, "/map", ros::Time(0), ros::Duration(3.0)); 
-						listener.transformPose("/map", stampedPose, stampOut);
+						listener.waitForTransform(param_sensor_frame_id, param_out_frame_id, ros::Time(0), ros::Duration(3.0)); 
+						listener.transformPose(param_out_frame_id, stampedPose, stampOut);
 						
+						//transform the human point cloud into presumably the /map frame of reference
+						pcl_ros::transformPointCloud (param_out_frame_id, person_cloud_ros, person_cloud_ros, listener);
 						
-						//transform the human point cloud
-						pcl_ros::transformPointCloud ("/map", person_cloud_ros, person_cloud_ros, listener);
+						//save to file for analysis
+						ros::Time nowTime = ros::Time::now();
+						
+						stringstream ss;
+						ss << ros::package::getPath("pcl_perception") << "/data/human_cloud_" << nowTime.toNSec() << ".pcd";
+						pcl::io::savePCDFileASCII (ss.str(), *person_cloud);
+					
+						//save cloud in map frame of reference
+						pcl::fromROSMsg(person_cloud_ros,*person_cloud);
+						ss.str(std::string());
+						ss << ros::package::getPath("pcl_perception") << "/data/human_cloud_map_" << nowTime.toNSec() << ".pcd";
+						pcl::io::savePCDFileASCII (ss.str(), *person_cloud);
 						
 						//get the actual transform
 						/*tf::StampedTransform transform_to_map;
@@ -364,7 +340,7 @@ int main (int argc, char** argv)
 						stampOut.header.stamp = ros::Time::now();
 						
 						//publish the marker
-						visualization_msgs::Marker marker_k = create_next_person_marker(it,"/map","segbot_pcl_person_detector",detection_count);	
+						visualization_msgs::Marker marker_k = create_next_person_marker(it,param_out_frame_id,"segbot_pcl_person_detector",detection_count);	
 						marker_k.pose = stampOut.pose;
 						marker_pub.publish(marker_k);
 						
