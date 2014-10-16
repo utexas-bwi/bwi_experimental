@@ -97,18 +97,22 @@ catkin_package(
 # include_directories(include)
 include_directories(
   ${catkin_INCLUDE_DIRS}
-  $ENV{PNP_INCLUDE}
+  pnp/include
 )
 
-link_directories($ENV{PNP_LIB})
+link_directories(pnp/build)
 
 set(task_pnp_SRC)
 
 add_subdirectory(src)
 
+#set(pnp_SRC)
+
+#add_subdirectory(pnp/src)
+
 ## Declare a cpp library
-# add_library(bwi_tasks_pnp
-#   src/${PROJECT_NAME}/bwi_tasks_pnp.cpp
+# add_library(pnp
+#   ${pnp_SRC}
 # )
 
 ## Declare a cpp executable
