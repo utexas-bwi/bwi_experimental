@@ -1,12 +1,12 @@
 #ifndef bwi_krexec_QLearningActionSelector_h__guard
 #define bwi_krexec_QLearningActionSelector_h__guard
 
+#include "DefaultActionValue.h"
 
 #include <actasp/state_utils.h>
 #include <actasp/ExecutionObserver.h>
 #include <actasp/ActionSelector.h>
 #include <actasp/AspKR.h>
-
 
 #include <map>
 #include <set>
@@ -23,7 +23,7 @@ public:
   
    typedef std::set< actasp::AspFluent> State;
   
-  QLearningActionSelector(double alpha, RewardFunction<State> *reward, actasp::AspKR *reasoner);
+  QLearningActionSelector(double alpha, RewardFunction<State> *reward, actasp::AspKR *reasoner, DefaultActionValue *defval);
   
   actasp::ActionSet::const_iterator choose(const actasp::ActionSet &options) throw() ;
   
@@ -41,6 +41,7 @@ public:
   
 private:
   actasp::AspKR *reasoner;
+  DefaultActionValue *defval;
 
   double alpha;
   RewardFunction<State> *reward;

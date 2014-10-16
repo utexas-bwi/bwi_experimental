@@ -4,6 +4,7 @@
 
 #include "learning/QLearningActionSelector.h"
 #include "learning/TimeReward.h"
+#include "learning/DefaultTimes.h"
 
 #include "bwi_kr_execution/ExecutePlanAction.h"
 
@@ -199,8 +200,9 @@ int main(int argc, char**argv) {
   AspKR *reasoner = new RemoteReasoner(MAX_N,queryDirectory,domainDirectory,actionMapToSet(ActionFactory::actions()),5);
 
   TimeReward<QLearningActionSelector::State> *reward = new TimeReward<QLearningActionSelector::State>();
+  DefaultActionValue *timeValue = new DefaultTimes();
 
-  selector = new QLearningActionSelector(0.3, reward , reasoner);
+  selector = new QLearningActionSelector(0.3, reward , reasoner,timeValue);
 
   //need a pointer to the specific type for the observer
   executor = new MultiPolicyExecutor(reasoner, reasoner,selector , ActionFactory::actions(),1.5);
@@ -220,6 +222,7 @@ int main(int argc, char**argv) {
 
   delete executor;
   delete selector;
+  delete timeValue;
   delete reward;
   delete reasoner;
 
