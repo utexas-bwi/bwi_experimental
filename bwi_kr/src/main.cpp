@@ -1,15 +1,18 @@
 
 #include <ros/ros.h>
 #include <ros/package.h>
+#include <ros/console.h>
 
 #include <sstream>
 #include <cstdlib>
 #include <fstream>
-#include <iostream>
 
 #include <bwi_kr/AnswerSet.h>
 #include <bwi_kr/ComputeAnswerSet.h>
 #include <bwi_kr/ChangeFluent.h>
+#include <std_srvs/Empty.h>
+#include <boost/thread.hpp>
+#include <ros/spinner.h>
 
 using namespace std;
 using namespace bwi_kr;
@@ -20,18 +23,25 @@ string packagePath;
 static void createCurrentState(const std::string& observations);
 static void createInitialstate(const std::string& initialFile);
 
+boost::shared_mutex mutex;
 
 bool computeAnswerSet(bwi_kr::ComputeAnswerSet::Request& req,
 						bwi_kr::ComputeAnswerSet::Response &res);
 
 bool changeFluent(bwi_kr::ChangeFluent::Request &req,
 						bwi_kr::ChangeFluent::Response &res);
+bool printService(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res);
 
+AnswerSet doComputeAnswerSet(const string& queryFilereq);
 
 int main(int argc, char **argv) {
 
 	ros::init(argc, argv, "bwi_kr");
 	ros::NodeHandle n("~");
+	
+	if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug) ) {
+		ros::console::notifyLoggerLevelsChanged();
+	}
 	
 	packagePath = ros::package::getPath("bwi_kr")+"/";
 	
@@ -40,10 +50,18 @@ int main(int argc, char **argv) {
 	ros::ServiceServer computeAS = n.advertiseService("compute_answer_set", computeAnswerSet);
 	//TODO consider accepting a vector of Predicates
 	ros::ServiceServer changeF = n.advertiseService("change_fluent", changeFluent);
+	ros::ServiceServer empty = n.advertiseService("empty", printService);
 	
-	ros::spin();
+	ros::MultiThreadedSpinner m;
+	
+	ros::spin(m);
 
 	return 0;
+}
+
+bool printService(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res) {
+	ROS_INFO_STREAM("[thread=" << boost::this_thread::get_id() << "]");
+	ros::Duration (60).sleep();
 }
 
 static AnswerSet readAnswerSet(const std::string& filePath) {
@@ -64,22 +82,31 @@ static AnswerSet readAnswerSet(const std::string& filePath) {
 bool computeAnswerSet(bwi_kr::ComputeAnswerSet::Request& req,
 						bwi_kr::ComputeAnswerSet::Response &res) {
 	
-	stringstream commandLine;
-	
-	string &queryFile = req.queryFile;
-	
-	const string outputFilePath = "/tmp/bwi_kr_query_output.txt";
-	
-	commandLine << "clingo " << queryFile << " " << packagePath << domainName << "/*.asp " << " > " << outputFilePath;
-	
-	system(commandLine.str().c_str());
+	boost::shared_lock<boost::shared_mutex> lock(mutex);
 
-	AnswerSet answer = readAnswerSet(outputFilePath);
-	
+	AnswerSet answer  = doComputeAnswerSet(req.queryFile);	
+
 	res.answerSet.satisfied = answer.isSatisfied();
 	res.answerSet.predicates = answer.getPredicates();
 
 	return true;
+
+}
+
+AnswerSet doComputeAnswerSet(const string& queryFile) {
+	
+	stringstream outputFileNameStream;
+	outputFileNameStream << "/tmp/bwi_kr_query_output" << boost::this_thread::get_id() << ".txt";
+
+	const string outputFilePath(outputFileNameStream.str());
+
+	stringstream commandLine;
+	commandLine << "clingo " << queryFile << " " << packagePath << domainName << "/*.asp " << " > " << outputFilePath;
+		
+	system(commandLine.str().c_str());
+	
+	return readAnswerSet(outputFilePath);
+	
 
 }
 
@@ -99,16 +126,20 @@ bool changeFluent(bwi_kr::ChangeFluent::Request &req,
 						bwi_kr::ChangeFluent::Response &res) {
 	
 	//TODO check that the fluent exists and has the correct number of parameters
+
+	boost::upgrade_lock<boost::shared_mutex> lock(mutex);
+	boost::upgrade_to_unique_lock<boost::shared_mutex> uniquelock(lock);
 	
+
 	stringstream ss;
     //std::string str1 = "";
     //for( int i = 0; i < req.fluent.size() ; i ++ ){
 	//str1 = str1 +  req.fluent[i].name + "(" +  concatenateParameters(req.fluent[i].parameters) + "1)." + "\n";//+ std::endl;
     //}
 	ss << req.fluent.name << "(" << concatenateParameters(req.fluent.parameters) << "1)." << endl;
-    std::cerr << "Fluent added to KR: " << ss.str() << std::endl;
-	createCurrentState(ss.str());
 	
+	createCurrentState(ss.str());
+
 	return true;
 }
 
@@ -128,7 +159,7 @@ void createInitialstate(const std::string& initialFile) {
 
 void createCurrentState(const std::string& observations) {
 	
-    std:cerr << "-----------Observations string: " << observations << std::endl;
+    ROS_DEBUG_STREAM( "-----------Observations string: " << observations);
 	const string queryPath = "/tmp/bwi_kr_currentstate_query.txt";
 	
 	stringstream copyCommand;
@@ -141,22 +172,13 @@ void createCurrentState(const std::string& observations) {
 	queryFile << observations << endl;
 	queryFile.close();
 	
-	ComputeAnswerSet answer;
-	answer.request.queryFile = queryPath;
-	
-    ////DEBUG:: MAKE FILE AT EACH ASP TIME STEP SO WE CAN SEE WHAT IS HAPPENING
-    //static int counter = 0;
-	//stringstream cc;
-	//cc << "cp " << packagePath + domainName + "/current.asp " << packagePath + domainName + "/current_" << counter << ".txt ";
-    //std::cerr << "---------------Counter: "<<counter << std::endl;
-    //counter++;
-	//system(cc.str().c_str());
 
-	computeAnswerSet(answer.request,answer.response);
+	AnswerSet answerSet = doComputeAnswerSet(queryPath);
+
 	
 	ofstream currentFile((packagePath + domainName + "/current.asp").c_str());
 	
-	vector<Predicate> &res = answer.response.answerSet.predicates;
+	const vector<Predicate> &res = answerSet.getPredicates();
 	
 	vector<Predicate>::const_iterator resIt = res.begin();
 	

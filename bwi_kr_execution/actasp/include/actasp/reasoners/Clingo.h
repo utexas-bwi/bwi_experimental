@@ -22,7 +22,9 @@ public:
 	Clingo(unsigned int max_n,
 	       const std::string& queryDir,
 	       const std::string& domainDir,
-	       const ActionSet& actions) throw();
+	       const ActionSet& actions,
+         unsigned int max_time = 0
+        ) throw();
 
 	AnswerSet currentStateQuery(const std::vector<actasp::AspRule>& query) const throw();
 	
@@ -45,6 +47,7 @@ public:
 private:
 
 	unsigned int max_n;
+  unsigned int max_time;
 	std::string queryDir;
 	std::string domainDir;
   ActionSet allActions;

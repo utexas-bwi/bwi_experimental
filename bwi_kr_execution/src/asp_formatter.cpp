@@ -11,6 +11,7 @@
 using namespace std;
 using namespace actasp;
 
+
 //// Code copied from Clingo.cpp
 
 class SimpleAction : public actasp::Action {
@@ -70,6 +71,7 @@ struct CreateFluent {
 	}
 };
 
+
 static std::set<actasp::AspFluent> parseAnswerSet(const std::string& answerSetContent) {
 
   stringstream predicateLine(answerSetContent);
@@ -83,6 +85,7 @@ static std::set<actasp::AspFluent> parseAnswerSet(const std::string& answerSetCo
             CreateFluent());
 
   return predicates;
+
 }
 
 static std::vector<actasp::AnswerSet> readAnswerSets(istream &input) {
@@ -111,7 +114,9 @@ static std::vector<actasp::AnswerSet> readAnswerSets(istream &input) {
 			getline(content,firstLine);
 			if (firstLine.find("Answer") != string::npos) {
 				getline(content,eachAnswerset);
+
 				set<AspFluent> fluents = parseAnswerSet(eachAnswerset);
+
 				allSets.push_back(AnswerSet(true, fluents));
 			}
 		}
@@ -124,9 +129,11 @@ static std::vector<actasp::AnswerSet> readAnswerSets(istream &input) {
 int main() {
 	
 	std::map<std::string, actasp::Action *> actionMap;
+
 	actionMap.insert(std::make_pair(std::string("approach"), new SimpleAction()));
 	actionMap.insert(std::make_pair(std::string("gothrough"), new SimpleAction()));
 	actionMap.insert(std::make_pair(std::string("opendoor"), new SimpleAction()));
+
 	
 	vector<AnswerSet> sets = readAnswerSets(cin);
 	
@@ -151,12 +158,14 @@ int main() {
 		
 		
 		//fluents in an answer set are ordered by time step.
+
 		unsigned int lastTimeStep = sets[i].maxTimeStep();
 		
 		for(int t = 0; t <= lastTimeStep; ++t) {
 			
 		set<AspFluent> fluentsAtTimeT = sets[i].getFluentsAtTime(t);
 		set<AspFluent>::const_iterator flu = fluentsAtTimeT.begin();
+
 		
 		
 		for(; flu != fluentsAtTimeT.end(); ++flu)

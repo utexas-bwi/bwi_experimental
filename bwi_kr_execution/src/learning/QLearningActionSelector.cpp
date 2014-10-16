@@ -31,14 +31,16 @@ struct CompareValues {
   QLearningActionSelector::ActionValueMap& value;
 };
 
-QLearningActionSelector::QLearningActionSelector(double alpha, RewardFunction<State> *reward, actasp::AspKR *reasoner) :
+QLearningActionSelector::QLearningActionSelector(double alpha, RewardFunction<State> *reward, 
+                                                 actasp::AspKR *reasoner, DefaultActionValue *defval) :
   reasoner(reasoner),
+  defval(defval),
   alpha(alpha),
   reward(reward),
   value(),
   initial(),
   final(),
-  previousAction("noop(0)"),
+  previousAction("noaction(0)"),
   count(0)  {}
 
 
@@ -82,8 +84,15 @@ actasp::ActionSet::const_iterator QLearningActionSelector::choose(const actasp::
   AnswerSet currentState = reasoner->currentStateQuery(vector<AspRule>());
 
   ActionSet::const_iterator optIt = options.begin();
-  for (; optIt != options.end(); ++optIt)
+  for (; optIt != options.end(); ++optIt) {
+    ActionValueMap &thisState = value[currentState.getFluents()];
+    
+    if(thisState.find(*optIt) == thisState.end()) {
+      //initialize to default
+      thisState[*optIt] = defval->value(*optIt);
+    }
     ss << value[currentState.getFluents()][*optIt] << " ";
+  }
 
   ROS_INFO_STREAM(ss.str());
 
@@ -114,6 +123,9 @@ void QLearningActionSelector::actionTerminated(const AspFluent& action) throw() 
 }
 
 void QLearningActionSelector::episodeEnded() {
+  if(initial.empty())
+    return;
+    
   ROS_INFO_STREAM("old value: " << value[initial][previousAction]);
   value[initial][previousAction] = (1 - alpha) * value[initial][previousAction] + alpha * reward->r(initial,previousAction,final);
   ROS_INFO_STREAM("new value: " << value[initial][previousAction]);

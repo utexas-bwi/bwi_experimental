@@ -23,15 +23,20 @@ namespace actasp {
 Clingo::Clingo(unsigned int max_n,
                const std::string& queryDir,
                const std::string& domainDir,
-               const ActionSet& actions) throw() :
+               const ActionSet& actions,
+               unsigned int max_time
+              ) throw() :
   max_n(max_n),
+  max_time(max_time),
   queryDir(queryDir),
   domainDir(domainDir),
   allActions(actions),
   actionFilter(){
 
-
-  //make sure directory end with '/'
+  if(max_time > 0 && !system("timeout 2>/dev/null")) //make sure timeout is available
+      max_time = 0;
+    
+  //make sure directory ends with '/'
 
   if (this->queryDir.find_last_of("/") != (this->queryDir.length() -1))
     this->queryDir += "/";
@@ -114,7 +119,7 @@ static std::set<actasp::AspFluent> parseAnswerSet(const std::string& answerSetCo
 }
 
 static std::vector<actasp::AnswerSet> readAnswerSets(const std::string& filePath) {
-
+  
   ifstream file(filePath.c_str());
 
   stringstream answerSetContent;
@@ -139,8 +144,12 @@ static std::vector<actasp::AnswerSet> readAnswerSets(const std::string& filePath
       getline(answerSetContent,firstLine);
       if (firstLine.find("Answer") != string::npos) {
         getline(answerSetContent,eachAnswerset);
-        set<AspFluent> fluents = parseAnswerSet(eachAnswerset);
-        allSets.push_back(AnswerSet(true, fluents));
+        try {
+          set<AspFluent> fluents = parseAnswerSet(eachAnswerset);
+          allSets.push_back(AnswerSet(true, fluents));
+        } catch (std::invalid_argument& arg) {
+          //swollow it and skip this answer set.
+        }
       }
     }
   }
@@ -163,14 +172,19 @@ std::vector<actasp::AnswerSet> Clingo::krQuery(const std::string& query,
   stringstream commandLine;
 
   const string outputFilePath = queryDir + "query_output.txt";
+  
+  if(max_time > 0) {
+      commandLine << "timeout " << max_time << " ";
+  }
 
   commandLine << "clingo " << queryPath << " " << domainDir << "*.asp " << " > " << outputFilePath << " " << answerSetsNumber;
 
-  if (!system(commandLine.str().c_str())) {
-    //TODO do something if clingo fails
+  if(!system(commandLine.str().c_str())) {
+    //maybe do something here, or just kill the warning about the return value not being used.
   }
-
+  
   return readAnswerSets(outputFilePath);
+
 }
 
 string Clingo::generatePlanQuery(const std::vector<actasp::AspRule>& goalRules,
@@ -273,20 +287,38 @@ struct PolicyMerger {
 
 //checks wheter the shorter plan occurs in the longer one. For instance: ABCDEF and ABCDXYEF removing XY
 
+struct SameActionAs {
+  SameActionAs(const AspFluent &action) : action(action), eq() {}
+  
+  bool operator()(const AspFluent& otherAction) const {
+    return eq(otherAction,action);
+  }
+  
+  const AspFluent &action;
+  ActionEquality eq;
+};
+
 struct IsSubSequence {
   
   IsSubSequence(const list< AspFluent> &myPlan) : longerPlan(myPlan) {};
   
   bool operator()(const list<AspFluent> &shorterPlan) const {
+    
+    list< AspFluent>::const_iterator currentAction = shorterPlan.begin();
+    list< AspFluent>::const_iterator longPlanPointer = longerPlan.begin();
+    
 
-    pair< list< AspFluent>::const_iterator, list< AspFluent>::const_iterator>
-    start = mismatch(shorterPlan.begin(),shorterPlan.end(),longerPlan.begin(), ActionEquality());
     
-    size_t remaining = distance(start.first, shorterPlan.end());
-    list< AspFluent>::const_iterator secondStart = longerPlan.end();
-    advance(secondStart, -remaining);
-    
-    return equal(start.first, shorterPlan.end(), secondStart, ActionEquality());
+    while(currentAction != shorterPlan.end() && longPlanPointer != longerPlan.end() && 
+          distance(longPlanPointer,longerPlan.end()) >= distance(currentAction, shorterPlan.end())) {
+      longPlanPointer = find_if(longPlanPointer,longerPlan.end(),SameActionAs(*currentAction)); //bind1st is bugged and doesn't work here :(
+        
+        if(longPlanPointer != longerPlan.end())
+          ++longPlanPointer;
+        ++currentAction;
+    }
+
+    return currentAction == shorterPlan.end(); //the whole plan is contained in the new one
     
   }
   
@@ -355,7 +387,7 @@ MultiPolicy Clingo::computePolicy(const std::vector<actasp::AspRule>& goal, doub
 
   --shortestLength;
     
-    MultiPolicy policy(allActions);
+  MultiPolicy policy(allActions);
 
   for_each(answerSets.begin(),answerSets.end(),PolicyMerger(policy));
   
@@ -373,7 +405,7 @@ MultiPolicy Clingo::computePolicy(const std::vector<actasp::AspRule>& goal, doub
     
     vector<AnswerSet>::iterator newEnd = remove_if(answerSets.begin(),answerSets.end(),IsNotLocallyOptimalSubPlanCheck(allPlans,allActions));
 
-    transform(answerSets.begin(),answerSets.end(),back_inserter(allPlans), CleanPlan(allActions));
+    transform(answerSets.begin(),newEnd,back_inserter(allPlans), CleanPlan(allActions));
 
 //     vector<AnswerSet>::iterator secondFilter = remove_if(answerSets.begin(),answerSets.end(),IsNotLocallyOptimal(this,goal,allActions));
 //     answerSets.erase(secondFilter,answerSets.end());
@@ -439,7 +471,7 @@ std::vector< AnswerSet > Clingo::computeAllPlans(const std::vector<actasp::AspRu
 
     vector<AnswerSet>::iterator newEnd = remove_if(answerSets.begin(),answerSets.end(), IsNotLocallyOptimalSubPlanCheck(allPlansList,allActions));
 
-    transform(answerSets.begin(), answerSets.end(),back_inserter(allPlansList),AnswerSetToList());
+    transform(answerSets.begin(), newEnd,back_inserter(allPlansList),AnswerSetToList());
     
     finalVector.insert(finalVector.end(),answerSets.begin(), newEnd);
     

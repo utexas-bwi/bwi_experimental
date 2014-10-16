@@ -125,7 +125,6 @@ add_subdirectory(actasp/src/)
 
 ## Declare a cpp executable
 
-
 set(spexec_SRC)
 set(lexec_SRC)
 set(krreasoner_SRC)
@@ -142,7 +141,6 @@ target_link_libraries( knowledge_reasoning_node ${catkin_LIBRARIES} actasp kract
 
 add_executable(asp_formatter src/asp_formatter.cpp)
 target_link_libraries(asp_formatter actasp)
-
 
 
 ## Add cmake target dependencies of the executable/library
