@@ -16,6 +16,7 @@
 #include "Task.h"
 #include <ros/package.h>
 
+#include <dirent.h>
 
 using namespace std;
 using namespace PetriNetPlans;
@@ -94,13 +95,13 @@ PetriNetPlans::PnpExecutable* TaskInstantiator::createAction(const std::string& 
 
     bwi_kr_execution::ExecutePlanGoal goal;
     stringstream goal_s;
-    goal_s << name << ":   ";
+    goal_s << name << "\n";
     string line;
-    string fileName = ros::package::getPath("bwi_tasks_pnp")+"/goals/"+ name + ".txt";
+    string fileName = ros::package::getPath("bwi_tasks_pnp")+"/task_types/"+ name + ".txt";
     ifstream goalFile(fileName.c_str());
 
     if ((goalFile) && (goalFile.is_open())) {
-        
+
         while (getline(goalFile,line)) {
             goal.aspGoal.push_back(parseAspRule(line));
             goal_s << line;
