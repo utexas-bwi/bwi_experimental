@@ -1,0 +1,120 @@
+//wh-words
+what :- S/(S\NP)/N : (lambda $0:<e,t> (lambda $1:<e,t> (lambda $2:e (and:<t*,t> ($0 $2) ($1 $2)))))
+what :- S/(S/NP)/N : (lambda $0:<e,t> (lambda $1:<e,t> (lambda $2:e (and:<t*,t> ($0 $2) ($1 $2)))))
+how many :- S/(S\NP)/N : (lambda $0:<e,t> (lambda $1:<e,t> (count:<<e,t>,i> (lambda $2:e (and:<t*,t> ($0 $2) ($1 $2))))))
+how many :- S/(S/NP)/N : (lambda $0:<e,t> (lambda $1:<e,t> (count:<<e,t>,i> (lambda $2:e (and:<t*,t> ($0 $2) ($1 $2))))))
+count :- S/(S\NP)/N : (lambda $0:<e,t> (lambda $1:<e,t> (count:<<e,t>,i> (lambda $2:e (and:<t*,t> ($0 $2) ($1 $2))))))
+count :- S/(S/NP)/N : (lambda $0:<e,t> (lambda $1:<e,t> (count:<<e,t>,i> (lambda $2:e (and:<t*,t> ($0 $2) ($1 $2))))))
+which :- S/NP : (lambda $0:e $0)
+how many :- S/NP : (lambda $0:e $0)
+how :- S/NP : (lambda $0:e $0)
+what :- S/NP : (lambda $0:e $0)
+where :- S/NP : (lambda $0:e $0)
+
+// commands
+take :- (S/NP)/NP : (lambda $0:e (lambda $1:e (and:<t*,t> (action:<a,t> bring:a) (actionrecipient:<a,<e,t>> bring:a $0) (actionpatient:<a,<e,t>> bring:a $1))))
+take :- (S/PP)/NP : (lambda $0:e (lambda $1:<a,t> (and:<t*,t> (action:<a,t> bring:a) (actionpatient:<a,<e,t>> bring:a $0) ($1 bring:a))))
+bring :- (S/NP)/NP : (lambda $0:e (lambda $1:e (and:<t*,t> (action:<a,t> bring:a) (actionrecipient:<a,<e,t>> bring:a $0) (actionpatient:<a,<e,t>> bring:a $1))))
+bring :- (S/PP)/NP : (lambda $0:e (lambda $1:<a,t> (and:<t*,t> (action:<a,t> bring:a) (actionpatient:<a,<e,t>> bring:a $0) ($1 bring:a))))
+
+walk :- S/PP : (lambda $0:<a,t> (and:<t*,t> (action:<a,t> walk:a) ($0 walk:a)))
+go :- S/PP : (lambda $0:<a,t> (and:<t*,t> (action:<a,t> walk:a) ($0 walk:a)))
+
+to :- PP/NP : (lambda $0:e (lambda $1:a (actionrecipient:<a,<e,t>> $1 $0)))
+
+// nouns
+who :- N : person:<pe,t>
+person :- N : person:<pe,t>
+people :- N : person:<pe,t>
+object :- N : object:<ob,t>
+objects :- N : object:<ob,t>
+room :- N : room:<ro,t>
+rooms :- N : room:<ro,t>
+office :- N : office:<of,t>
+offices :- N : office:<of,t>
+
+//determiners
+the :- N/N : (lambda $0:<e,t> $0)
+is :- N/N : (lambda $0:<e,t> $0)
+a :- N/N : (lambda $0:<e,t> $0)
+of :- N/N : (lambda $0:<e,t> $0)
+the :- NP/NP : (lambda $0:e $0)
+is :- NP/NP : (lambda $0:e $0)
+of :- NP/NP : (lambda $0:e $0)
+the :- NP/N : (lambda $0:<e,t> (the:<<e,t>,e> $0))
+
+that :- PP/(S\NP) : (lambda $0:<e,t> $0)
+that :- PP/(S/NP) : (lambda $0:<e,t> $0)
+which :- PP/(S\NP) : (lambda $0:<e,t> $0)
+which :- PP/(S/NP) : (lambda $0:<e,t> $0)
+are :- PP/PP : (lambda $0:<e,t> $0)
+
+// for "bob 's office"; "the office of the chair"
+s :- (NP/N)\NP : (lambda $0:e (lambda $1:<e,t> (the:<<e,t>,e> (lambda $2:e (and:<t*,t> (person:<pe,t> $0) ($1 $2) (possesses:<pe,<e,t>> $0 $2))))))
+of :- (NP\N)/NP : (lambda $0:e (lambda $1:<e,t> (the:<<e,t>,e> (lambda $2:e (and:<t*,t> (person:<pe,t> $0) ($1 $2) (possesses:<pe,<e,t>> $0 $2))))))
+
+// copula, etc.
+are :- (N\N)/N : (lambda $0:<e,t> (lambda $1:<e,t> (lambda $2:e (and:<t*,t> ($0 $2) ($1 $2)))))
+are :- (S\NP)/PP : (lambda $0:<e,t> $0)
+does :- (S/NP)/(S/NP) : (lambda $0:<e,t> $0)
+does :- (S\NP)/(S\NP) : (lambda $0:<e,t> $0)
+is :- (S/NP)/(S/NP) : (lambda $0:<e,t> $0)
+have :- (S/NP)/(S/NP) : (lambda $0:<e,t> $0)
+is :- (S\NP)/(S\NP) : (lambda $0:<e,t> $0)
+are there :- S\NP : (lambda $0:e true:t)
+is :- (S\NP)/NP : (lambda $0:e (lambda $1:e (equals:<e,<e,t>> $1 $0)))
+
+// negation
+not :- N/N : (lambda $0:<e,t> (lambda $1:e (not:<t,t> ($0 $1))))
+not :- PP/PP : (lambda $0:<e,t> (lambda $1:e (not:<t,t> ($0 $1))))
+do not :- (S\NP)/(S\NP) : (lambda $0:<e,t> (lambda $1:e (not:<t,t> ($0 $1))))
+no :- (S\NP)/(S\NP) : (lambda $0:<e,t> (lambda $1:e (not:<t,t> ($0 $1))))
+excluding :- PP/NP : (lambda $0:e (lambda $1:e (not:<t,t> (equals:<e,<e,t>> $1 $0))))
+
+// empty sentence modifier
+tell me :- S/S : (lambda $0:<e,t> $0)
+can you  :- S/S : (lambda $0:<e,t> $0)
+please  :- S/S : (lambda $0:<e,t> $0)
+please :- S\S : (lambda $0:e $0)
+please :- S\S : (lambda $0:t $0)
+is :- S/S : (lambda $0:t $0)
+
+// quantifier
+is :- (NP\N)/(NP/N)  : (lambda $0:<<e,t>,e> $0)
+are  :- (NP\N)/(NP/N)  : (lambda $0:<<e,t>,e> $0)
+with  :- (NP\N)/(NP/N)  : (lambda $0:<<e,t>,e> $0)
+
+// np-list copy; including these entries here allows them to be used as candidates by the GENLEX procedure
+i :- NP : me:pe
+you :- NP : self:self
+yourself :- NP : self:self
+dr stone :- NP : peter:pe
+dr mooney :- NP : ray:pe
+dr ballard :- NP : dana:pe
+dr iwata :- NP : kazunori:pe
+dr leonetti :- NP : matteo:pe
+dr zhang :- NP : shiqi:pe
+dr sinapov :- NP : jivko:pe
+stacy miller :- NP : stacy:pe
+402 :- NP : l3_402:ro
+404 :- NP : l3_404:ro
+416 :- NP : l3_416:ro
+418 :- NP : l3_418:ro
+420 :- NP : l3_420:ro
+422 :- NP : l3_422:ro
+430 :- NP : l3_430:ro
+432 :- NP : l3_432:ro
+436 :- NP : l3_436:ro
+428 :- NP : l3_428:ro
+426 :- NP : l3_426:ro
+414 :- NP : l3_414:ro
+412 :- NP : l3_412:ro
+502 :- NP : l3_502:ro
+508 :- NP : l3_508:ro
+510 :- NP : l3_510:ro
+512 :- NP : l3_512:ro
+516 :- NP : l3_516:ro
+counter :- NP : coffeecounter:sc
+coffee :- NP : coffee:it
+bread :- NP : bread:it
+sandwich :- NP : sandwich:it
