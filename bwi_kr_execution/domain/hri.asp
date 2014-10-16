@@ -17,3 +17,6 @@ inside(shiqi,l3_420).
 inside(jivko,l3_432). 
 inside(stacy,l3_502). 
 
+#hide person/1.
+#hide inside/2.
+
