@@ -311,6 +311,7 @@ int main (int argc, char** argv)
 						geometry_msgs::PoseStamped stampOut;
 						listener.waitForTransform(param_sensor_frame_id, param_out_frame_id, ros::Time(0), ros::Duration(3.0)); 
 						listener.transformPose(param_out_frame_id, stampedPose, stampOut);
+
 						
 						//transform the human point cloud into presumably the /map frame of reference
 						pcl_ros::transformPointCloud (param_out_frame_id, person_cloud_ros, person_cloud_ros, listener);
@@ -318,6 +319,7 @@ int main (int argc, char** argv)
 						//save to file for analysis
 						ros::Time nowTime = ros::Time::now();
 						
+
 						stringstream ss;
 						ss << ros::package::getPath("pcl_perception") << "/data/human_cloud_" << nowTime.toNSec() << ".pcd";
 						pcl::io::savePCDFileASCII (ss.str(), *person_cloud);
@@ -328,8 +330,6 @@ int main (int argc, char** argv)
 						ss << ros::package::getPath("pcl_perception") << "/data/human_cloud_map_" << nowTime.toNSec() << ".pcd";
 						pcl::io::savePCDFileASCII (ss.str(), *person_cloud);
 						
-
-
 						stampOut.pose.position.z = 0.7;
 						stampOut.header.stamp = nowTime;
 						
