@@ -329,6 +329,7 @@ int main (int argc, char** argv)
 						pcl::io::savePCDFileASCII (ss.str(), *person_cloud);
 						
 
+
 						stampOut.pose.position.z = 0.7;
 						stampOut.header.stamp = nowTime;
 						
