@@ -221,18 +221,9 @@ int main (int argc, char** argv)
 			if (visualize){
 				viewer_display->removeAllPointClouds();
 				viewer_display->removeAllShapes();
-			}
-			
-			
-			pcl::visualization::PointCloudColorHandlerRGBField<PointT> rgb(cloud);
-			
-			if (visualize){
+				pcl::visualization::PointCloudColorHandlerRGBField<PointT> rgb(cloud);
 				viewer_display->addPointCloud<PointT> (cloud, rgb, "input_cloud");
 			}
-			
-			
-			//prepare vizualization message
-			visualization_msgs::MarkerArray markers_msg;
 			
 			unsigned int k = 0;
 			for(std::vector<pcl::people::PersonCluster<PointT> >::iterator it = clusters.begin(); it != clusters.end(); ++it)
@@ -321,13 +312,13 @@ int main (int argc, char** argv)
 						
 
 						stringstream ss;
-						ss << ros::package::getPath("pcl_perception") << "/data/human_cloud_" << nowTime.toNSec() << ".pcd";
+						ss << ros::package::getPath("pcl_perception") << "/data/human_kinect_" << nowTime.toNSec() << ".pcd";
 						pcl::io::savePCDFileASCII (ss.str(), *person_cloud);
 					
 						//save cloud in map frame of reference
 						pcl::fromROSMsg(person_cloud_ros,*person_cloud);
 						ss.str(std::string());
-						ss << ros::package::getPath("pcl_perception") << "/data/human_cloud_map_" << nowTime.toNSec() << ".pcd";
+						ss << ros::package::getPath("pcl_perception") << "/data/human_map_" << nowTime.toNSec() << ".pcd";
 						pcl::io::savePCDFileASCII (ss.str(), *person_cloud);
 						
 						stampOut.pose.position.z = 0.7;
