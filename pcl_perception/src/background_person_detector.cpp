@@ -328,16 +328,9 @@ int main (int argc, char** argv)
 						ss << ros::package::getPath("pcl_perception") << "/data/human_cloud_map_" << nowTime.toNSec() << ".pcd";
 						pcl::io::savePCDFileASCII (ss.str(), *person_cloud);
 						
-						//get the actual transform
-						/*tf::StampedTransform transform_to_map;
-						listener.lookupTransform ("/map", param_sensor_frame_id,  ros::Time(0), transform_to_map);
-						geometry_msgs::TransformStamped transform_to_map_msg;
-						tf::transformStampedTFToMsg (transform_to_map, transform_to_map_msg)
-						
-						transformPointCloud ("/map", const tf::Transform &net_transform, const sensor_msgs::PointCloud2 &in, sensor_msgs::PointCloud2 &out)*/
-						
+
 						stampOut.pose.position.z = 0.7;
-						stampOut.header.stamp = ros::Time::now();
+						stampOut.header.stamp = nowTime;
 						
 						//publish the marker
 						visualization_msgs::Marker marker_k = create_next_person_marker(it,param_out_frame_id,"segbot_pcl_person_detector",detection_count);	
