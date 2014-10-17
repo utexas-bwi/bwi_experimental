@@ -614,7 +614,7 @@ class dialogue_manager:
 		else:
 			if (relatively_confident_about[self.asp_role_map["action"]] == "query"):
 				self.role_requested = "patient"
-				verbal_query = "'"+self.verbalize_apr_tuple(relatively_confident_about)+"', does that sound right?"
+				verbal_query = "'"+self.verbalize_apr_tuple(relatively_confident_about)+"', does that answer your question?"
 			else:
 				verbal_query = "You want me to "+self.verbalize_apr_tuple(relatively_confident_about)+"?"
 	
@@ -945,7 +945,10 @@ class dialogue_manager:
 			#return the asp goal state generated
 			if (self.current_best_asp_understanding[self.asp_role_map["action"]][0] == "query"):
 				patient_ref = self.choose_referring_expression(self.current_best_asp_understanding[self.asp_role_map["patient"]][0],self.utterances_for_goal[-1])
+				self.request_type = None
+				self.role_requested = None
 				self.vocalize(patient_ref)
+				self.vocalize("Happy to help")
 			else:
 				self.request_type = None
 				self.role_requested = None
