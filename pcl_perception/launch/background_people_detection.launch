@@ -10,7 +10,6 @@
 	<!-- when publishing the detected poses, which frame id should they be in -->
 	<param name="out_frame_id" value = "/map"/>
 
-
 </node>
 
 </launch>
