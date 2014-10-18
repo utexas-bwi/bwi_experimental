@@ -310,7 +310,7 @@ int main (int argc, char** argv)
 						//save to file for analysis
 						ros::Time nowTime = ros::Time::now();
 						
-
+						//save cloud in kinect frame of reference
 						stringstream ss;
 						ss << ros::package::getPath("pcl_perception") << "/data/human_kinect_" << nowTime.toNSec() << ".pcd";
 						pcl::io::savePCDFileASCII (ss.str(), *person_cloud);
@@ -320,6 +320,16 @@ int main (int argc, char** argv)
 						ss.str(std::string());
 						ss << ros::package::getPath("pcl_perception") << "/data/human_map_" << nowTime.toNSec() << ".pcd";
 						pcl::io::savePCDFileASCII (ss.str(), *person_cloud);
+						
+						//save the pose
+						Eigen::Vector3f pose;
+						pose(0)=stampOut.pose.position.x;
+						pose(1)=stampOut.pose.position.y;
+						pose(1)=stampOut.pose.position.z;
+						ss.str(std::string());
+						ss << ros::package::getPath("pcl_perception") << "/data/pose_" << nowTime.toNSec() << ".txt";
+						write_vector_to_file(ss.str().c_str(),pose,3);
+						
 						
 						stampOut.pose.position.z = 0.7;
 						stampOut.header.stamp = nowTime;
