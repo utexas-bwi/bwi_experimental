@@ -125,22 +125,22 @@ include_directories(
 # )
 
 
-add_executable(segbot_odom_calibration_test src/segbot_odom_calibration_test.cpp)
-target_link_libraries(segbot_odom_calibration_test ${catkin_LIBRARIES} ${PCL_LIBRARIES})
+#add_executable(segbot_odom_calibration_test src/segbot_odom_calibration_test.cpp)
+#target_link_libraries(segbot_odom_calibration_test ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 
 
-add_executable(main_ground_based_people_detection src/main_ground_based_people_detection.cpp)
-target_link_libraries(main_ground_based_people_detection ${catkin_LIBRARIES} ${PCL_LIBRARIES})
+#add_executable(main_ground_based_people_detection src/main_ground_based_people_detection.cpp)
+#target_link_libraries(main_ground_based_people_detection ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 
 
-add_executable(general_perception src/general_perception.cpp)
+#add_executable(general_perception src/general_perception.cpp)
 #makes sure messages are generated before this is compiled
-add_dependencies(general_perception ${catkin_EXPORTED_TARGETS})
-target_link_libraries(general_perception ${catkin_LIBRARIES} ${PCL_LIBRARIES})
+#add_dependencies(general_perception ${catkin_EXPORTED_TARGETS})
+#target_link_libraries(general_perception ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 
 
-add_executable(main_ground_based_people_detection_demo src/main_ground_based_people_detection_demo.cpp)
-target_link_libraries(main_ground_based_people_detection_demo ${catkin_LIBRARIES} ${PCL_LIBRARIES})
+#add_executable(main_ground_based_people_detection_demo src/main_ground_based_people_detection_demo.cpp)
+#target_link_libraries(main_ground_based_people_detection_demo ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 
 add_executable(background_person_detector src/background_person_detector.cpp)
 target_link_libraries(background_person_detector ${catkin_LIBRARIES} ${PCL_LIBRARIES})
