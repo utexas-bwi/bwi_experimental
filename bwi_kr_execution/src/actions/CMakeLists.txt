@@ -8,4 +8,5 @@ SET( kractions_SRC ${KREXEC_SRC}
 	${CMAKE_CURRENT_SOURCE_DIR}/OpenSimulatedDoor.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/GoThrough.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/ApproachDoor.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/AskInRoom.cpp
 	PARENT_SCOPE)

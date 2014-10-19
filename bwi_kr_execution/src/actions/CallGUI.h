@@ -3,6 +3,7 @@
 #define bwi_krexec_CallGUI_h__guard
 
 #include <segbot_gui/QuestionDialogRequest.h>
+#include "segbot_gui/QuestionDialog.h"
 
 #include "actasp/Action.h"
 
@@ -27,6 +28,10 @@ public:
 
   std::string getName() const { return name; }
 
+  std::string getResponse();
+
+  int getResponseIndex();
+
   void run();
 
   bool hasFinished() const { return done; }
@@ -47,6 +52,8 @@ private:
   float timeOut;
   std::vector<std::string> options;
   bool done;
+
+  segbot_gui::QuestionDialog req;
 
 };
 
