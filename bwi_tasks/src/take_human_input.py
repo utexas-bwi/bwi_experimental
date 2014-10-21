@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import time
 import rospy
 
 import roslib; roslib.load_manifest('bwi_tasks')
@@ -8,45 +9,55 @@ import actionlib
 from bwi_kr_execution.msg import *
 import segbot_gui.srv
 
-from multiprocessing import Process, Lock
+from multiprocessing import Process, Value
 
 human_waiting = False
 next_room = None
 
+def get_human_waiting():
+    global human_waiting
+    return human_waiting
+
+def set_human_waiting(value):
+    global human_waiting
+    human_waiting = value
+
 # option 
 # 1: click me if you need help
 # 2: please let me know your goal place
-def gui_thread(option):
+def gui_thread(human_waiting):
   
+    rospy.init_node('human_input_gui_thread')
+
     print("gui_thread started")
 
     rospy.wait_for_service('question_dialog')
     
-    if option == 1:
+    while not rospy.is_shutdown():
+
+        if human_waiting.value == True:
+            rospy.sleep(2)
+            continue
+
         try:
             handle = rospy.ServiceProxy('question_dialog', segbot_gui.srv.QuestionDialog)
             res = handle(1, "Please click the button, if you need help.", ["Button"], 0)
-            human_waiting = True
-            return 1
+            human_waiting.value = True
+            res = handle(0, "Follow me please, I am moving fast.", ["Button"], 0)
+
         except rospy.ServiceException, e:
             print ("Service call failed")
     
-    elif option == 2:
-        try:
-            handle = rospy.ServiceProxy('question_dialog', QuestionDialog)
-            res = handle(2, "Please select the room.", ["418", "420"], 0)
-            return 1
-        except rospy.ServiceException, e:
-            print ("Service call failed: %s"%e)
+    return True
 
-def platform_thread():
+def platform_thread(human_waiting):
 
-    rospy.init_node('take_human_input_py')
-    global human_waiting
+    rospy.init_node('human_input_platform_thread')
+    rospy.wait_for_service('question_dialog')
 
-    print("platform_thread started123")
+    print("platform_thread started")
 
-    doors = ["d3_414b1", "d3_414b2", "d3_420", "d3_414a1", "d3_414a2", "d3_418"]
+    doors = ["d3_420", "d3_418", "d3_414a1", "d3_414b2"]
     
     client = actionlib.SimpleActionClient('/action_executor/execute_plan',\
             ExecutePlanAction)
@@ -54,33 +65,76 @@ def platform_thread():
 
     current_door = 0
 
-    while not rospy.is_shutdown():
+   
 
-        loc = doors[current_door]
-        current_door += 1
-        
-        if current_door >= len(doors):
-            current_door = 0
-        
-        if human_waiting == True:
-            next_room = gui_thread(2)
-            human_waiting = False
-        else:
-            print("human_waiting == True")
-        
-        goal = ExecutePlanGoal()
-        rule = AspRule()
-        fluent = AspFluent()
-        
-        fluent.name = "not facing"
-        fluent.variables = [loc]
-        rule.body = [fluent]
-        goal.aspGoal = [rule]
-        
-        print("sending goal: " + loc)
-        client.send_goal(goal)
+    while not rospy.is_shutdown():
+        print("human_waiting: " + str(human_waiting))
+
+        if human_waiting.value == True:
+            print("Human is waiting. Let me see where the goal is.")
+
+            try:
+                handle = rospy.ServiceProxy('question_dialog', segbot_gui.srv.QuestionDialog)
+                res = handle(1, "Please select the room.", doors, 0)
+            except rospy.ServiceException, e:
+                print ("Service call failed: %s"%e)
+
+            try:
+                handle = rospy.ServiceProxy('question_dialog', segbot_gui.srv.QuestionDialog)
+                handle(0, "Follow me please. We are arriving soon. ", doors, 0)
+            except rospy.ServiceException, e:
+                print ("Service call failed: %s"%e)
+
+
+            loc = doors[res.index]
+
+            goal = ExecutePlanGoal()
+            rule = AspRule()
+            fluent = AspFluent()
+            
+            fluent.name = "not beside"
+            fluent.variables = [loc]
+            rule.body = [fluent]
+            goal.aspGoal = [rule]
+            
+            print("sending goal: " + loc)
+            client.send_goal(goal)
     
-        client.wait_for_result()
+            client.wait_for_result()
+
+            try:
+                handle = rospy.ServiceProxy('question_dialog', segbot_gui.srv.QuestionDialog)
+                res = handle(0, "You have arrived. I am leaving. \n\nThank you!", doors, 0)
+                rospy.sleep(10)
+
+            except rospy.ServiceException, e:
+                print ("Service call failed: %s"%e)
+
+            human_waiting.value = False
+
+        else:
+            print("No one needs my help. Let me take a random walk.")
+
+            loc = doors[current_door]
+            current_door += 1
+            
+            if current_door >= len(doors):
+                current_door = 0
+        
+            goal = ExecutePlanGoal()
+            rule = AspRule()
+            fluent = AspFluent()
+            
+            fluent.name = "not beside"
+            fluent.variables = [loc]
+            rule.body = [fluent]
+            goal.aspGoal = [rule]
+            
+            print("sending goal: " + loc)
+            client.send_goal(goal)
+    
+            client.wait_for_result()
+
 
     return 1
 
@@ -88,11 +142,15 @@ if __name__ == '__main__':
 
   try:
 
-    p1 = Process(target = gui_thread, args = (1,))
-    p2 = Process(target = platform_thread)
+    human_waiting = Value('b', False)
+
+    p1 = Process(target = gui_thread, args = (human_waiting, ))
+    p2 = Process(target = platform_thread, args = (human_waiting, ))
 
     p1.start()
     p2.start()
+    p1.join()
+    p2.join()
 
   except:
 
