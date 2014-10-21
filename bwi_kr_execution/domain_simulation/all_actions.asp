@@ -6,7 +6,7 @@
 
 1{	approach(D1,I) : door(D1), 
 	gothrough(D2,I) : door(D2), 
-	opendoor(D3,I) : door(D3),
+	opendoor(D3,I) : door(D3), 
         askinroom(P,R,I): person(P) : room(R)
 	}1 :- not noop(I), I=0..n-1.
 

@@ -1,0 +1,1 @@
+:- not inGDC(matteo,n), not -inGDC(matteo,n).

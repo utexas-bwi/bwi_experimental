@@ -47,12 +47,6 @@ void AskInRoom::run() {
   uf.request.fluents.push_back(fluent);
   krClient.call(uf);
 
-  //ROS_INFO_STREAM(fluent.name);
-
-  fluent.name = "knowinroom";
-  uf.request.fluents.push_back(fluent);
-  krClient.call(uf);
-
   if (response >= 0) {
     CallGUI thank("thank", CallGUI::DISPLAY,  "Thanks!");
     thank.run();
@@ -65,9 +59,7 @@ void AskInRoom::run() {
 actasp::Action* AskInRoom::cloneAndInit(const actasp::AspFluent& fluent) const {
   AskInRoom *newAction = new AskInRoom();
   newAction->person = fluent.getParameters().at(0);
-  //ROS_INFO_STREAM(newAction->person);
   newAction->room = fluent.getParameters().at(1);
-  //ROS_INFO_STREAM(newAction->room);
   
   return newAction;
 }
