@@ -33,8 +33,8 @@ private:
  std::vector<std::string> getParameters() const;
  std::string person;
  std::string room;
- ros::Publisher ask_pub;
- bool pub_set;
+ static ros::Publisher ask_pub;
+ static bool pub_set;
  bool done;
  
 };

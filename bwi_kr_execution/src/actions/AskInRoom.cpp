@@ -26,6 +26,8 @@ AskInRoom::AskInRoom() :
             done(false){
             }
 
+ros::Publisher AskInRoom::ask_pub();
+bool AskInRoom::pub_set(false);
   
 void AskInRoom::run() {
   //current state query
