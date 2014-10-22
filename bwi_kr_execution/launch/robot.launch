@@ -28,6 +28,10 @@
     <param name="location_file" value="$(arg location_file)" />
     <param name="object_file" value="$(arg object_file)" />
   </node>
+  
+  <!-- launch PCL people detection node -->
+  <include file="$(find pcl_perception)/launch/background_people_detection.launch">
+  </include>
 
   <!-- launch the gui -->
   <node name="segbot_gui" pkg="segbot_gui" type="question_dialog_plugin" />
