@@ -100,7 +100,7 @@ include_directories(
   pnp/include
 )
 
-link_directories(pnp/build)
+#link_directories(pnp/build)
 
 set(task_pnp_SRC)
 
@@ -116,6 +116,26 @@ add_subdirectory(src)
 # )
 
 ## Declare a cpp executable
+find_package(LibXml2 REQUIRED)
+include_directories(${LIBXML2_INCLUDE_DIR})
+SET( pnp_SRC pnp/src/conditionchecker.cpp
+  pnp/src/petrinet.cpp
+  pnp/src/pnp_action.cpp
+  pnp/src/pnp_action_loader_txt.cpp
+  pnp/src/pnp_executable.cpp
+  pnp/src/pnp_executer.cpp
+  pnp/src/pnp_instantiators.cpp
+  pnp/src/pnp_plan.cpp
+  pnp/src/utils.cpp
+  pnp/src/basic_plan/xml_plan_instantiator.cpp
+  pnp/src/parser/ConditionParser.cpp
+  pnp/src/parser/ConditionScanner.cpp )
+  
+add_subdirectory(pnp/src/learning_plan)
+
+add_library(pnp ${pnp_SRC})
+target_link_libraries(pnp ${LIBXML2_LIBRARIES})
+
 add_executable(bwi_tasks_pnp_node ${task_pnp_SRC})
 
 ## Add cmake target dependencies of the executable/library
