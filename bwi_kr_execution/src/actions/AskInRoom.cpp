@@ -22,11 +22,10 @@ namespace bwi_krexec {
 AskInRoom::AskInRoom() : 
             person(),
             room(),
-            pub_set(false),
             done(false){
             }
 
-ros::Publisher AskInRoom::ask_pub();
+ros::Publisher AskInRoom::ask_pub;
 bool AskInRoom::pub_set(false);
   
 void AskInRoom::run() {
