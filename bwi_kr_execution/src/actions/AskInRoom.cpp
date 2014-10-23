@@ -59,14 +59,18 @@ void AskInRoom::run() {
     sound_req.sound = sound_play::SoundRequest::SAY;
     sound_req.command = sound_play::SoundRequest::PLAY_ONCE;
     std::stringstream ss;
-    ss << "Is " << person << "in the room?";
+    ss << "Is " << person << " in the room?";
     sound_req.arg = ss.str();
-    ask_pub.publish(sound_req);
-    ROS_INFO("%d", ask_pub.getNumSubscribers());
-    ROS_INFO_STREAM(ask_pub.getTopic());
 
-    /*sound_play::SoundClient client(n,"robotsound");
-    client.say("Is " + person + " inside the room");*/
+    ros::Rate r(50);
+    while(ask_pub.getNumSubscribers() == 0)
+      r.sleep();
+    
+    ask_pub.publish(sound_req);
+    ros::spinOnce();
+    r.sleep();
+
+    ROS_INFO("%d", ask_pub.getNumSubscribers());
   }
 
   vector<string> options;
