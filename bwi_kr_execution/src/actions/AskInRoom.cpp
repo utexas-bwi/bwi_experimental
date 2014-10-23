@@ -70,14 +70,14 @@ void AskInRoom::run() {
     ros::spinOnce();
     r.sleep();
 
-    ROS_INFO("%d", ask_pub.getNumSubscribers());
+    ROS_INFO("published sound message");
   }
 
   vector<string> options;
   options.push_back("yes");
   options.push_back("no");
 
-  CallGUI askInRoom("askInRoom", CallGUI::CHOICE_QUESTION,  "Is " + person + " inside the room " + room + "?", 20.0, options);
+  CallGUI askInRoom("askInRoom", CallGUI::CHOICE_QUESTION,  "Is " + person + " in the room " + room + "?", 60.0, options);
   askInRoom.run();
 
   int response = askInRoom.getResponseIndex();

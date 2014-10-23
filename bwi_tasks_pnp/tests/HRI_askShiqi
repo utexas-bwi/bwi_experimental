@@ -1,0 +1,1 @@
+:- not inoffice(shiqi,n), not -inoffice(shiqi,n).
