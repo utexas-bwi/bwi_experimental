@@ -157,6 +157,8 @@ if (retrain_master_parser == True):
 			if (f.split('.')[1] == "txt"): #right filetype
 				alog_f = open(os.path.join(root,f),'r')
 				alog_f_lines = alog_f.read().strip().split("\n")
+				if (len(alog_f_lines) < 2): #blank
+					continue
 				i = 0
 				while (i < len(alog_f_lines)):
 					utterance_parse_pairs.append((alog_f_lines[i],alog_f_lines[i+1]))
@@ -198,8 +200,8 @@ if (run_offline == True):
 		f = open(command_filename,'w')
 		f.write(asp_goal_state)
 		f.close()
-		dm.write_core_elements_to_pickle_and_shutdown() #write output vocalization(s) and safe final core
 		os.system("rm -R "+os.path.join(path_to_master_dir,session_master)) #remove user-specific parsing model to save disk space
+		dm.write_core_elements_to_pickle_and_shutdown() #write output vocalization(s) and safe final core
 
 #online command loop
 else:
