@@ -28,6 +28,20 @@
     <param name="location_file" value="$(arg location_file)" />
     <param name="object_file" value="$(arg object_file)" />
   </node>
+  
+  <!-- launch PCL people detection node -->
+  <include file="$(find pcl_perception)/launch/background_people_detection.launch">
+  </include>
+
+  <!-- launch rosbridge_server for remote video streaming -->
+  <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch"> 
+  </include>
+
+  <!-- launch mjpeg_server for remote video streaming -->
+  <node name="mjpeg_server" pkg="mjpeg_server" type="mjpeg_server" 
+        output="screen">
+    <param name="__image_transport" value="compressed" />
+  </node>
 
   <!-- launch the gui -->
   <node name="segbot_gui" pkg="segbot_gui" type="question_dialog_plugin" />
@@ -37,5 +51,7 @@
 
   <!-- logging node -->
   <include file="$(find bwi_logging)/launch/record.launch"> </include>
+
+
 
 </launch>
