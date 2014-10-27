@@ -1,0 +1,7 @@
+<launch>
+
+  <param name="path_to_bwi_rlg" type="string" value="$(find bwi_rlg)" />
+
+  <node name="semantic_parser_server" pkg="bwi_rlg" type="semantic_parser_server.py"/> 
+
+</launch>
