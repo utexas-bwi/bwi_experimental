@@ -29,13 +29,14 @@ ros::Publisher AskInRoom::ask_pub;
 bool AskInRoom::pub_set(false);
   
 void AskInRoom::run() {
-  //current state query
+
   ros::NodeHandle n;
   if (!pub_set) { 
     ask_pub = n.advertise<sound_play::SoundRequest>("robotsound", 1000);
     pub_set = true;
   }
 
+  //current state query
   ros::ServiceClient currentClient = n.serviceClient<bwi_kr_execution::CurrentStateQuery> ( "current_state_query" );
   
   bwi_kr_execution::AspFluent atFluent;
@@ -54,21 +55,18 @@ void AskInRoom::run() {
   bool at = csq.response.answer.satisfied;
 
   if (at) {
-    //sound generation
+
+    if (ask_pub.getNumSubscribers() == 0) return; //if the subscriber is not connected, sleep
+
+    //speak
     sound_play::SoundRequest sound_req;
     sound_req.sound = sound_play::SoundRequest::SAY;
     sound_req.command = sound_play::SoundRequest::PLAY_ONCE;
     std::stringstream ss;
     ss << "Is " << person << " in the room?";
     sound_req.arg = ss.str();
-
-    ros::Rate r(50);
-    while(ask_pub.getNumSubscribers() == 0)
-      r.sleep();
     
     ask_pub.publish(sound_req);
-    ros::spinOnce();
-    r.sleep();
 
     ROS_INFO("published sound message");
   }
