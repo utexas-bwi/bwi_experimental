@@ -75,7 +75,7 @@ def handle_semantic_parser(req):
                 time.sleep(0.1)
 
             f = open(output_file, 'r')
-            output = f.readline()
+            output = f.read()
             f.close()
 
             f = open(file_last_comm, 'w+')
@@ -105,7 +105,7 @@ def handle_semantic_parser(req):
                 time.sleep(0.1)
 
             f = open(output_file, 'r')
-            output = f.readline()
+            output = f.read()
             f.close()
 
             f = open(file_last_comm, 'w+')
