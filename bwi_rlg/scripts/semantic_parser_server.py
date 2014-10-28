@@ -5,6 +5,8 @@ import rospy
 import time
 import subprocess
 import os.path
+import os
+import glob
 
 def handle_semantic_parser(req):
 
@@ -12,11 +14,11 @@ def handle_semantic_parser(req):
 
         rospy.loginfo("Human: " + req.input_text)
 
-        path_to_bwi_rlg = rospy.get_param("/path_to_bwi_rlg", "")
+        path_to_bwi_rlg = rospy.get_param("/semantic_parser_server/path_to_bwi_rlg")
 
         print("path_to_bwi_rlg: " + path_to_bwi_rlg)
 
-        file_last_comm = path_to_bwi_rlg + "agent/dialog/last_comm_time.txt"
+        file_last_comm = path_to_bwi_rlg + "/agent/dialog/last_comm_time.txt"
         time_curr = time.time()
         
         print("file_last_comm: " + file_last_comm)
@@ -39,6 +41,10 @@ def handle_semantic_parser(req):
             time_diff = 0
 
         path_to_main = path_to_bwi_rlg + "/agent/dialog/"
+
+        filelist = glob.glob(path_to_main + "offline_data/outputs/*")
+        for f in filelist:
+            os.remove(f)
 
         print(str(time_diff))
 
@@ -65,12 +71,14 @@ def handle_semantic_parser(req):
                 else:
                     time.sleep(0.1)
 
-            time.sleep(1)
+            while os.path.exists(output_file) == False:
+                time.sleep(0.1)
+
             f = open(output_file, 'r')
             output = f.readline()
             f.close()
 
-            f = open(file_last_comm, 'w')
+            f = open(file_last_comm, 'w+')
             f.write(str(time.time()) + '\n')
             f.write(id_last)
             f.close()
@@ -82,7 +90,7 @@ def handle_semantic_parser(req):
             id_new = "id_" + str(time.time())
             
             f = open(path_to_main + "offline_data/inputs/" + id_new + \
-                    "_input.txt", 'w')
+                    "_input.txt", 'w+')
             f.write(req.input_text)
             f.close()
 
@@ -100,7 +108,7 @@ def handle_semantic_parser(req):
             output = f.readline()
             f.close()
 
-            f = open(file_last_comm, 'w')
+            f = open(file_last_comm, 'w+')
             f.write(str(time.time()) + '\n')
             f.write(id_new)
             f.close()
@@ -144,7 +152,7 @@ def semantic_parser_server():
 
 if __name__ == "__main__":
 
-    rospy.set_param("path_to_bwi_rlg", "/home/szhang/catkin_ws/src/bwi_experimental/bwi_rlg/")
+    # rospy.set_param("path_to_bwi_rlg", "/home/szhang/catkin_ws/src/bwi_experimental/bwi_rlg/")
     rospy.set_param("patience_time_in_conversation", 30)
     semantic_parser_server()   
 

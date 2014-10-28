@@ -67,7 +67,7 @@ def platform_thread(human_waiting, curr_goal):
 
 
     while not rospy.is_shutdown():
-        print("human_waiting: " + str(human_waiting))
+        print("human_waiting: " + str(human_waiting.value))
 
         if human_waiting.value == True:
             print("Human is waiting. Let me see where the goal is.")

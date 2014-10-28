@@ -2,9 +2,7 @@
 
   <arg name="dir_path" default="$(find bwi_rlg)" />
 
-
-
-  <node name="semantic_parser" pkg="bwi_rlg" type="semantic_parser_server.py"
+  <node name="semantic_parser_server" pkg="bwi_rlg" output ="screen" type="semantic_parser_server.py">
       <param name="path_to_bwi_rlg" value="$(arg dir_path)" />
   </node>
 
