@@ -58,11 +58,14 @@ def handle_semantic_parser(req):
                 "_output.txt"
 
             while True:
-                diff = abs(time.time() - os.path.getmtime(output_file))
-                if diff < 1:
-                    break
-                time.sleep(0.1)
+                if os.path.exists(output_file):
+                    diff = abs(time.time() - os.path.getmtime(output_file))
+                    if diff < 1:
+                        break
+                else:
+                    time.sleep(0.1)
 
+            time.sleep(1)
             f = open(output_file, 'r')
             output = f.readline()
             f.close()
@@ -134,8 +137,6 @@ def handle_semantic_parser(req):
 
 def semantic_parser_server():
 
-    print("I am here!!")
-
     rospy.init_node('semantic_parser_server')
     s = rospy.Service('semantic_parser', SemanticParser, handle_semantic_parser)
     rospy.spin()
@@ -143,9 +144,8 @@ def semantic_parser_server():
 
 if __name__ == "__main__":
 
-    rospy.set_param("path_to_bwi_rlg", "/home/szhang/ros_workspace/catkin_ws/src/bwi_experimental/bwi_rlg/")
+    rospy.set_param("path_to_bwi_rlg", "/home/szhang/catkin_ws/src/bwi_experimental/bwi_rlg/")
     rospy.set_param("patience_time_in_conversation", 30)
-    print("I am here: main")
     semantic_parser_server()   
 
 

@@ -10,23 +10,17 @@ from bwi_kr_execution.msg import *
 import segbot_gui.srv
 import bwi_rlg.srv
 
-from multiprocessing import Process, Value
+from multiprocessing import Process, Value, Array
 
-human_waiting = False
-next_room = None
+# human_waiting = False
+# curr_goal = []
+# next_room = None
 
-def get_human_waiting():
-    global human_waiting
-    return human_waiting
-
-def set_human_waiting(value):
-    global human_waiting
-    human_waiting = value
 
 # option 
 # 1: click me if you need help
 # 2: please let me know your goal place
-def gui_thread(human_waiting):
+def gui_thread(human_waiting, curr_goal):
   
     rospy.init_node('human_input_gui_thread')
 
@@ -42,21 +36,27 @@ def gui_thread(human_waiting):
 
         try:
             handle = rospy.ServiceProxy('question_dialog', segbot_gui.srv.QuestionDialog)
-            res = handle(1, "Please click the button, if you need my help.", ["Button"], 0)
+            res = handle(1, "Please click the button, if you need my help.\n\nI am moving to " + curr_goal.value, ["Button"], 2)
+
+            while (res.index < 0):
+                handle = rospy.ServiceProxy('question_dialog', segbot_gui.srv.QuestionDialog)
+                res = handle(1, "Please click the button, if you need my help.\n\nI am moving to " + curr_goal.value, ["Button"], 2)
+
             human_waiting.value = True
-            res = handle(0, "Follow me please, I am moving fast.", ["Button"], 0)
+            res = handle(0, "I have to go to " + curr_goal.value + " first.\n\nFollow me please, I will serve you in a moment.", ["Button"], 0)
 
         except rospy.ServiceException, e:
             print ("Service call failed")
     
     return True
 
-def platform_thread(human_waiting):
+def platform_thread(human_waiting, curr_goal):
 
     rospy.init_node('human_input_platform_thread')
-    rospy.wait_for_service('question_dialog')
 
     print("platform_thread started")
+
+    rospy.wait_for_service('question_dialog')
 
     rooms = ["414a", "414b", "416", "418", "420"]
     doors = ["d3_414a1", "d3_414b1", "d3_416", "d3_418", "d3_420"]
@@ -92,8 +92,18 @@ def platform_thread(human_waiting):
             # now the robot has found the query from semantic parser
 
             loc = res_sp.query
-            loc = loc.replace("at(l", "d")
-            loc = loc[:loc.find(",")]
+            print ("loc: " + loc)
+
+            if (loc.find("at") >= 0):
+
+                loc = loc.replace("at(l", "d")
+                loc = loc[:loc.find(",")]
+
+            elif (loc.find("query") >= 0):
+
+                loc = loc.replace("query(l", "d")
+                loc = loc[:loc.find(":")]
+
             if loc.find("d3_414") > 0:
                 loc += "1"
 
@@ -133,6 +143,7 @@ def platform_thread(human_waiting):
             print("No one needs my help. Let me take a random walk.")
 
             loc = doors[int(time.time()) % len(rooms)]
+            curr_goal.value = loc
             
             goal = ExecutePlanGoal()
             rule = AspRule()
@@ -153,20 +164,15 @@ def platform_thread(human_waiting):
 
 if __name__ == '__main__':
 
-  try:
-
     human_waiting = Value('b', False)
+    curr_goal = Array('c', "this is a very long string for nothing")
 
-    p1 = Process(target = gui_thread, args = (human_waiting, ))
-    p2 = Process(target = platform_thread, args = (human_waiting, ))
+    p1 = Process(target = gui_thread, args = (human_waiting, curr_goal))
+    p2 = Process(target = platform_thread, args = (human_waiting, curr_goal))
 
     p1.start()
     p2.start()
+
     p1.join()
     p2.join()
-
-  except:
-
-    rospy.loginfo("Error: unable to start thread")
-
 
