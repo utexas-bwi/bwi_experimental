@@ -619,8 +619,13 @@ class dialogue_manager:
 		#if relatively confident about all arguments, ask for global confirmation
 		else:
 			if (relatively_confident_about[self.asp_role_map["action"]] == "query"):
-				self.role_requested = "patient"
-				verbal_query = "Are you asking a question about '"+self.verbalize_apr_tuple(relatively_confident_about)+"'?"
+				if (self.role_requested == "action"):
+					self.role_requested = "patient"
+					#verbal_query = "Are you asking a question about '"+self.verbalize_apr_tuple(relatively_confident_about)+"'?"
+					verbal_query = "'"+self.verbalize_apr_tuple(relatively_confident_about)+"', does that answer your question?"
+				else:
+					self.role_requested = "action"
+					verbal_query = "Are you asking me a question?"
 			else:
 				verbal_query = "You want me to "+self.verbalize_apr_tuple(relatively_confident_about)+"?"
 	
@@ -640,9 +645,10 @@ class dialogue_manager:
 			return None
 		elif (utterance_class == "no"):
 			self.vocalize("Sorry I misunderstood",request_type="failed_guess",role_requested=None)
-			if (self.role_requested != None and self.current_best_asp_understanding[self.asp_role_map[self.role_requested]][0] != None): #the user is rejecting a clarification on an argument
+			if (self.current_best_asp_understanding[self.asp_role_map["action"]][0] != "query" and self.role_requested != None and self.current_best_asp_understanding[self.asp_role_map[self.role_requested]][0] != None): #the user is rejecting a clarification on an argument
 				self.current_asp_confidence[self.asp_role_map[self.role_requested]][self.current_best_asp_understanding[self.asp_role_map[self.role_requested]][0]] = 0
 			else: #the user is rejecting an assumption that the system has made; this is the same as a termination request
+				#temporarily, we are rejecting when 'query' was rejecting too
 				self.request_type = "terminate"
 				self.role_requested = None
 			return None
