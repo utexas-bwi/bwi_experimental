@@ -286,7 +286,10 @@ class dialogue_manager:
 				else: #multiple parses
 					j = 1 if ' WRONG: ' in lines[i] else 2
 					while (' Had correct parses: ' not in lines[i+j]):
-						p = lines[i+j][lines[i+j].index('[')+2:]
+						if ('[S' not in lines[i+j]):
+							p = lines[i+j][lines[i+j].index('[')+2:]
+						else:
+							p = lines[i+j].split(']')[2][1:]
 						s = float(lines[i+j+1].split()[3])
 						print s #DEBUG
 						parses.append((p,s))
