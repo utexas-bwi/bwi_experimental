@@ -51,7 +51,7 @@ def task_delivery(person, item, client, dialog_handle):
     
     # going to the shop first - there is no shop - going to Jesse's pod
     fluent.name = "not facing"
-    fluent.variables = ["d3_502"]
+    fluent.variables = ["d3_504"]
     rule.body = [fluent]
     goal.aspGoal = [rule]
     

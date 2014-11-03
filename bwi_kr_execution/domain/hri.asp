@@ -17,6 +17,17 @@ inside(shiqi,l3_420).
 inside(jivko,l3_432). 
 inside(stacy,l3_502). 
 
+
+%%%%%%%%%%%%%%%%%%%%%%%
+% temp!
+%%%%%%%%%%%%%%%%%%%%%%
+
+door(d3_504). 
+hasdoor(l3_504, d3_504). 
+hasdoor(l3_500, d3_504). 
+-acc(l3_504,l3_500). 
+
+
 #hide person/1.
 #hide inside/2.
 
