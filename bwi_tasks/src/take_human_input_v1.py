@@ -16,7 +16,7 @@ from multiprocessing import Process, Value, Array
 # curr_goal = []
 # next_room = None
 
-def task_guiding(doorname)
+def task_guiding(doorname):
 
     handle = rospy.ServiceProxy('question_dialog', 
                                 segbot_gui.srv.QuestionDialog)
@@ -43,7 +43,7 @@ def task_guiding(doorname)
                     "Is there anything else I can do for you?", \
                  ["Yes", "No"], 30)
 
-    if res.index == None || res.index == 1:
+    if res.index == None or res.index == 1:
 
         res = handle(0, "I am leaving. Thank you!", "", 10)
         human_waiting.value = False
@@ -88,9 +88,9 @@ def task_delivery(person, item):
                    'raymond'    : 'd3_512',
                    'stacy'      : 'd3_502',
                    'kazunori'   : 'd3_402',
-                   'matteo',    : 'd3_418',
-                   'jivko',     : 'd3_432',
-                   'shiqi',     : 'd3_420'}
+                   'matteo'     : 'd3_418',
+                   'jivko'      : 'd3_432',
+                   'shiqi'      : 'd3_420'}
 
     fluent.name = "not facing"
     fluent.variables = [person_door[person]]
@@ -111,7 +111,7 @@ def task_delivery(person, item):
     res = handle(1, "Is there anything else I can do for you?", \
                  ["Yes", "No"], 30)
 
-    if res.index == None || res.index == 1:
+    if res.index == None or res.index == 1:
 
         res = handle(0, "I am leaving. Thank you!", "", 10)
         human_waiting.value = False
