@@ -16,11 +16,9 @@ from multiprocessing import Process, Value, Array
 # curr_goal = []
 # next_room = None
 
-def task_guiding(doorname, client):
+def task_guiding(doorname, client, dialog_handle):
 
-    handle = rospy.ServiceProxy('question_dialog', 
-                                segbot_gui.srv.QuestionDialog)
-    handle(0, "Follow me please. We are arriving soon. ", [], 0)
+    dialog_handle(0, "Follow me please. We are arriving soon. ", [], 0)
 
     goal = ExecutePlanGoal()
     rule = AspRule()
@@ -36,27 +34,16 @@ def task_guiding(doorname, client):
 
     client.wait_for_result()
 
-    handle = rospy.ServiceProxy('question_dialog', 
-                                segbot_gui.srv.QuestionDialog)
+    res = dialog_handle(0, "You have arrived. I am leaving. \n\nThank you!", \
+                        [""], 10)
+    rospy.sleep(10)
 
-    res = handle(1, "You have arrived. \n\n" + \
-                    "Is there anything else I can do for you?", \
-                 ["Yes", "No"], 30)
-
-    if res.index == None or res.index == 1:
-
-        res = handle(0, "I am leaving. Thank you!", [""], 10)
-        human_waiting.value = False
+    human_waiting.value = False
     
-    else:
 
-        human_waiting.value = True
+def task_delivery(person, item, client, dialog_handle):
 
-def task_delivery(person, item, client):
-
-    handle = rospy.ServiceProxy('question_dialog', 
-                                segbot_gui.srv.QuestionDialog)
-    handle(0, "I am busy... ", [""], 0)
+    dialog_handle(0, "Got you. I am working on it...", [], 0)
 
     goal = ExecutePlanGoal()
     rule = AspRule()
@@ -64,20 +51,17 @@ def task_delivery(person, item, client):
     
     # going to the shop first - there is no shop - going to Jesse's pod
     fluent.name = "not facing"
-    fluent.variables = ["d3_504"]
+    fluent.variables = ["d3_502"]
     rule.body = [fluent]
     goal.aspGoal = [rule]
     
-    rospy.loginfo("Sending goal (doorname): " + doorname)
+    rospy.loginfo("Sending goal (doorname): " + fluent.variables[0])
     client.send_goal(goal)
 
     client.wait_for_result()
 
-    handle = rospy.ServiceProxy('question_dialog', 
-                                segbot_gui.srv.QuestionDialog)
-
-    res = handle(1, "May I have " + item + " please?", \
-                 ["Sorry, we do not have that", "Loaded"], 30)
+    res = dialog_handle(1, "May I have " + item + " please?", \
+                 ["Sorry, we do not have that", "Loaded"], 60)
 
     hasLoaded = bool(res.index)
 
@@ -97,31 +81,21 @@ def task_delivery(person, item, client):
     rule.body = [fluent]
     goal.aspGoal = [rule]
     
-    rospy.loginfo("Sending goal (doorname): " + doorname)
+    rospy.loginfo("Sending goal (doorname): " + person_door[person])
     client.send_goal(goal)
     client.wait_for_result()
 
-    handle = rospy.ServiceProxy('question_dialog', 
-                                segbot_gui.srv.QuestionDialog)
-
-    if hadLoaded == True:
-        res = handle(1, "Here is your " + item + ". ", \
+    if hasLoaded == True:
+        res = dialog_handle(1, "Here is your " + item + ". ", \
                  ["Unloaded"], 30)
 
-    res = handle(1, "Is there anything else I can do for you?", \
-                 ["Yes", "No"], 30)
+    res = dialog_handle(0, "Delivery done. I am leaving. \n\nThank you!", \
+                        [""], 20)
+    rospy.sleep(20)
 
-    if res.index == None or res.index == 1:
-
-        res = handle(0, "I am leaving. Thank you!", [""], 10)
-        human_waiting.value = False
+    human_waiting.value = False
     
-    else:
-
-        human_waiting.value = True
-
-
-def process_request(query, client):
+def process_request(query, client, dialog_handle):
 
     print ("query: " + query)
 
@@ -134,7 +108,7 @@ def process_request(query, client):
         if query.find("d3_414") > 0:
             query += "1"
 
-        task_guiding(query, client)
+        task_guiding(query, client, dialog_handle)
 
     elif (query.find("query") >= 0): # this is a question-asking task! 
 
@@ -145,7 +119,7 @@ def process_request(query, client):
         if query.find("d3_414") > 0:
             query += "1"
 
-        task_guiding(query, client)
+        task_guiding(query, client, dialog_handle)
 
     elif (query.find("served") >= 0): # this is a delivery task! 
         # served(shiqi,coffee,n)
@@ -155,7 +129,7 @@ def process_request(query, client):
         query = query[query.find(',')+1 : ]
         item_name = query[: query.find(',')]
 
-        task_delivery(person_name, item_name, client)
+        task_delivery(person_name, item_name, client, dialog_handle)
 
 
 # option 
@@ -169,28 +143,28 @@ def gui_thread(human_waiting, curr_goal):
 
     rospy.wait_for_service('question_dialog')
     
+    handle = rospy.ServiceProxy('question_dialog', \
+                                segbot_gui.srv.QuestionDialog)
+
     while not rospy.is_shutdown():
 
         if human_waiting.value == True:
             rospy.sleep(2)
             continue
 
-        handle = rospy.ServiceProxy('question_dialog', \
-                                    segbot_gui.srv.QuestionDialog)
         res = handle(1, "Please click the button, if you need my help." + \
-                     "\n\nI am moving to room " + curr_goal.value[3:], \
+                     "\n\nI am moving to room 3." + curr_goal.value[3:], \
                      ["Button"], 2)
 
         while (res.index < 0):
 
-            handle = rospy.ServiceProxy('question_dialog', \
-                                        segbot_gui.srv.QuestionDialog)
             res = handle(1, "Please click the button, if you need my help." + \
-                         "\n\nI am moving to room " + curr_goal.value[3:], \
+                         "\n\nI am moving to room 3." + curr_goal.value[3:], \
                          ["Button"], 2)
 
         human_waiting.value = True
-        res = handle(0, "I have to go to " + curr_goal.value[3:] + " first." +\
+        res = handle(0, "I have to go to room 3." + curr_goal.value[3:] + \
+                        " first." + \
                         "\n\nFollow me please, I will serve you in a moment.",\
                      ["Button"], 0)
 
@@ -212,37 +186,37 @@ def platform_thread(human_waiting, curr_goal):
                                           ExecutePlanAction)
     client.wait_for_server()
 
+    dialog_handle = rospy.ServiceProxy('question_dialog',
+                                       segbot_gui.srv.QuestionDialog)
+
     while not rospy.is_shutdown():
 
         if human_waiting.value == True:
 
             rospy.loginfo("Human is waiting. Let me see if I can help.")
 
+            # commumication......
             # robot speaks first
-            handle = rospy.ServiceProxy('question_dialog', 
-                                        segbot_gui.srv.QuestionDialog)
-            res_qd = handle(0, "I can do guiding and shopping tasks for you.",\
-                            [""], 0)
 
-            handle = rospy.ServiceProxy('semantic_parser', 
+            res_qd = dialog_handle(0, 
+                     "I can do guiding and shopping tasks for you.", [""], 5)
+
+            rospy.sleep(5)
+            parser_handle = rospy.ServiceProxy('semantic_parser', 
                                         bwi_rlg.srv.SemanticParser)
-            res_sp = handle(0, res_qd.text)
+            res_sp = parser_handle(0, res_qd.text)
 
             while len(res_sp.query) == 0:
                 
                 # take human feedback
-                handle = rospy.ServiceProxy('question_dialog', 
-                                            segbot_gui.srv.QuestionDialog)
-                res_qd = handle(2, res_sp.output_text, doors, 0)
+                res_qd = dialog_handle(2, res_sp.output_text, doors, 0)
 
                 # robot speaks back
-                handle = rospy.ServiceProxy('semantic_parser', 
-                                            bwi_rlg.srv.SemanticParser)
-                res_sp = handle(0, res_qd.text)
+                res_sp = parser_handle(0, res_qd.text)
 
             # now the robot has found the query from semantic parser
 
-            process_request(res_sp.query, client)
+            process_request(res_sp.query, client, dialog_handle)
 
         else:
 
