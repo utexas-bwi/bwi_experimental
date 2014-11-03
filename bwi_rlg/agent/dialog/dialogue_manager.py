@@ -558,8 +558,11 @@ class dialogue_manager:
 				elif (apr[self.asp_role_map["action"]] == "at"):
 					return "Where should I walk?"
 			else:
-				if (apr[self.asp_role_map["action"]] == None and patient_ref != None):
-					return "So "+patient_ref+" is for "+recipient_ref+"?"
+				if (apr[self.asp_role_map["action"]] == None):
+					if (patient_ref != None):
+						return "So "+patient_ref+" is for "+recipient_ref+"?"
+					else:
+						return "I should do something involving "+recipient_ref+"?"
 				elif (apr[self.asp_role_map["action"]] == "served" and patient_ref == None):
 					return "I am to deliver something to "+recipient_ref+"?"
 
