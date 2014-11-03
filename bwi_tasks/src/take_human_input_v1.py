@@ -16,7 +16,7 @@ from multiprocessing import Process, Value, Array
 # curr_goal = []
 # next_room = None
 
-def task_guiding(doorname):
+def task_guiding(doorname, client):
 
     handle = rospy.ServiceProxy('question_dialog', 
                                 segbot_gui.srv.QuestionDialog)
@@ -45,18 +45,18 @@ def task_guiding(doorname):
 
     if res.index == None or res.index == 1:
 
-        res = handle(0, "I am leaving. Thank you!", [], 10)
+        res = handle(0, "I am leaving. Thank you!", [""], 10)
         human_waiting.value = False
     
     else:
 
         human_waiting.value = True
 
-def task_delivery(person, item):
+def task_delivery(person, item, client):
 
     handle = rospy.ServiceProxy('question_dialog', 
                                 segbot_gui.srv.QuestionDialog)
-    handle(0, "I am busy... ", [], 0)
+    handle(0, "I am busy... ", [""], 0)
 
     goal = ExecutePlanGoal()
     rule = AspRule()
@@ -113,7 +113,7 @@ def task_delivery(person, item):
 
     if res.index == None or res.index == 1:
 
-        res = handle(0, "I am leaving. Thank you!", [], 10)
+        res = handle(0, "I am leaving. Thank you!", [""], 10)
         human_waiting.value = False
     
     else:
@@ -121,7 +121,7 @@ def task_delivery(person, item):
         human_waiting.value = True
 
 
-def process_request(query):
+def process_request(query, client):
 
     print ("query: " + query)
 
@@ -134,7 +134,7 @@ def process_request(query):
         if query.find("d3_414") > 0:
             query += "1"
 
-        task_guiding(query)
+        task_guiding(query, client)
 
     elif (query.find("query") >= 0): # this is a question-asking task! 
 
@@ -145,7 +145,7 @@ def process_request(query):
         if query.find("d3_414") > 0:
             query += "1"
 
-        task_guiding(query)
+        task_guiding(query, client)
 
     elif (query.find("served") >= 0): # this is a delivery task! 
         # served(shiqi,coffee,n)
@@ -155,7 +155,7 @@ def process_request(query):
         query = query[query.find(',')+1 : ]
         item_name = query[: query.find(',')]
 
-        task_delivery(person_name, item_name)
+        task_delivery(person_name, item_name, client)
 
 
 # option 
@@ -221,8 +221,8 @@ def platform_thread(human_waiting, curr_goal):
             # robot speaks first
             handle = rospy.ServiceProxy('semantic_parser', 
                                         bwi_rlg.srv.SemanticParser)
-            handle(0, "I can do guiding and shopping tasks for you.", [], 5)
-            res_sp = handle(0, "")
+            res_sp = handle(0, "I can do guiding and shopping tasks for you.",\
+                            [""], 5)
 
             while len(res_sp.query) == 0:
                 
@@ -238,7 +238,7 @@ def platform_thread(human_waiting, curr_goal):
 
             # now the robot has found the query from semantic parser
 
-            process_request(res_sp.query)
+            process_request(res_sp.query, client)
 
         else:
 
