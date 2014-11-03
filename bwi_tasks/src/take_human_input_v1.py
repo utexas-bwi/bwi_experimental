@@ -219,10 +219,14 @@ def platform_thread(human_waiting, curr_goal):
             rospy.loginfo("Human is waiting. Let me see if I can help.")
 
             # robot speaks first
+            handle = rospy.ServiceProxy('question_dialog', 
+                                        segbot_gui.srv.QuestionDialog)
+            res_qd = handle(0, "I can do guiding and shopping tasks for you.",\
+                            [""], 0)
+
             handle = rospy.ServiceProxy('semantic_parser', 
                                         bwi_rlg.srv.SemanticParser)
-            res_sp = handle(0, "I can do guiding and shopping tasks for you.",\
-                            [""], 5)
+            res_sp = handle(0, res_qd.text)
 
             while len(res_sp.query) == 0:
                 
