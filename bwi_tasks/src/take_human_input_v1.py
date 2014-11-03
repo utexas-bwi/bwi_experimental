@@ -178,7 +178,7 @@ def gui_thread(human_waiting, curr_goal):
         handle = rospy.ServiceProxy('question_dialog', \
                                     segbot_gui.srv.QuestionDialog)
         res = handle(1, "Please click the button, if you need my help." + \
-                     "\n\nI am moving to room " + curr_goal.value[4:], \
+                     "\n\nI am moving to room " + curr_goal.value[3:], \
                      ["Button"], 2)
 
         while (res.index < 0):
@@ -186,11 +186,11 @@ def gui_thread(human_waiting, curr_goal):
             handle = rospy.ServiceProxy('question_dialog', \
                                         segbot_gui.srv.QuestionDialog)
             res = handle(1, "Please click the button, if you need my help." + \
-                         "\n\nI am moving to room " + curr_goal.value[4:], \
+                         "\n\nI am moving to room " + curr_goal.value[3:], \
                          ["Button"], 2)
 
         human_waiting.value = True
-        res = handle(0, "I have to go to " + curr_goal.value[4:] + " first." +\
+        res = handle(0, "I have to go to " + curr_goal.value[3:] + " first." +\
                         "\n\nFollow me please, I will serve you in a moment.",\
                      ["Button"], 0)
 
@@ -221,6 +221,7 @@ def platform_thread(human_waiting, curr_goal):
             # robot speaks first
             handle = rospy.ServiceProxy('semantic_parser', 
                                         bwi_rlg.srv.SemanticParser)
+            handle(0, "I can do guiding and shopping tasks for you.", [], 5)
             res_sp = handle(0, "")
 
             while len(res_sp.query) == 0:
@@ -238,7 +239,6 @@ def platform_thread(human_waiting, curr_goal):
             # now the robot has found the query from semantic parser
 
             process_request(res_sp.query)
-
 
         else:
 
