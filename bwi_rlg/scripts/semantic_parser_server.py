@@ -14,25 +14,25 @@ def handle_semantic_parser(req):
 
         rospy.loginfo("Human: " + req.input_text)
 
-        path_to_bwi_rlg = rospy.get_param("/semantic_parser_server/path_to_bwi_rlg")
+        path_to_bwi_rlg = rospy.get_param(\
+                "/semantic_parser_server/path_to_bwi_rlg")
+        rospy.loginfo("path_to_bwi_rlg: " + path_to_bwi_rlg)
 
-        print("path_to_bwi_rlg: " + path_to_bwi_rlg)
+        path_to_main = path_to_bwi_rlg + "/agent/dialog/"
+        file_last_comm =  path_to_main + "last_comm_time.txt"
 
-        file_last_comm = path_to_bwi_rlg + "/agent/dialog/last_comm_time.txt"
         time_curr = time.time()
         
-        print("file_last_comm: " + file_last_comm)
+        rospy.loginfo("file_last_comm: " + file_last_comm)
 
         if os.path.exists(file_last_comm):
 
             f = open(file_last_comm, 'r')
-            time_last = f.readline()
-            time_last = time_last.replace("\n", "")
-            id_last = f.readline()
-            id_last = id_last.replace("\n", "")
+            time_last = f.readline().replace("\n", "")
+            id_last = f.readline().replace("\n", "")
             f.close()
-            print("time_curr: " + str(time_curr))
-            print("time_last: " + str(time_last))
+            # print("time_curr: " + str(time_curr))
+            # print("time_last: " + str(time_last))
             time_diff = float(time_curr) - float(time_last)
 
         else:
@@ -40,16 +40,14 @@ def handle_semantic_parser(req):
             id_last = "id_" + str(time.time())
             time_diff = 0
 
-        path_to_main = path_to_bwi_rlg + "/agent/dialog/"
-
         filelist = glob.glob(path_to_main + "offline_data/outputs/*")
-        for f in filelist:
-            os.remove(f)
+        [os.remove(f) for f in filelist]
 
-        print(str(time_diff))
+        # print(str(time_diff))
 
 
-        if time_diff < rospy.get_param("patience_time_in_conversation"):
+        if time_diff < rospy.get_param(\
+                "/semantic_parser_server/patience_time_in_conversation"):
 
             f = open(path_to_main + "offline_data/inputs/" + id_last + \
                     "_input.txt", 'w')
@@ -152,8 +150,5 @@ def semantic_parser_server():
 
 if __name__ == "__main__":
 
-    # rospy.set_param("path_to_bwi_rlg", "/home/szhang/catkin_ws/src/bwi_experimental/bwi_rlg/")
-    rospy.set_param("patience_time_in_conversation", 30)
     semantic_parser_server()   
-
 
