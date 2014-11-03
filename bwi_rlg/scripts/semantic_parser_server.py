@@ -119,7 +119,7 @@ def handle_semantic_parser(req):
             f = open(path_to_command, 'r')
             command = f.readline()
             command = command.replace("\n", "")
-            print("path_to_command: " + command)
+            rospy.loginfo("path_to_command: " + command)
         else:
             command = ""
             
