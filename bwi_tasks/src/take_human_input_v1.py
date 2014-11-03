@@ -20,7 +20,7 @@ def task_guiding(doorname):
 
     handle = rospy.ServiceProxy('question_dialog', 
                                 segbot_gui.srv.QuestionDialog)
-    handle(0, "Follow me please. We are arriving soon. ", "", 0)
+    handle(0, "Follow me please. We are arriving soon. ", [], 0)
 
     goal = ExecutePlanGoal()
     rule = AspRule()
@@ -45,7 +45,7 @@ def task_guiding(doorname):
 
     if res.index == None or res.index == 1:
 
-        res = handle(0, "I am leaving. Thank you!", "", 10)
+        res = handle(0, "I am leaving. Thank you!", [], 10)
         human_waiting.value = False
     
     else:
@@ -56,7 +56,7 @@ def task_delivery(person, item):
 
     handle = rospy.ServiceProxy('question_dialog', 
                                 segbot_gui.srv.QuestionDialog)
-    handle(0, "I am busy... ", "", 0)
+    handle(0, "I am busy... ", [], 0)
 
     goal = ExecutePlanGoal()
     rule = AspRule()
@@ -113,7 +113,7 @@ def task_delivery(person, item):
 
     if res.index == None or res.index == 1:
 
-        res = handle(0, "I am leaving. Thank you!", "", 10)
+        res = handle(0, "I am leaving. Thank you!", [], 10)
         human_waiting.value = False
     
     else:
@@ -165,7 +165,7 @@ def gui_thread(human_waiting, curr_goal):
   
     rospy.init_node('human_input_gui_thread')
 
-    rospy.info("gui_thread started")
+    rospy.loginfo("gui_thread started")
 
     rospy.wait_for_service('question_dialog')
     
