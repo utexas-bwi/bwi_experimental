@@ -16,6 +16,111 @@ from multiprocessing import Process, Value, Array
 # curr_goal = []
 # next_room = None
 
+def task_guiding(doorname)
+
+    handle = rospy.ServiceProxy('question_dialog', 
+                                segbot_gui.srv.QuestionDialog)
+    handle(0, "Follow me please. We are arriving soon. ", "", 0)
+
+    goal = ExecutePlanGoal()
+    rule = AspRule()
+    fluent = AspFluent()
+    
+    fluent.name = "not facing"
+    fluent.variables = [doorname]
+    rule.body = [fluent]
+    goal.aspGoal = [rule]
+    
+    rospy.loginfo("Sending goal (doorname): " + doorname)
+    client.send_goal(goal)
+
+    client.wait_for_result()
+
+    handle = rospy.ServiceProxy('question_dialog', 
+                                segbot_gui.srv.QuestionDialog)
+
+    res = handle(1, "You have arrived. \n\n" + \
+                    "Is there anything else I can do for you?", \
+                 ["Yes", "No"], 30)
+
+    if res.index == None || res.index == 1:
+
+        res = handle(0, "I am leaving. Thank you!", "", 10)
+        human_waiting.value = False
+    
+    else:
+
+        human_waiting.value = True
+
+def task_delivery(person, item):
+
+    handle = rospy.ServiceProxy('question_dialog', 
+                                segbot_gui.srv.QuestionDialog)
+    handle(0, "I am busy... ", "", 0)
+
+    goal = ExecutePlanGoal()
+    rule = AspRule()
+    fluent = AspFluent()
+    
+    # going to the shop first - there is no shop - going to Jesse's pod
+    fluent.name = "not facing"
+    fluent.variables = ["d3_504"]
+    rule.body = [fluent]
+    goal.aspGoal = [rule]
+    
+    rospy.loginfo("Sending goal (doorname): " + doorname)
+    client.send_goal(goal)
+
+    client.wait_for_result()
+
+    handle = rospy.ServiceProxy('question_dialog', 
+                                segbot_gui.srv.QuestionDialog)
+
+    res = handle(1, "May I have " + item + " please?", \
+                 ["Sorry, we do not have that", "Loaded"], 30)
+
+    hasLoaded = bool(res.index)
+
+    # loaded item, now going to the person's place
+    person_door = {'peter'      : 'd3_508', 
+                   'dana'       : 'd3_510',
+                   'ray'        : 'd3_512',
+                   'raymond'    : 'd3_512',
+                   'stacy'      : 'd3_502',
+                   'kazunori'   : 'd3_402',
+                   'matteo',    : 'd3_418',
+                   'jivko',     : 'd3_432',
+                   'shiqi',     : 'd3_420'}
+
+    fluent.name = "not facing"
+    fluent.variables = [person_door[person]]
+    rule.body = [fluent]
+    goal.aspGoal = [rule]
+    
+    rospy.loginfo("Sending goal (doorname): " + doorname)
+    client.send_goal(goal)
+    client.wait_for_result()
+
+    handle = rospy.ServiceProxy('question_dialog', 
+                                segbot_gui.srv.QuestionDialog)
+
+    if hadLoaded == True:
+        res = handle(1, "Here is your " + item + ". ", \
+                 ["Unloaded"], 30)
+
+    res = handle(1, "Is there anything else I can do for you?", \
+                 ["Yes", "No"], 30)
+
+    if res.index == None || res.index == 1:
+
+        res = handle(0, "I am leaving. Thank you!", "", 10)
+        human_waiting.value = False
+    
+    else:
+
+        human_waiting.value = True
+
+
 def process_request(query):
 
     print ("query: " + query)
@@ -25,43 +130,32 @@ def process_request(query):
         query = query.replace("at(l", "d")
         query = query[:query.find(",")]
 
+        # in case there are multiple doors to a room, select the first one
+        if query.find("d3_414") > 0:
+            query += "1"
+
+        task_guiding(query)
+
     elif (query.find("query") >= 0): # this is a question-asking task! 
 
+        rospy.loginfo("Question-asking tasks will be treated as guiding ones.")
         query = query.replace("query(l", "d")
         query = query[:query.find(":")]
+
+        if query.find("d3_414") > 0:
+            query += "1"
+
+        task_guiding(query)
 
     elif (query.find("served") >= 0): # this is a delivery task! 
         # served(shiqi,coffee,n)
 
-        pass
+        person_name = query[query.find('(')+1 : query.find(',')]
+        # remove the person name -> coffee,n)
+        query = query[query.find(',')+1 : ]
+        item_name = query[: query.find(',')]
 
-    # TODO TODO TODO TODO
-
-    if query.find("d3_414") > 0:
-        query += "1"
-
-    handle = rospy.ServiceProxy('question_dialog', segbot_gui.srv.QuestionDialog)
-    handle(0, "Follow me please. We are arriving soon. ", doors, 0)
-
-    # query = doors[res.index]
-
-    goal = ExecutePlanGoal()
-    rule = AspRule()
-    fluent = AspFluent()
-    
-    fluent.name = "not beside"
-    fluent.variables = [query]
-    rule.body = [fluent]
-    goal.aspGoal = [rule]
-    
-    print("sending goal: " + query)
-    client.send_goal(goal)
-
-    client.wait_for_result()
-
-    handle = rospy.ServiceProxy('question_dialog', segbot_gui.srv.QuestionDialog)
-    res = handle(0, "You have arrived. I am leaving. \n\nThank you!", doors, 0)
-    rospy.sleep(10)
+        task_delivery(person_name, item_name)
 
 
 # option 
@@ -145,8 +239,6 @@ def platform_thread(human_waiting, curr_goal):
 
             process_request(res_sp.query)
 
-
-            human_waiting.value = False
 
         else:
 
