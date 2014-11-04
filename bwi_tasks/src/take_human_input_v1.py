@@ -34,11 +34,11 @@ def task_guiding(doorname, client, dialog_handle):
 
     client.wait_for_result()
 
-    res = dialog_handle(0, "You have arrived. I am leaving. \n\nThank you!", \
-                        [""], 10)
-    rospy.sleep(10)
+    # res = dialog_handle(0, "You have arrived. I am leaving. \n\nThank you!", \
+    #                     [""], 10)
+    # rospy.sleep(10)
 
-    human_waiting.value = False
+    # human_waiting.value = False
     
 
 def task_delivery(person, item, client, dialog_handle):
@@ -63,7 +63,7 @@ def task_delivery(person, item, client, dialog_handle):
     res = dialog_handle(1, "May I have " + item + " please?", \
                  ["Sorry, we do not have that", "Loaded"], 60)
 
-    hasLoaded = bool(res.index)
+    hasLoaded = (res.index == 1)
 
     res = dialog_handle(0, "I am busy...", [""], 0)
 
@@ -95,15 +95,15 @@ def task_delivery(person, item, client, dialog_handle):
         res = dialog_handle(1, "Sorry that " + item + " is sold out. ", \
                             ["Got it."], 30)
 
-    res = dialog_handle(0, "Delivery done. I am leaving. \n\nThank you!", \
-                        [""], 20)
-    rospy.sleep(20)
+    # res = dialog_handle(0, "Delivery done. I am leaving. \n\nThank you!", \
+    #                     [""], 20)
+    # rospy.sleep(20)
 
-    human_waiting.value = False
+    # human_waiting.value = False
     
 def process_request(query, client, dialog_handle):
 
-    print ("query: " + query)
+    rospy.loginfo("query: " + query)
 
     if (query.find("at(") >= 0): # this is a guiding task! 
 
@@ -138,6 +138,7 @@ def process_request(query, client, dialog_handle):
         task_delivery(person_name, item_name, client, dialog_handle)
 
 
+
 # option 
 # 1: click me if you need help
 # 2: please let me know your goal place
@@ -158,19 +159,20 @@ def gui_thread(human_waiting, curr_goal):
             rospy.sleep(2)
             continue
 
-        res = handle(1, "Please click the button, if you need my help." + \
-                     "\n\nI am moving to room 3." + curr_goal.value[3:], \
-                     ["Button"], 2)
+        res = handle(1, "", ["Button"], 2)
 
         while (res.index < 0):
 
+            if len(curr_goal.value) > 6:
+                g = "3." + curr_goal.value[3:-1]
+            else:
+                g = "3." + curr_goal.value[3:]
+
             res = handle(1, "Please click the button, if you need my help." + \
-                         "\n\nI am moving to room 3." + curr_goal.value[3:], \
-                         ["Button"], 2)
+                         "\n\nI am moving to room " + g, ["Button"], 2)
 
         human_waiting.value = True
-        res = handle(0, "I have to go to room 3." + curr_goal.value[3:] + \
-                        " first." + \
+        res = handle(0, "I have to go to room " + g + " first." + \
                         "\n\nFollow me please, I will serve you in a moment.",\
                      ["Button"], 0)
 
@@ -199,34 +201,45 @@ def platform_thread(human_waiting, curr_goal):
 
         if human_waiting.value == True:
 
-            rospy.loginfo("Human is waiting. Let me see if I can help.")
+            # a human may give goals to the robot one after another
+            while True:
 
-            # commumication......
-            # robot speaks first
+                # commumication......
+                # robot speaks first
 
-            res_qd = dialog_handle(0, 
-                     "I can do guiding and shopping tasks for you.", [""], 5)
+                res_qd = dialog_handle(0, \
+                         "I can do guiding and shopping tasks for you.", \
+                         [""], 5)
 
-            rospy.sleep(5)
-            parser_handle = rospy.ServiceProxy('semantic_parser', 
-                                        bwi_rlg.srv.SemanticParser)
-            res_sp = parser_handle(0, res_qd.text)
-
-            while len(res_sp.query) == 0:
-                
-                # take human feedback
-                res_qd = dialog_handle(2, res_sp.output_text, doors, 0)
-
-                # robot speaks back
+                rospy.sleep(5)
+                parser_handle = rospy.ServiceProxy('semantic_parser', 
+                                            bwi_rlg.srv.SemanticParser)
                 res_sp = parser_handle(0, res_qd.text)
 
-            # now the robot has found the query from semantic parser
+                while len(res_sp.query) == 0:
+                    
+                    # take human feedback
+                    res_qd = dialog_handle(2, res_sp.output_text, doors, 0)
 
-            process_request(res_sp.query, client, dialog_handle)
+                    # robot speaks back
+                    res_sp = parser_handle(0, res_qd.text)
+
+                # now the robot has found the query from semantic parser
+
+                process_request(res_sp.query, client, dialog_handle)
+
+                res = dialog_handle(1, "Anything else I can do for you?", \
+                                    ["Yes", "No"], 30)
+
+                if res.index < 0 or res.index == 1:
+
+                    human_waiting.value = False
+                    break
 
         else:
 
             rospy.loginfo("No one needs me. I will do a random walk.")
+            rospy.sleep(1)
 
             loc = doors[int(time.time()) % len(rooms)]
             curr_goal.value = loc
