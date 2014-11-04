@@ -110,6 +110,8 @@ run_offline = None
 log_filename = None
 restart_master_parser = False
 retrain_master_parser = False
+exclude_test_goals = False
+test_goals = ['at(l3_512,n)','at(l3_416,n)','served(shiqi,phone,n)','served(shiqi,trashcan,n)','served(shiqi,coffee,n)','served(kazunori,calendar,n)','served(kazunori,hamburger,n)','served(stacy,calendar,n)','served(stacy,trashcan,n)','served(peter,calendar,n)','served(daniel,trashcan,n)','served(matteo,phone,n)']
 if (len(sys.argv) >= 3 and sys.argv[2] == "retrain"):
 		run_offline = True
 		log_filename = False
@@ -131,8 +133,10 @@ elif (len(sys.argv) >= 4):
 for i in range(2,len(sys.argv)):
 	if (sys.argv[i] == "-restart_parser"):
 		restart_master_parser = True
+	elif (sys.argv[i] == "-exclude_test_goals"):
+		exclude_test_goals = True
 if (run_offline == None or log_filename == None):
-	print "USE: $python main.py [path_to_main] [retrain/online/offline] session_id [-restart_parser]"
+	print "USE: $python main.py [path_to_main] [retrain/online/offline] session_id [-restart_parser] [-exclude_test_goals]"
 	sys.exit()
 	
 #train parser
@@ -155,6 +159,19 @@ if (retrain_master_parser == True):
 	for root,dirs,files in os.walk(os.path.join(path_to_main,"offline_data","alignments")):
 		for f in files:
 			if (f.split('.')[1] == "txt"): #right filetype
+			
+				#maybe exclude user based on goal
+				if (exclude_test_goals == True):
+					user_id = f.split("_")[:-1]
+					if (not os.path.exists(os.path.join(path_to_main,"offline_data","commands",user_id+"_command.txt"))):
+						print "DEBUG: skipped user '"+user_id+"' because their dialog produced no command"
+						continue
+					g = open(os.path.join(path_to_main,"offline_data","commands",user_id+"_command.txt"),'r')
+					command = g.read().strip()
+					if (command in test_goals):
+						print "DEBUG: skipped user '"+user_id+"' because their dialog led to test gaol '"+command+"'"
+						continue
+			
 				alog_f = open(os.path.join(root,f),'r')
 				alog_f_lines = alog_f.read().strip().split("\n")
 				if (len(alog_f_lines) < 2): #blank
