@@ -9,6 +9,7 @@ import actionlib
 from bwi_kr_execution.msg import *
 import segbot_gui.srv
 import bwi_rlg.srv
+import os.path
 
 from multiprocessing import Process, Value, Array
 
@@ -228,6 +229,25 @@ def platform_thread(human_waiting, curr_goal):
 
                 process_request(res_sp.query, client, dialog_handle)
 
+                # identify good (and bad) data
+                res = dialog_handle(1, "Did I do the right thing? ", \
+                                    ["Yes", "No"], 30)
+                filepath = rospy.get_param(\
+                       "/semantic_parser_server/path_to_bwi_rlg")
+                filepath += "/agent/dialog/list_of_bad_data.txt"
+
+                if res.index != 0:
+
+                    if os.path.exists(filepath):
+                        f = open(filepath, 'a')
+                    else:
+                        f = open(filepath, 'w+')
+
+                    f.write(time.strftime("%m/%d/%Y") + ' - ' + \
+                            str(time.time()) + ' - ' + res_sp.query + '\n')
+                    f.close()
+
+                # anything else for the same user? 
                 res = dialog_handle(1, "Anything else I can do for you?", \
                                     ["Yes", "No"], 30)
 
