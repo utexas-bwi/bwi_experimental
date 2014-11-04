@@ -65,6 +65,8 @@ def task_delivery(person, item, client, dialog_handle):
 
     hasLoaded = bool(res.index)
 
+    res = dialog_handle(0, "I am busy...", [""], 0)
+
     # loaded item, now going to the person's place
     person_door = {'peter'      : 'd3_508', 
                    'dana'       : 'd3_510',
@@ -74,7 +76,9 @@ def task_delivery(person, item, client, dialog_handle):
                    'kazunori'   : 'd3_402',
                    'matteo'     : 'd3_418',
                    'jivko'      : 'd3_432',
-                   'shiqi'      : 'd3_420'}
+                   'shiqi'      : 'd3_420',
+                   'piyush'     : 'd3_416',
+                   'daniel'     : 'd3_436'}
 
     fluent.name = "not facing"
     fluent.variables = [person_door[person]]
@@ -86,8 +90,10 @@ def task_delivery(person, item, client, dialog_handle):
     client.wait_for_result()
 
     if hasLoaded == True:
-        res = dialog_handle(1, "Here is your " + item + ". ", \
-                 ["Unloaded"], 30)
+        res = dialog_handle(1, "Here is your " + item + ". ", ["Unloaded"], 30)
+    else:
+        res = dialog_handle(1, "Sorry that " + item + " is sold out. ", \
+                            ["Got it."], 30)
 
     res = dialog_handle(0, "Delivery done. I am leaving. \n\nThank you!", \
                         [""], 20)
@@ -99,7 +105,7 @@ def process_request(query, client, dialog_handle):
 
     print ("query: " + query)
 
-    if (query.find("at") >= 0): # this is a guiding task! 
+    if (query.find("at(") >= 0): # this is a guiding task! 
 
         query = query.replace("at(l", "d")
         query = query[:query.find(",")]
@@ -110,7 +116,7 @@ def process_request(query, client, dialog_handle):
 
         task_guiding(query, client, dialog_handle)
 
-    elif (query.find("query") >= 0): # this is a question-asking task! 
+    elif (query.find("query(") >= 0): # this is a question-asking task! 
 
         rospy.loginfo("Question-asking tasks will be treated as guiding ones.")
         query = query.replace("query(l", "d")
@@ -121,7 +127,7 @@ def process_request(query, client, dialog_handle):
 
         task_guiding(query, client, dialog_handle)
 
-    elif (query.find("served") >= 0): # this is a delivery task! 
+    elif (query.find("served(") >= 0): # this is a delivery task! 
         # served(shiqi,coffee,n)
 
         person_name = query[query.find('(')+1 : query.find(',')]
