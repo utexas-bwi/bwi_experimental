@@ -129,6 +129,7 @@ hasdoor(l3_432, d3_432).
 hasdoor(l3_400, d3_432).
 
 hasdoor(l3_436, d3_436).
+hasdoor(l3_400, d3_436).
 %hasdoor(l3_436, d3_436a).
 %hasdoor(l3_400, d3_436a).
 %hasdoor(l3_436, d3_436b).

@@ -129,6 +129,7 @@ hasdoor(l3_432, d3_432).
 hasdoor(l3_400, d3_432).
 
 hasdoor(l3_436, d3_436).
+hasdoor(l3_400, d3_436).
 %hasdoor(l3_436, d3_436a).
 %hasdoor(l3_400, d3_436a).
 %hasdoor(l3_436, d3_436b).
@@ -160,7 +161,7 @@ acc(l3_410,l3_500).
 acc(l3_424,l3_400).
 acc(l3_434,l3_400).
 acc(l3_434,l3_500).
-acc(l3_504,l3_500) :- not -acc(l3_504,l3_500).
+%  acc(l3_504,l3_500). 
 acc(l3_506,l3_500).
 acc(l3_514,l3_500).
 acc(l3_518,l3_500).
@@ -198,7 +199,6 @@ inside(stacy,l3_502).
 door(d3_504). 
 hasdoor(l3_504, d3_504). 
 hasdoor(l3_500, d3_504). 
--acc(l3_504,l3_500). 
 
 
 %hide non fluents
