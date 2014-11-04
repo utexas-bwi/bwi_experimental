@@ -13,6 +13,9 @@ import os.path
 
 from multiprocessing import Process, Value, Array
 
+from PIL import Image
+import subprocess
+
 # human_waiting = False
 # curr_goal = []
 # next_room = None
@@ -198,6 +201,9 @@ def platform_thread(human_waiting, curr_goal):
     dialog_handle = rospy.ServiceProxy('question_dialog',
                                        segbot_gui.srv.QuestionDialog)
 
+    path_rlg = rospy.get_param("/semantic_parser_server/path_to_bwi_rlg")
+    filepath = path_rlg + "/agent/dialog/list_of_bad_data.txt"
+
     while not rospy.is_shutdown():
 
         if human_waiting.value == True:
@@ -209,10 +215,15 @@ def platform_thread(human_waiting, curr_goal):
                 # robot speaks first
 
                 res_qd = dialog_handle(0, \
-                         "I can do guiding and shopping tasks for you.", \
+                         "At this time, I can only help with navigation " + \
+                         "and item delivery to named people.", \
                          [""], 5)
 
                 rospy.sleep(5)
+
+                img = subprocess.Popen(["display", \
+                                      path_rlg + '/images/unnamed.jpg'])
+
                 parser_handle = rospy.ServiceProxy('semantic_parser', 
                                             bwi_rlg.srv.SemanticParser)
                 res_sp = parser_handle(0, res_qd.text)
@@ -228,13 +239,12 @@ def platform_thread(human_waiting, curr_goal):
                 # now the robot has found the query from semantic parser
 
                 process_request(res_sp.query, client, dialog_handle)
+                
+                img.kill()
 
                 # identify good (and bad) data
                 res = dialog_handle(1, "Did I do the right thing? ", \
                                     ["Yes", "No"], 30)
-                filepath = rospy.get_param(\
-                       "/semantic_parser_server/path_to_bwi_rlg")
-                filepath += "/agent/dialog/list_of_bad_data.txt"
 
                 if res.index != 0:
 
