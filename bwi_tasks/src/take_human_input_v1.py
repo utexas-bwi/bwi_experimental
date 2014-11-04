@@ -217,10 +217,10 @@ def platform_thread(human_waiting, curr_goal):
                                             bwi_rlg.srv.SemanticParser)
                 res_sp = parser_handle(0, res_qd.text)
 
-                while len(res_sp.query) == 0:
+                while len(res_sp.query) == 0 and res_qd.index != -2:
                     
                     # take human feedback
-                    res_qd = dialog_handle(2, res_sp.output_text, doors, 0)
+                    res_qd = dialog_handle(2, res_sp.output_text, doors, 60)
 
                     # robot speaks back
                     res_sp = parser_handle(0, res_qd.text)
