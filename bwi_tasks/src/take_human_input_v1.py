@@ -10,6 +10,7 @@ from bwi_kr_execution.msg import *
 import segbot_gui.srv
 import bwi_rlg.srv
 import os.path
+import string
 
 from multiprocessing import Process, Value, Array
 
@@ -22,7 +23,14 @@ import subprocess
 
 def task_guiding(doorname, client, dialog_handle):
 
-    dialog_handle(0, "Follow me please. We are arriving soon. ", [], 0)
+    roomname = doorname[doorname.find('_')+1 : ]
+    
+    if roomname.find('414') >= 0:
+        roomname = roomname[:-1]
+
+    roomname = '3.' + roomname
+
+    dialog_handle(0, "I am going to " + roomname + '. ', [], 0)
 
     goal = ExecutePlanGoal()
     rule = AspRule()
@@ -39,7 +47,9 @@ def task_guiding(doorname, client, dialog_handle):
 
 def task_delivery(person, item, client, dialog_handle):
 
-    dialog_handle(0, "Got you. I am working on it...", [], 0)
+    upper_person = person[0].upper() + person[1:]
+    dialog_handle(0, "I am going to pick up " + item + " for " + \
+                  upper_person + '. ', [], 0)
 
     goal = ExecutePlanGoal()
     rule = AspRule()
@@ -61,7 +71,8 @@ def task_delivery(person, item, client, dialog_handle):
 
     hasLoaded = (res.index == 1)
 
-    res = dialog_handle(0, "I am busy...", [""], 0)
+    res = dialog_handle(0, "I am taking " + item + " to " + upper_person + \
+                        ". ", [""], 0)
 
     # loaded item, now going to the person's place
     person_door = {'peter'      : 'd3_508', 
@@ -86,10 +97,13 @@ def task_delivery(person, item, client, dialog_handle):
     client.wait_for_result()
 
     if hasLoaded == True:
-        res = dialog_handle(1, "Here is your " + item + ". ", ["Unloaded"], 60)
+        res = dialog_handle(1, "Someone requested this " + item + \
+                            " to be delivered to you. Please take it. ", \
+                            ["Unloaded"], 60)
     else:
-        res = dialog_handle(1, "Sorry that " + item + " is sold out. ", \
-                            ["Got it."], 60)
+        res = dialog_handle(1, "Someone requested " + item + \
+                            " be delivered to you, but the store did not give it to me. ", \
+                            ["I see."], 60)
 
 def process_request(query, client, dialog_handle):
 
@@ -162,7 +176,7 @@ def gui_thread(human_waiting, curr_goal):
 
         human_waiting.value = True
         res = handle(0, "I have to go to room " + g + " first." + \
-                        "\n\nFollow me please, I will serve you in a moment.",\
+                        "\n\nWe can chat when I get there.",\
                      ["Button"], 0)
 
     return True
@@ -200,8 +214,7 @@ def platform_thread(human_waiting, curr_goal):
                 # robot speaks first
 
                 res_qd = dialog_handle(0, \
-                         "At this time, I can only help with navigation " + \
-                         "and item delivery to named people.", \
+                         'At this time, I can only help with navigation and item delivery to named people. Please try not to change your mind about what you want while we chat. ', \
                          [""], 5)
 
                 rospy.sleep(5)
@@ -228,10 +241,11 @@ def platform_thread(human_waiting, curr_goal):
                 img.kill()
 
                 # identify good (and bad) data
-                res = dialog_handle(1, "Did I do the right thing? ", \
+                res = dialog_handle(1, "Did I accomplish the goal you were trying to convey?", \
                                     ["Yes", "No"], 60)
 
-                if res.index != 0:
+                # if no response, assuming it's a correct one
+                if res.index == 1:
 
                     if os.path.exists(filepath):
                         f = open(filepath, 'a')
@@ -243,7 +257,7 @@ def platform_thread(human_waiting, curr_goal):
                     f.close()
 
                 # anything else for the same user? 
-                res = dialog_handle(1, "Anything else I can do for you?", \
+                res = dialog_handle(1, "Do you need anything else?", \
                                     ["Yes", "No"], 30)
 
                 if res.index < 0 or res.index == 1:
@@ -279,7 +293,7 @@ def platform_thread(human_waiting, curr_goal):
 if __name__ == '__main__':
 
     human_waiting = Value('b', False)
-    curr_goal = Array('c', "this is a very long string for nothing")
+    curr_goal = Array('c', "This is a very very very long string for nothing.")
 
     p1 = Process(target = gui_thread, args = (human_waiting, curr_goal))
     p2 = Process(target = platform_thread, args = (human_waiting, curr_goal))
