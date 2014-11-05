@@ -197,8 +197,11 @@ def platform_thread(human_waiting, curr_goal):
                                           ExecutePlanAction)
     client.wait_for_server()
 
-    dialog_handle = rospy.ServiceProxy('question_dialog',
+    dialog_handle = rospy.ServiceProxy('question_dialog', \
                                        segbot_gui.srv.QuestionDialog)
+
+    parser_handle = rospy.ServiceProxy('semantic_parser', \
+                                       bwi_rlg.srv.SemanticParser)
 
     path_rlg = rospy.get_param("/semantic_parser_server/path_to_bwi_rlg")
     filepath = path_rlg + "/agent/dialog/list_of_bad_data.txt"
@@ -216,15 +219,12 @@ def platform_thread(human_waiting, curr_goal):
                 res_qd = dialog_handle(0, \
                          'At this time, I can only help with navigation and item delivery to named people. Please try not to change your mind about what you want while we chat. ', \
                          [""], 5)
+                rospy.sleep(6)
 
-                rospy.sleep(5)
-
-                img = subprocess.Popen(["display", \
+                img = subprocess.Popen(["eog", \
                                       path_rlg + '/images/unnamed.jpg'])
 
-                parser_handle = rospy.ServiceProxy('semantic_parser', 
-                                            bwi_rlg.srv.SemanticParser)
-                res_sp = parser_handle(0, res_qd.text)
+                res_sp = parser_handle(0, "STARTING-KEYWORD")
 
                 while len(res_sp.query) == 0 and res_qd.index != -2:
                     
@@ -233,6 +233,10 @@ def platform_thread(human_waiting, curr_goal):
 
                     # robot speaks back
                     res_sp = parser_handle(0, res_qd.text)
+
+                    # the robot prints: I am thinking...
+                    dialog_handle(0, "I am thinking...", doors, 2)
+                    rospy.sleep(2)
 
                 # now the robot has found the query from semantic parser
 

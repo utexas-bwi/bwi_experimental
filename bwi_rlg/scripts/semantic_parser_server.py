@@ -51,7 +51,8 @@ def handle_semantic_parser(req):
         [os.remove(f) for f in filelist]
 
 
-        if time_diff < rospy.get_param(\
+        if req.input_text.find("STARTING-KEYWORD") < 0 and \
+                time_diff < rospy.get_param(\
                 "/semantic_parser_server/patience_time_in_conversation"):
 
             f = open(path_to_main + "offline_data/inputs/" + id_last + \
