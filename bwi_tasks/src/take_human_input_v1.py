@@ -219,16 +219,22 @@ def platform_thread(human_waiting, curr_goal):
 
                 rospy.sleep(5)
 
-                img = subprocess.Popen(["display", \
+                img = subprocess.Popen(["eog", \
                                       path_rlg + '/images/unnamed.jpg'])
 
                 parser_handle = rospy.ServiceProxy('semantic_parser', 
                                             bwi_rlg.srv.SemanticParser)
-                res_sp = parser_handle(0, res_qd.text)
+                res_sp = parser_handle(0, "STARTING-KEYWORD")
 
                 while len(res_sp.query) == 0 and res_qd.index != -2:
                     
                     # take human feedback
+                    res_qd = dialog_handle(2, res_sp.output_text, doors, 60)
+                    
+                    # the robot prints: I am thinking...
+                    dialog_handle(0, "I am thinking...", doors, 2)
+                    rospy.sleep(2)
+
                     res_qd = dialog_handle(2, res_sp.output_text, doors, 60)
 
                     # robot speaks back
