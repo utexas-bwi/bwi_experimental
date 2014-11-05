@@ -162,7 +162,7 @@ if (retrain_master_parser == True):
 			
 				#maybe exclude user based on goal
 				if (exclude_test_goals == True):
-					user_id = f.split("_")[:-1]
+					user_id = "_".join(f.split("_")[:-1])
 					if (not os.path.exists(os.path.join(path_to_main,"offline_data","commands",user_id+"_command.txt"))):
 						print "DEBUG: skipped user '"+user_id+"' because their dialog produced no command"
 						continue
