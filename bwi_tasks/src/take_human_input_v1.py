@@ -128,7 +128,7 @@ def process_request(query, client, dialog_handle):
 
     if (query.find("at(") >= 0): # this is a guiding task! 
 
-        room = query[query.find('l')+1 : query.find(',')]
+        room = query[query.find('l') : query.find(',')]
 
         if room in room_list:
 
