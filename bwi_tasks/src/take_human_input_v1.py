@@ -21,6 +21,28 @@ import subprocess
 # curr_goal = []
 # next_room = None
 
+person_door = {'peter'      : 'd3_508', 
+               'dana'       : 'd3_510',
+               'ray'        : 'd3_512',
+               'raymond'    : 'd3_512',
+               'stacy'      : 'd3_502',
+               'kazunori'   : 'd3_402',
+               'matteo'     : 'd3_418',
+               'jivko'      : 'd3_432',
+               'shiqi'      : 'd3_420',
+               'piyush'     : 'd3_416',
+               'daniel'     : 'd3_436'}
+
+room_list = ['l3_502', 'l3_504', 'l3_508', 'l3_510', 'l3_512', 'l3_516',
+             'l3_436', 'l3_402', 'l3_404', 'l3_416', 'l3_418', 'l3_420',
+             'l3_422', 'l3_430', 'l3_432', 'l3_414a', 'l3_414b']
+
+door_list = ['d3_502', 'd3_504', 'd3_508', 'd3_510', 'd3_512', 'd3_516',
+             'd3_436', 'd3_402', 'd3_404', 'd3_416', 'd3_418', 'd3_420',
+             'd3_422', 'd3_430', 'd3_432', 'd3_414a1', 'd3_414a2', 'd3_414b1',
+             'd3_414b2']
+
+
 def task_guiding(doorname, client, dialog_handle):
 
     roomname = doorname[doorname.find('_')+1 : ]
@@ -46,6 +68,8 @@ def task_guiding(doorname, client, dialog_handle):
     client.wait_for_result()
 
 def task_delivery(person, item, client, dialog_handle):
+
+    global person_door
 
     upper_person = person[0].upper() + person[1:]
     dialog_handle(0, "I am going to pick up " + item + " for " + \
@@ -74,24 +98,13 @@ def task_delivery(person, item, client, dialog_handle):
     res = dialog_handle(0, "I am taking " + item + " to " + upper_person + \
                         ". ", [""], 0)
 
-    # loaded item, now going to the person's place
-    person_door = {'peter'      : 'd3_508', 
-                   'dana'       : 'd3_510',
-                   'ray'        : 'd3_512',
-                   'raymond'    : 'd3_512',
-                   'stacy'      : 'd3_502',
-                   'kazunori'   : 'd3_402',
-                   'matteo'     : 'd3_418',
-                   'jivko'      : 'd3_432',
-                   'shiqi'      : 'd3_420',
-                   'piyush'     : 'd3_416',
-                   'daniel'     : 'd3_436'}
-
     fluent.name = "not facing"
     fluent.variables = [person_door[person]]
     rule.body = [fluent]
     goal.aspGoal = [rule]
     
+    # loaded item, now going to the person's place
+
     rospy.loginfo("Sending goal (doorname): " + person_door[person])
     client.send_goal(goal)
     client.wait_for_result()
@@ -107,18 +120,30 @@ def task_delivery(person, item, client, dialog_handle):
 
 def process_request(query, client, dialog_handle):
 
+    global room_list
+    global door_list
+    global person_door
+
     rospy.loginfo("query: " + query)
 
     if (query.find("at(") >= 0): # this is a guiding task! 
 
-        query = query.replace("at(l", "d")
-        query = query[:query.find(",")]
+        room = query[query.find('l')+1 : query.find(',')]
 
-        # in case there are multiple doors to a room, select the first one
-        if query.find("d3_414") > 0:
-            query += "1"
+        if room in room_list:
 
-        task_guiding(query, client, dialog_handle)
+            query = query.replace("at(l", "d")
+            query = query[:query.find(",")]
+
+            # in case there are multiple doors to a room, select the first one
+            if query.find("d3_414") > 0:
+                query += "1"
+
+            task_guiding(query, client, dialog_handle)
+
+        else:
+
+            rospy.logwarn("This does not seem to be a room name: " + room)
 
     elif (query.find("query(") >= 0): # this is a question-asking task! 
 
@@ -132,16 +157,22 @@ def process_request(query, client, dialog_handle):
         # task_guiding(query, client, dialog_handle)
 
     elif (query.find("served(") >= 0): # this is a delivery task! 
+
         # served(shiqi,coffee,n)
 
-        person_name = query[query.find('(')+1 : query.find(',')]
-        # remove the person name -> coffee,n)
-        query = query[query.find(',')+1 : ]
-        item_name = query[: query.find(',')]
+        person = query[query.find('(')+1 : query.find(',')]
 
-        task_delivery(person_name, item_name, client, dialog_handle)
+        if person in person_door: 
 
+            # remove the person name -> coffee,n)
+            query = query[query.find(',')+1 : ]
+            item = query[: query.find(',')]
 
+            task_delivery(person, item, client, dialog_handle)
+
+        else:
+
+            rospy.logwarn("This does not seem to be a person name: " + person)
 # option 
 # 1: click me if you need help
 # 2: please let me know your goal place
