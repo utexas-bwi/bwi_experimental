@@ -35,15 +35,7 @@ def task_guiding(doorname, client, dialog_handle):
     
     rospy.loginfo("Sending goal (doorname): " + doorname)
     client.send_goal(goal)
-
     client.wait_for_result()
-
-    # res = dialog_handle(0, "You have arrived. I am leaving. \n\nThank you!", \
-    #                     [""], 10)
-    # rospy.sleep(10)
-
-    # human_waiting.value = False
-    
 
 def task_delivery(person, item, client, dialog_handle):
 
@@ -94,17 +86,11 @@ def task_delivery(person, item, client, dialog_handle):
     client.wait_for_result()
 
     if hasLoaded == True:
-        res = dialog_handle(1, "Here is your " + item + ". ", ["Unloaded"], 30)
+        res = dialog_handle(1, "Here is your " + item + ". ", ["Unloaded"], 60)
     else:
         res = dialog_handle(1, "Sorry that " + item + " is sold out. ", \
-                            ["Got it."], 30)
+                            ["Got it."], 60)
 
-    # res = dialog_handle(0, "Delivery done. I am leaving. \n\nThank you!", \
-    #                     [""], 20)
-    # rospy.sleep(20)
-
-    # human_waiting.value = False
-    
 def process_request(query, client, dialog_handle):
 
     rospy.loginfo("query: " + query)
@@ -122,14 +108,14 @@ def process_request(query, client, dialog_handle):
 
     elif (query.find("query(") >= 0): # this is a question-asking task! 
 
-        rospy.loginfo("Question-asking tasks will be treated as guiding ones.")
-        query = query.replace("query(l", "d")
-        query = query[:query.find(":")]
+        rospy.logwarn("Query from semantic parser: " + query)
+        # query = query.replace("query(l", "d")
+        # query = query[:query.find(":")]
 
-        if query.find("d3_414") > 0:
-            query += "1"
+        # if query.find("d3_414") > 0:
+        #     query += "1"
 
-        task_guiding(query, client, dialog_handle)
+        # task_guiding(query, client, dialog_handle)
 
     elif (query.find("served(") >= 0): # this is a delivery task! 
         # served(shiqi,coffee,n)
@@ -140,7 +126,6 @@ def process_request(query, client, dialog_handle):
         item_name = query[: query.find(',')]
 
         task_delivery(person_name, item_name, client, dialog_handle)
-
 
 
 # option 
@@ -244,7 +229,7 @@ def platform_thread(human_waiting, curr_goal):
 
                 # identify good (and bad) data
                 res = dialog_handle(1, "Did I do the right thing? ", \
-                                    ["Yes", "No"], 30)
+                                    ["Yes", "No"], 60)
 
                 if res.index != 0:
 
@@ -253,8 +238,8 @@ def platform_thread(human_waiting, curr_goal):
                     else:
                         f = open(filepath, 'w+')
 
-                    f.write(time.strftime("%m/%d/%Y") + ' - ' + \
-                            str(time.time()) + ' - ' + res_sp.query + '\n')
+                    res_sp = parser_handle(3, res_qd.text)
+                    f.write(res_sp.output_text + '---' + res_sp.query + '\n')
                     f.close()
 
                 # anything else for the same user? 

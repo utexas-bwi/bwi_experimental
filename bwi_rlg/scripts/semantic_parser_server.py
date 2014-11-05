@@ -8,7 +8,15 @@ import os.path
 import os
 import glob
 
+id_curr = ""
+
+def get_id():
+
+    return time.strftime("ID-%Y-%m-%d---") + str(time.time()).replace('.', '-')
+
 def handle_semantic_parser(req):
+
+    global id_curr
 
     if req.type == 0: # QUESTION_ASKING
 
@@ -16,7 +24,6 @@ def handle_semantic_parser(req):
 
         path_to_bwi_rlg = rospy.get_param(\
                 "/semantic_parser_server/path_to_bwi_rlg")
-        rospy.loginfo("path_to_bwi_rlg: " + path_to_bwi_rlg)
 
         path_to_main = path_to_bwi_rlg + "/agent/dialog/"
         file_last_comm =  path_to_main + "last_comm_time.txt"
@@ -37,20 +44,18 @@ def handle_semantic_parser(req):
 
         else:
 
-            id_last = "id_" + str(time.time())
+            id_last = get_id() 
             time_diff = 0
 
         filelist = glob.glob(path_to_main + "offline_data/outputs/*")
         [os.remove(f) for f in filelist]
-
-        # print(str(time_diff))
 
 
         if time_diff < rospy.get_param(\
                 "/semantic_parser_server/patience_time_in_conversation"):
 
             f = open(path_to_main + "offline_data/inputs/" + id_last + \
-                    "_input.txt", 'w')
+                    "_input.txt", 'w+')
             f.write(req.input_text)
             f.close()
             
@@ -85,7 +90,7 @@ def handle_semantic_parser(req):
 
         else: 
 
-            id_new = "id_" + str(time.time())
+            id_new = get_id()
             
             f = open(path_to_main + "offline_data/inputs/" + id_new + \
                     "_input.txt", 'w+')
@@ -129,14 +134,18 @@ def handle_semantic_parser(req):
     elif req.type == 1: # TRAINING
         
         res = "Training: not implemented."
-        rospy.loginfo(res)
+        rospy.logwarn(res)
         return SemanticParserResponse(res)
 
     elif req.type == 2: # STARTOVER
 
         res = "Start over: not implemnted."
-        rospy.loginfo(res)
+        rospy.logwarn(res)
         return SemanticParserResponse(res)
+
+    elif req.type == 3: # GETID
+
+        return SemanticParserResponse(id_curr, "")
 
     else:
         rospy.logerr("Error in semantic_parser_server.")

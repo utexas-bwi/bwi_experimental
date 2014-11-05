@@ -5,7 +5,7 @@
   <!-- launch semantic parser -->
   <node name="semantic_parser_server" pkg="bwi_rlg" output ="screen" type="semantic_parser_server.py">
       <param name="path_to_bwi_rlg" value="$(arg dir_path)" />
-      <param name="patience_time_in_conversation" value="30" />
+      <param name="patience_time_in_conversation" value="60" />
   </node>
 
 </launch>

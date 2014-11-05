@@ -2,6 +2,7 @@
 int32 QUESTION_ASKING = 0
 int32 TRAINING = 1
 int32 STARTOVER = 2
+int32 GETID = 3
 
 int32 type
 string input_text
