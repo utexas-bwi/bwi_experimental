@@ -211,12 +211,13 @@ if (run_offline == True):
 	if (asp_goal_state == None):
 		sys.exit("WARNING: reached main before shutting down")
 	elif (asp_goal_state == False):
-		sys.exit("WARNING: user gave up on achieving goal")
+		print "WARNING: user gave up on achieving goal"
 		asp_goal_state = "query(gave-up)" #ensures segbot dialog manager won't crash on no command
 		f = open(command_filename,'w')
 		f.write(asp_goal_state)
 		f.close()
 		os.system("rm -R "+os.path.join(path_to_master_dir,session_master)) #remove user-specific parsing model to save disk space
+		dm.write_core_elements_to_pickle_and_shutdown() #write output vocalization(s) and save final core
 	else:
 		print asp_goal_state
 		f = open(command_filename,'w')
