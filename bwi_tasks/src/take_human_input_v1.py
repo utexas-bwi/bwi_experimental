@@ -94,9 +94,13 @@ def task_delivery(person, item, client, dialog_handle):
                  ["Sorry, we do not have that", "Loaded"], 60)
 
     hasLoaded = (res.index == 1)
-
-    res = dialog_handle(0, "I am taking " + item + " to " + upper_person + \
+    
+    if res.index == 1:
+        res = dialog_handle(0, "I am taking " + item + " to " + upper_person + \
                         ". ", [""], 0)
+    else:
+        res = dialog_handle(0, "I am going to tell " + upper_person + \
+                            " that " + item + " is not available. ", [""], 0)
 
     fluent.name = "not facing"
     fluent.variables = [person_door[person]]
@@ -299,13 +303,11 @@ def platform_thread(human_waiting, curr_goal):
                 else:
 
                     # incrementally learning
-                    rospy.loginfo("before learning...")
+                    dialog_handle(0, "I am learning...", doors, 10)
                     subprocess.call("python " + path_rlg +\
                                     "/agent/dialog/main.py " +\
                                      path_rlg + "/agent/dialog/ " +\
-                                     "retrain -exclude_test_goals")
-                    rospy.loginfo("after learning...")
-
+                                     "retrain -exclude_test_goals", shell=True)
 
                 # anything else for the same user? 
                 res = dialog_handle(1, "Do you need anything else?", \
