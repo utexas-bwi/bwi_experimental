@@ -111,7 +111,7 @@ log_filename = None
 restart_master_parser = False
 retrain_master_parser = False
 exclude_test_goals = False
-test_goals = ['at(l3_512,n)','at(l3_416,n)','served(shiqi,phone,n)','served(shiqi,trashcan,n)','served(shiqi,coffee,n)','served(kazunori,calendar,n)','served(kazunori,hamburger,n)','served(stacy,calendar,n)','served(stacy,trashcan,n)','served(peter,calendar,n)','served(daniel,trashcan,n)','served(matteo,phone,n)']
+test_goals = ['query(gave-up)','at(l3_512,n)','at(l3_416,n)','served(shiqi,phone,n)','served(shiqi,trashcan,n)','served(shiqi,coffee,n)','served(kazunori,calendar,n)','served(kazunori,hamburger,n)','served(stacy,calendar,n)','served(stacy,trashcan,n)','served(peter,calendar,n)','served(daniel,trashcan,n)','served(matteo,phone,n)']
 if (len(sys.argv) >= 3 and sys.argv[2] == "retrain"):
 		run_offline = True
 		log_filename = False
@@ -139,6 +139,20 @@ if (run_offline == None or log_filename == None):
 	print "USE: $python main.py [path_to_main] [retrain/online/offline] session_id [-restart_parser] [-exclude_test_goals]"
 	sys.exit()
 	
+#if excluding test goals, we need to read in the list of bad data IDs
+bad_data_ids = []
+if (exclude_test_goals == True):
+	print "getting list of bad data IDs to exclude as well..."
+	try:
+		f = open('list_of_bad_data.txt','r')
+		for line in f:
+			bad_data_ids.append(line[:-4])
+		f.close()
+	except:
+		print "\tcouldn't find list_of_bad_data.txt"
+	print bad_data_ids #DEBUG
+	print "done"
+	
 #train parser
 if (restart_master_parser == True):
 	#train initial parser
@@ -163,13 +177,16 @@ if (retrain_master_parser == True):
 				#maybe exclude user based on goal
 				if (exclude_test_goals == True):
 					user_id = "_".join(f.split("_")[:-1])
+					if (user_id in bad_data_ids):
+						print "DEBUG: skipped user '"+user_id+"' because they are marked as bad data"
+						continue
 					if (not os.path.exists(os.path.join(path_to_main,"offline_data","commands",user_id+"_command.txt"))):
 						print "DEBUG: skipped user '"+user_id+"' because their dialog produced no command"
 						continue
 					g = open(os.path.join(path_to_main,"offline_data","commands",user_id+"_command.txt"),'r')
 					command = g.read().strip()
 					if (command in test_goals):
-						print "DEBUG: skipped user '"+user_id+"' because their dialog led to test gaol '"+command+"'"
+						print "DEBUG: skipped user '"+user_id+"' because their dialog led to test goal '"+command+"'"
 						continue
 			
 				alog_f = open(os.path.join(root,f),'r')
