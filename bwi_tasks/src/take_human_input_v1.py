@@ -288,8 +288,17 @@ def platform_thread(human_waiting, curr_goal):
                                     "\n\nDid I accomplish the goal you were trying to convey?", \
                                     ["Yes", "No"], 60)
 
-                # if no response, assuming it's a correct one
-                if res.index == 1:
+                # if no response, assuming it's a wrong one
+                if res.index == 0:
+
+                    # incrementally learning
+                    dialog_handle(0, "I am learning...", doors, 10)
+                    subprocess.call("python " + path_rlg +\
+                                    "/agent/dialog/main.py " +\
+                                     path_rlg + "/agent/dialog/ " +\
+                                     "retrain -exclude_test_goals", shell=True)
+
+                else:
 
                     if os.path.exists(filepath):
                         f = open(filepath, 'a')
@@ -299,15 +308,6 @@ def platform_thread(human_waiting, curr_goal):
                     res_sp = parser_handle(3, res_qd.text)
                     f.write(res_sp.output_text + '---' + res_sp.query + '\n')
                     f.close()
-
-                else:
-
-                    # incrementally learning
-                    dialog_handle(0, "I am learning...", doors, 10)
-                    subprocess.call("python " + path_rlg +\
-                                    "/agent/dialog/main.py " +\
-                                     path_rlg + "/agent/dialog/ " +\
-                                     "retrain -exclude_test_goals", shell=True)
 
                 # anything else for the same user? 
                 res = dialog_handle(1, "Do you need anything else?", \
