@@ -156,6 +156,8 @@ def process_request(query, client, dialog_handle):
 
         # task_guiding(query, client, dialog_handle)
 
+        return False
+
     elif (query.find("served(") >= 0): # this is a delivery task! 
 
         # served(shiqi,coffee,n)
@@ -173,6 +175,8 @@ def process_request(query, client, dialog_handle):
         else:
 
             rospy.logwarn("This does not seem to be a person name: " + person)
+    
+    return True
 # option 
 # 1: click me if you need help
 # 2: please let me know your goal place
@@ -271,12 +275,13 @@ def platform_thread(human_waiting, curr_goal):
 
                 # now the robot has found the query from semantic parser
 
-                process_request(res_sp.query, client, dialog_handle)
+                hasSucceeded = process_request(res_sp.query, \
+                                               client, dialog_handle)
                 
                 img.kill()
-
                 # identify good (and bad) data
-                res = dialog_handle(1, "Did I accomplish the goal you were trying to convey?", \
+                res = dialog_handle(1, res_sp.output_text + \
+                                    "\n\nDid I accomplish the goal you were trying to convey?", \
                                     ["Yes", "No"], 60)
 
                 # if no response, assuming it's a correct one
@@ -290,6 +295,17 @@ def platform_thread(human_waiting, curr_goal):
                     res_sp = parser_handle(3, res_qd.text)
                     f.write(res_sp.output_text + '---' + res_sp.query + '\n')
                     f.close()
+
+                else:
+
+                    # incrementally learning
+                    rospy.loginfo("before learning...")
+                    subprocess.call("python " + path_rlg +\
+                                    "/agent/dialog/main.py " +\
+                                     path_rlg + "/agent/dialog/ " +\
+                                     "retrain -exclude_test_goals")
+                    rospy.loginfo("after learning...")
+
 
                 # anything else for the same user? 
                 res = dialog_handle(1, "Do you need anything else?", \
@@ -321,7 +337,6 @@ def platform_thread(human_waiting, curr_goal):
             client.send_goal(goal)
     
             client.wait_for_result()
-
 
     return 1
 
