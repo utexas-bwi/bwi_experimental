@@ -144,7 +144,7 @@ bad_data_ids = []
 if (exclude_test_goals == True):
 	print "getting list of bad data IDs to exclude as well..."
 	try:
-		f = open('list_of_bad_data.txt','r')
+		f = open(os.path.join(path_to_main,'list_of_bad_data.txt'),'r')
 		for line in f:
 			bad_data_ids.append(line[:-4])
 		f.close()

@@ -580,6 +580,11 @@ class dialogue_manager:
 				relatively_confident_about[self.asp_role_map[role]] = self.current_best_asp_understanding[self.asp_role_map[role]][0]
 				if (relatively_confident_about[self.asp_role_map[role]] not in [False,None]):
 					confident_about_at_least_one = True
+		
+		#ad-hoc check for a situation where an action requiring a patient is chosen but the patient confidence is False; will ask for patient
+		if (relatively_confident_about[self.asp_role_map["action"]] == "served" and relatively_confident_about[self.asp_role_map["patient"]] == False):
+			relatively_confident_about[self.asp_role_map["patient"]] = None
+		
 		if (confident_about_at_least_one == False):
 			verbal_query = "Sorry I couldn't understand that. Could you reword your original request?"
 			self.request_type = "user_initiative"
