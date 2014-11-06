@@ -42,6 +42,9 @@ door_list = ['d3_502', 'd3_504', 'd3_508', 'd3_510', 'd3_512', 'd3_516',
              'd3_422', 'd3_430', 'd3_432', 'd3_414a1', 'd3_414a2', 'd3_414b1',
              'd3_414b2']
 
+resting_time = 300
+cnt = 0
+last_loc = ''
 
 def task_guiding(doorname, client, dialog_handle):
 
@@ -222,6 +225,10 @@ def gui_thread(human_waiting, curr_goal):
 
 def platform_thread(human_waiting, curr_goal):
 
+    global cnt
+    global resting_time
+    global last_loc
+
     rospy.init_node('human_input_platform_thread')
 
     rospy.loginfo("platform_thread started")
@@ -323,9 +330,18 @@ def platform_thread(human_waiting, curr_goal):
             rospy.loginfo("No one needs me. I will do a random walk.")
             rospy.sleep(1)
 
-            loc = doors[int(time.time()) % len(rooms)]
+            if (cnt % resting_time) == 0 or last_loc == '': 
+
+                loc = doors[int(time.time()) % len(rooms)]
+                last_loc = loc
+
+            else:
+
+                loc = last_loc
+
+            cnt += 1
+
             curr_goal.value = loc
-            
             goal = ExecutePlanGoal()
             rule = AspRule()
             fluent = AspFluent()
