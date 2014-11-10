@@ -67,8 +67,6 @@ void AskInRoom::run() {
     sound_req.arg = ss.str();
     
     ask_pub.publish(sound_req);
-
-    ROS_INFO("published sound message");
   }
 
   vector<string> options;
@@ -95,8 +93,15 @@ void AskInRoom::run() {
   krClient.call(uf);
 
   if (response >= 0) {
-    CallGUI thank("thank", CallGUI::DISPLAY,  "Thanks!");
+    CallGUI thank("thank", CallGUI::DISPLAY,  "Thank you!");
     thank.run();
+    if (at) {
+      sound_play::SoundRequest sound_req;
+      sound_req.sound = sound_play::SoundRequest::SAY;
+      sound_req.command = sound_play::SoundRequest::PLAY_ONCE;
+      sound_req.arg = "Thank you !";
+      ask_pub.publish(sound_req);
+    }
   }
 
   done = true;
