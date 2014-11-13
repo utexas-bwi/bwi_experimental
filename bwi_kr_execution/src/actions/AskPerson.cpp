@@ -1,4 +1,4 @@
-#include "AskPsnRoom.h"
+#include "AskPerson.h"
 
 #include "ActionFactory.h"
 
@@ -19,16 +19,16 @@ using namespace std;
 
 namespace bwi_krexec {
 
-AskPsnRoom::AskPsnRoom() : 
+AskPerson::AskPerson() : 
             person_to_ask(),
             person_to_know(),
             done(false){
             }
 
-ros::Publisher AskPsnRoom::ask_pub;
-bool AskPsnRoom::pub_set(false);
+ros::Publisher AskPerson::ask_pub;
+bool AskPerson::pub_set(false);
   
-void AskPsnRoom::run() {
+void AskPerson::run() {
 
   ros::NodeHandle n;
 
@@ -56,10 +56,10 @@ void AskPsnRoom::run() {
   options.push_back("Yes! " + person_to_know + " is in GDC and I know exactly where.");
   options.push_back("No, I have no idea.");
 
-  CallGUI askPsn("askPsnRoom", CallGUI::CHOICE_QUESTION,  "Hi " + person_to_ask + "! Do you know where " + person_to_know + " is?", 60.0, options);
-  askPsn.run();
+  CallGUI askPerson("askPerson", CallGUI::CHOICE_QUESTION,  "Hi " + person_to_ask + "! Do you know where " + person_to_know + " is?", 60.0, options);
+  askPerson.run();
 
-  int response = askPsn.getResponseIndex();
+  int response = askPerson.getResponseIndex();
 
   if (response < 0) {    
     bwi_kr_execution::UpdateFluents uf;
@@ -100,20 +100,20 @@ void AskPsnRoom::run() {
       int count = 0;
 
       sound_req.arg = "Great! Please tell me the room number.";
-      CallGUI *askPsnRoom = new CallGUI("askPsnRoom", CallGUI::TEXT_QUESTION,  "Great! Please tell me the room number.", 60.0);
+      CallGUI *askPerson = new CallGUI("askPerson", CallGUI::TEXT_QUESTION,  "Great! Please tell me the room number.", 60.0);
       
       while ((! know) && (count < 3)) {
 
         ask_pub.publish(sound_req);
-        askPsnRoom->run();
+        askPerson->run();
 
-        if ((askPsnRoom->getResponseIndex() == -3) && (askPsnRoom->getResponse() != "")) {
+        if ((askPerson->getResponseIndex() == -3) && (askPerson->getResponse() != "")) {
               bwi_kr_execution::UpdateFluents uf;
               bwi_kr_execution::AspFluent fluent;
               
               fluent.timeStep = 0;
               fluent.variables.push_back(person_to_know);
-              fluent.variables.push_back(askPsnRoom->getResponse());
+              fluent.variables.push_back(askPerson->getResponse());
 
               fluent.name = "inroom";
 
@@ -126,8 +126,8 @@ void AskPsnRoom::run() {
         count++;
 
         sound_req.arg = "The room number doesn't exist. Please try again.";
-        delete askPsnRoom;
-        askPsnRoom = new CallGUI("askPsnRoom", CallGUI::TEXT_QUESTION,  "The room number doesn't exist. Please try again.", 60.0);
+        delete askPerson;
+        askPerson = new CallGUI("askPerson", CallGUI::TEXT_QUESTION,  "The room number doesn't exist. Please try again.", 60.0);
       }
 
       sound_req.arg = "Thank you very much!";
@@ -160,15 +160,15 @@ void AskPsnRoom::run() {
 
 }  
   
-actasp::Action* AskPsnRoom::cloneAndInit(const actasp::AspFluent& fluent) const {
-  AskPsnRoom *newAction = new AskPsnRoom();
+actasp::Action* AskPerson::cloneAndInit(const actasp::AspFluent& fluent) const {
+  AskPerson *newAction = new AskPerson();
   newAction->person_to_ask = fluent.getParameters().at(0);
   newAction->person_to_know = fluent.getParameters().at(1);
   
   return newAction;
 }
 
-std::vector<std::string> AskPsnRoom::getParameters() const {
+std::vector<std::string> AskPerson::getParameters() const {
   vector<string> param;
   param.push_back(person_to_ask);
   param.push_back(person_to_know);
@@ -176,6 +176,6 @@ std::vector<std::string> AskPsnRoom::getParameters() const {
 }
 
 
-ActionFactory AskPsnRoomFactory(new AskPsnRoom());
+ActionFactory AskPersonFactory(new AskPerson());
   
 }

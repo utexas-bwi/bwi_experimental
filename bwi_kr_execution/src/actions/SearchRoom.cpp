@@ -1,4 +1,4 @@
-#include "AskInRoom.h"
+#include "SearchRoom.h"
 
 #include "ActionFactory.h"
 
@@ -19,16 +19,16 @@ using namespace std;
 
 namespace bwi_krexec {
 
-AskInRoom::AskInRoom() : 
+SearchRoom::SearchRoom() : 
             person(),
             room(),
             done(false){
             }
 
-ros::Publisher AskInRoom::ask_pub;
-bool AskInRoom::pub_set(false);
+ros::Publisher SearchRoom::ask_pub;
+bool SearchRoom::pub_set(false);
   
-void AskInRoom::run() {
+void SearchRoom::run() {
 
   ros::NodeHandle n;
   if (!pub_set) { 
@@ -73,10 +73,10 @@ void AskInRoom::run() {
   options.push_back("yes");
   options.push_back("no");
 
-  CallGUI askInRoom("askInRoom", CallGUI::CHOICE_QUESTION,  "Is " + person + " in the room " + room + "?", 60.0, options);
-  askInRoom.run();
+  CallGUI searchRoom("searchRoom", CallGUI::CHOICE_QUESTION,  "Is " + person + " in the room " + room + "?", 60.0, options);
+  searchRoom.run();
 
-  int response = askInRoom.getResponseIndex();
+  int response = searchRoom.getResponseIndex();
 
   ros::ServiceClient krClient = n.serviceClient<bwi_kr_execution::UpdateFluents> ( "update_fluents" );
   krClient.waitForExistence();
@@ -108,15 +108,15 @@ void AskInRoom::run() {
 
 }  
   
-actasp::Action* AskInRoom::cloneAndInit(const actasp::AspFluent& fluent) const {
-  AskInRoom *newAction = new AskInRoom();
+actasp::Action* SearchRoom::cloneAndInit(const actasp::AspFluent& fluent) const {
+  SearchRoom *newAction = new SearchRoom();
   newAction->person = fluent.getParameters().at(0);
   newAction->room = fluent.getParameters().at(1);
   
   return newAction;
 }
 
-std::vector<std::string> AskInRoom::getParameters() const {
+std::vector<std::string> SearchRoom::getParameters() const {
   vector<string> param;
   param.push_back(person);
   param.push_back(room);
@@ -124,6 +124,6 @@ std::vector<std::string> AskInRoom::getParameters() const {
 }
 
 
-ActionFactory AskInRoomFactory(new AskInRoom());
+ActionFactory SearchRoomFactory(new SearchRoom());
   
 }

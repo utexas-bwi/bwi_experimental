@@ -1,6 +1,6 @@
 
-#ifndef bwi_krexec_AskInRoom_h__guard
-#define bwi_krexec_AskInRoom_h__guard
+#ifndef bwi_krexec_SearchRoom_h__guard
+#define bwi_krexec_SearchRoom_h__guard
 
 #include "actasp/Action.h"
 
@@ -12,13 +12,13 @@
 
 namespace bwi_krexec {
 
-class AskInRoom : public actasp::Action{
+class SearchRoom : public actasp::Action{
 public:
-  AskInRoom();
+  SearchRoom();
 
   int paramNumber() const {return 2;}
   
-  std::string getName() const {return "askinroom";}
+  std::string getName() const {return "searchroom";}
   
   void run();
   
@@ -26,7 +26,7 @@ public:
   
   actasp::Action *cloneAndInit(const actasp::AspFluent & fluent) const;
   
-  virtual actasp::Action *clone() const {return new AskInRoom(*this);}
+  virtual actasp::Action *clone() const {return new SearchRoom(*this);}
   
 private:
   

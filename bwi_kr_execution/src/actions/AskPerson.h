@@ -1,6 +1,6 @@
 
-#ifndef bwi_krexec_AskPsnRoom_h__guard
-#define bwi_krexec_AskPsnRoom_h__guard
+#ifndef bwi_krexec_AskPerson_h__guard
+#define bwi_krexec_AskPerson_h__guard
 
 #include "actasp/Action.h"
 
@@ -12,13 +12,13 @@
 
 namespace bwi_krexec {
 
-class AskPsnRoom : public actasp::Action{
+class AskPerson : public actasp::Action{
 public:
-  AskPsnRoom();
+  AskPerson();
 
   int paramNumber() const {return 2;}
   
-  std::string getName() const {return "askpsnroom";}
+  std::string getName() const {return "askperson";}
   
   void run();
   
@@ -26,7 +26,7 @@ public:
   
   actasp::Action *cloneAndInit(const actasp::AspFluent & fluent) const;
   
-  virtual actasp::Action *clone() const {return new AskPsnRoom(*this);}
+  virtual actasp::Action *clone() const {return new AskPerson(*this);}
   
 private:
   

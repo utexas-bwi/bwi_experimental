@@ -22,6 +22,9 @@ canbeinroom(matteo, l3_414b).
 canbeinroom(shiqi, l3_414b).
 canbeinroom(jivko, l3_414b).
 
+canknow(P1,P2) :- canknow(P1,P2).
+
 #hide person/1.
 #hide hasoffice/2.
+#hide canbeinroom/2.
 

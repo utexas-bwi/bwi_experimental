@@ -7,8 +7,8 @@
 1{	approach(D1,I) : door(D1), 
 	gothrough(D2,I) : door(D2), 
 	opendoor(D3,I) : door(D3), 
-        askinroom(P,R,I): person(P) : room(R),
-        askpsnroom(P1,P2,I): person(P1) : person(P2)
+        searchroom(P,R,I): person(P) : room(R),
+        askperson(P1,P2,I): person(P1) : person(P2)
 	}1 :- not noop(I), I=0..n-1.
 
 %removes the warning about noop not being defined, shouldn't have any consequences
