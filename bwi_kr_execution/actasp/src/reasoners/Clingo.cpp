@@ -160,7 +160,7 @@ static std::vector<actasp::AnswerSet> readAnswerSets(const std::string& filePath
 std::vector<actasp::AnswerSet> Clingo::krQuery(const std::string& query,
     unsigned int timeStep,
     const std::string& fileName,
-    unsigned int answerSetsNumber = 1) const throw() {
+    unsigned int answerSetsNumber = 0) const throw() {
 
   string queryPath = queryDir + fileName;
 
@@ -177,7 +177,7 @@ std::vector<actasp::AnswerSet> Clingo::krQuery(const std::string& query,
       commandLine << "timeout " << max_time << " ";
   }
 
-  commandLine << "clingo " << queryPath << " " << domainDir << "*.asp " << " > " << outputFilePath << " " << answerSetsNumber;
+  commandLine << "clingo " << queryPath << " " << domainDir << "*.lua " << domainDir << "*.asp " << " > " << outputFilePath << " " << answerSetsNumber;
 
   if(!system(commandLine.str().c_str())) {
     //maybe do something here, or just kill the warning about the return value not being used.
