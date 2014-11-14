@@ -267,8 +267,8 @@ def platform_thread(human_waiting, curr_goal):
                          [""], 5)
                 rospy.sleep(6)
 
-                img = subprocess.Popen(["eog", \
-                                      path_rlg + '/images/unnamed.jpg'])
+                # img = subprocess.Popen(["eog", \
+                #                       path_rlg + '/images/unnamed.jpg'])
 
                 res_sp = parser_handle(0, "STARTING-KEYWORD")
 

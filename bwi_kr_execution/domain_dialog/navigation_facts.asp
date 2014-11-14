@@ -200,6 +200,9 @@ door(d3_504).
 hasdoor(l3_504, d3_504). 
 hasdoor(l3_500, d3_504). 
 
+door(d3_520). 
+hasdoor(l3_520, d3_520). 
+hasdoor(l3_500, d3_520). 
 
 %hide non fluents
 
