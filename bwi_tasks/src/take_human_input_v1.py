@@ -291,7 +291,7 @@ def platform_thread(human_waiting, curr_goal):
                 
                 # img.kill()
                 # identify good (and bad) data
-                res = dialog_handle(1, "\n\nDid I accomplish the goal you were trying to convey?", \
+                res = dialog_handle(1, "Did I accomplish the goal you were trying to convey?", \
                                     ["Yes", "No"], 60)
 
                 # if no response, assuming it's a wrong one
