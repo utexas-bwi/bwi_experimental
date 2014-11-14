@@ -82,9 +82,9 @@ def task_delivery(person, item, client, dialog_handle):
     rule = AspRule()
     fluent = AspFluent()
     
-    # going to the shop first - there is no shop - going to Jesse's pod
+    # going to the shop first - there is no shop - going to the kitchen: 520
     fluent.name = "not facing"
-    fluent.variables = ["d3_504"]
+    fluent.variables = ["d3_520"]
     rule.body = [fluent]
     goal.aspGoal = [rule]
     
@@ -291,8 +291,7 @@ def platform_thread(human_waiting, curr_goal):
                 
                 img.kill()
                 # identify good (and bad) data
-                res = dialog_handle(1, res_sp.output_text + \
-                                    "\n\nDid I accomplish the goal you were trying to convey?", \
+                res = dialog_handle(1, "\n\nDid I accomplish the goal you were trying to convey?", \
                                     ["Yes", "No"], 60)
 
                 # if no response, assuming it's a wrong one
