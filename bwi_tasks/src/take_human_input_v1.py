@@ -289,7 +289,7 @@ def platform_thread(human_waiting, curr_goal):
                 hasSucceeded = process_request(res_sp.query, \
                                                client, dialog_handle)
                 
-                img.kill()
+                # img.kill()
                 # identify good (and bad) data
                 res = dialog_handle(1, "\n\nDid I accomplish the goal you were trying to convey?", \
                                     ["Yes", "No"], 60)
