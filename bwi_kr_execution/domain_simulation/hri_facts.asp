@@ -14,7 +14,7 @@ ingroup(matteo,bwi).
 ingroup(shiqi,bwi).
 ingroup(jivko,bwi).
 
-meeting(bwi_weekly_meeting,bwi,l3_414b).
+meeting(bwi_meeting,bwi,l3_414b).
 
 hasoffice(peter,l3_508). 
 hasoffice(ray,l3_512).
@@ -26,8 +26,8 @@ hasoffice(jivko,l3_432).
 hasoffice(stacy,l3_502). 
 
 canbeinroom(P,R) :- hasoffice(P,R), person(P), room(R).
-
 canbeinroom(P,l3_414b) :- ingroup(P,bwi).
+%canknow(P1,P2) :- ingroup(P1,G), ingroup(P2,G), group(G).
 
 canknow(P1,P2) :- canknow(P1,P2).
 

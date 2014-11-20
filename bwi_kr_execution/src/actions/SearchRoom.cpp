@@ -38,7 +38,8 @@ void SearchRoom::run() {
 
   //current state query
   ros::ServiceClient currentClient = n.serviceClient<bwi_kr_execution::CurrentStateQuery> ( "current_state_query" );
-  
+  currentClient.waitForExistence();
+
   bwi_kr_execution::AspFluent atFluent;
   atFluent.name = "at";
   atFluent.timeStep = 0;
@@ -78,10 +79,22 @@ void SearchRoom::run() {
 
   int response = searchRoom.getResponseIndex();
 
+  if (response >= 0) {
+    CallGUI thank("thank", CallGUI::DISPLAY,  "Thank you!");
+    thank.run();
+    /*if (at) {
+      sound_play::SoundRequest sound_req;
+      sound_req.sound = sound_play::SoundRequest::SAY;
+      sound_req.command = sound_play::SoundRequest::PLAY_ONCE;
+      sound_req.arg = "Thank you !";
+      ask_pub.publish(sound_req);
+    }*/
+  }
+
   ros::ServiceClient krClient = n.serviceClient<bwi_kr_execution::UpdateFluents> ( "update_fluents" );
   krClient.waitForExistence();
-  bwi_kr_execution::UpdateFluents uf;
 
+  bwi_kr_execution::UpdateFluents uf;
   bwi_kr_execution::AspFluent fluent;
   fluent.timeStep = 0;
   fluent.variables.push_back(person);
@@ -91,18 +104,6 @@ void SearchRoom::run() {
 
   uf.request.fluents.push_back(fluent);
   krClient.call(uf);
-
-  if (response >= 0) {
-    CallGUI thank("thank", CallGUI::DISPLAY,  "Thank you!");
-    thank.run();
-    if (at) {
-      sound_play::SoundRequest sound_req;
-      sound_req.sound = sound_play::SoundRequest::SAY;
-      sound_req.command = sound_play::SoundRequest::PLAY_ONCE;
-      sound_req.arg = "Thank you !";
-      ask_pub.publish(sound_req);
-    }
-  }
 
   done = true;
 

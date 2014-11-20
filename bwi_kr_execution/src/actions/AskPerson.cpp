@@ -6,7 +6,6 @@
 
 #include "bwi_kr_execution/AspFluent.h"
 
-#include "bwi_kr_execution/CurrentStateQuery.h"
 #include <bwi_kr_execution/UpdateFluents.h>
 
 #include <ros/ros.h>
@@ -48,7 +47,8 @@ void AskPerson::run() {
   sound_req.command = sound_play::SoundRequest::PLAY_ONCE;
 
   stringstream ss;
-  ss << "Hi " + person_to_ask + "! Do you know where " + person_to_know + " is?";
+  ss << "Hi " << person_to_ask << "! ";
+  ss << "Do you know where " << person_to_know << " is?";
   sound_req.arg = ss.str();
   ask_pub.publish(sound_req);
 
@@ -72,7 +72,7 @@ void AskPerson::run() {
     fluent.name = "-know";
 
     uf.request.fluents.push_back(fluent);
-    bool f = krClient.call(uf);
+    krClient.call(uf);
   }
 
   if (response == 1) {
@@ -91,7 +91,7 @@ void AskPerson::run() {
     fluent.name = "-know";
 
     uf.request.fluents.push_back(fluent);
-    bool f = krClient.call(uf);
+    krClient.call(uf);
   }
 
   if (response == 0) {

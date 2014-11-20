@@ -16,7 +16,7 @@ inoffice(P,I) :- inroom(P,R,I), hasoffice(P,R), person(P), room(R), I=0..n.
 
 %fluent ingdc(P,I)
 ingdc(P,I) :- inroom(P,R,I), person(P), room(R), I=0..n.
--ingdc(P,I) :- 0{ not -inroom(P,R,I) : canbeinroom(P,R) }0, 0{ not -know(P1,P,I) : canknow(P1,P) }0, person(P), I=0..n.
+-ingdc(P,I) :- { not -inroom(P,R,I) : canbeinroom(P,R) }0, { not -know(P1,P,I) : canknow(P1,P) }0, person(P), I=0..n.
 
 %action askperson(P1,P2,I)  ask P1 where P2 is
 1{ inroom(P2,R,I+1) : room(R) }1 :- askperson(P1,P2,I), person(P1), person(P2), I=0..n-1.
@@ -24,6 +24,7 @@ ingdc(P,I) :- inroom(P,R,I), person(P), room(R), I=0..n.
 :- askperson(P1,P2,I), inroom(P2,R,I), person(P1), person(P2), room(R), I=0..n.
 :- askperson(P1,P2,I), not canknow(P1,P2), person(P1), person(P2), I=0..n.
 :- askperson(P1,P2,I), -know(P1,P2,I), person(P1), person(P2), I=0..n.
+:- inroom(P,R,I), not room(R).
 
 %fluent know(P1,P2)  P1 knows where P2 is
 1{ know(P1,P2,I+1), -know(P1,P2,I+1) }1 :- askperson(P1,P2,I), person(P1), person(P2), I=0..n-1.
@@ -45,4 +46,4 @@ inmeeting(P,M,I+1) :- inmeeting(P,M,I), not -inmeeting(P,M,I+1), I=0..n-1.
 -inmeeting(P,M,I+1) :- -inmeeting(P,M,I), not inmeeting(P,M,I+1), I=0..n-1.
 
 %fluent allinmeeting(M,I)
-allinmeeting(M,I) :- 0{ not inmeeting(P,M,I) : ingroup(P,G) }0, meeting(M,G,R), group(G), room(R), I=0..n.
+allinmeeting(M,I) :- { not inmeeting(P,M,I) : ingroup(P,G) }0, meeting(M,G,R), group(G), room(R), I=0..n.
