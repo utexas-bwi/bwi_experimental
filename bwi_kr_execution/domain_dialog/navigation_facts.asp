@@ -39,7 +39,7 @@ location(l3_200).
 location(l3_300).
 location(l3_302).
 
-location(l3_ele_area). 
+room(l3_ele_area). 
 
 %elevator(l3_ele1).
 %elevator(l3_ele2).
@@ -87,20 +87,25 @@ door(d3_516b).
 door(d3_ele_l).
 door(d3_ele_s).
 
-%hasdoor(l3_ele1, d3_ele1).
-%hasdoor(l3_200, d3_ele1).
-%hasdoor(l3_ele2, d3_ele2).
-%hasdoor(l3_200, d3_ele2).
+% hasdoor(l3_ele1, d3_ele1).
+% hasdoor(l3_200, d3_ele1).
+% hasdoor(l3_ele2, d3_ele2).
+% hasdoor(l3_200, d3_ele2).
 
-%hasdoor(l3_ele_l, d3_ele_l).
-%hasdoor(l3_ele_area, d3_ele_l).
-%hasdoor(l3_ele_s, d3_ele_s).
-%hasdoor(l3_ele_area, d3_ele_s).
+hasdoor(l3_ele_l, d3_ele_l).
+hasdoor(l3_ele_area, d3_ele_l).
+hasdoor(l3_ele_s, d3_ele_s).
+hasdoor(l3_ele_area, d3_ele_s).
 
-hasdoor(l3_200, d3_500).
-hasdoor(l3_500, d3_500).
-hasdoor(l3_300, d3_400).
-hasdoor(l3_400, d3_400).
+hasdoor(l3_500, d3_500). 
+hasdoor(l3_400, d3_400). 
+hasdoor(l3_ele_area, d3_500). 
+hasdoor(l3_ele_area, d3_400). 
+
+% hasdoor(l3_200, d3_500).
+% hasdoor(l3_500, d3_500).
+% hasdoor(l3_300, d3_400).
+% hasdoor(l3_400, d3_400).
 
 hasdoor(l3_402, d3_402).
 hasdoor(l3_400, d3_402).
@@ -178,7 +183,6 @@ acc(l3_434,l3_500).
 acc(l3_506,l3_500).
 acc(l3_514,l3_500).
 acc(l3_518,l3_500).
-
 
 
 dooracc(R1,D,R2) :- hasdoor(R1,D), hasdoor(R2,D), R1 != R2, door(D), room(R1),
