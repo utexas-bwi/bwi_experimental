@@ -235,9 +235,9 @@ def platform_thread(human_waiting, curr_goal):
 
     rospy.wait_for_service('question_dialog')
 
-    rooms = ["414a", "414a", "414b", "414b", "416", "418", "420", "432"]
-    doors = ["d3_414a1", "d3_414a2", "d3_414b1", "d3_414b2", "d3_416", \
-             "d3_418", "d3_420", "d3_432"]
+    rooms = ["414a", "414b", "414b", "418", "420", "elevator", "elevator"]
+    doors = ["d3_414a2", "d3_414b1", "d3_414b2", \
+             "d3_418", "d3_420", "d3_ele_l", "d3_ele_s"]
     
     client = actionlib.SimpleActionClient('/action_executor/execute_plan',\
                                           ExecutePlanAction)
