@@ -39,10 +39,15 @@ location(l3_200).
 location(l3_300).
 location(l3_302).
 
+location(l3_ele_area). 
+
 %elevator(l3_ele1).
 %elevator(l3_ele2).
 
-%location(E) :- elevator(E).
+elevator(l3_ele_l).
+elevator(l3_ele_s).
+
+location(E) :- elevator(E).
 location(R) :- room(R).
 
 door(d3_400).
@@ -79,10 +84,18 @@ door(d3_516b).
 %door(d3_ele1).
 %door(d3_ele2).
 
+door(d3_ele_l).
+door(d3_ele_s).
+
 %hasdoor(l3_ele1, d3_ele1).
 %hasdoor(l3_200, d3_ele1).
 %hasdoor(l3_ele2, d3_ele2).
 %hasdoor(l3_200, d3_ele2).
+
+%hasdoor(l3_ele_l, d3_ele_l).
+%hasdoor(l3_ele_area, d3_ele_l).
+%hasdoor(l3_ele_s, d3_ele_s).
+%hasdoor(l3_ele_area, d3_ele_s).
 
 hasdoor(l3_200, d3_500).
 hasdoor(l3_500, d3_500).
