@@ -177,7 +177,7 @@ std::vector<actasp::AnswerSet> Clingo::krQuery(const std::string& query,
       commandLine << "timeout " << max_time << " ";
   }
 
-  commandLine << "clingo " << queryPath << " " << domainDir << "*.lua " << domainDir << "*.asp " << " > " << outputFilePath << " " << answerSetsNumber;
+  commandLine << "clingo " << queryPath << " " << domainDir << "*.asp " << " > " << outputFilePath << " " << answerSetsNumber;
 
   if(!system(commandLine.str().c_str())) {
     //maybe do something here, or just kill the warning about the return value not being used.

@@ -16,19 +16,33 @@ inoffice(P,I) :- inroom(P,R,I), hasoffice(P,R), person(P), room(R), I=0..n.
 
 %fluent ingdc(P,I)
 ingdc(P,I) :- inroom(P,R,I), person(P), room(R), I=0..n.
--ingdc(P,I) :- 0{not -inroom(P,R,I) : canbeinroom(P,R)}0, 0{not -know(P1,P,I) : canknow(P1,P), know(P1,P,I) : person(P1)}0, person(P), I=0..n.
+-ingdc(P,I) :- 0{ not -inroom(P,R,I) : canbeinroom(P,R) }0, 0{ not -know(P1,P,I) : canknow(P1,P) }0, person(P), I=0..n.
 
 %action askperson(P1,P2,I)  ask P1 where P2 is
-1{inroom(P2,R,I+1) : room(R)}1 :- askperson(P1,P2,I), canknow(P1,P2) , person(P1), person(P2), I=0..n-1.
+1{ inroom(P2,R,I+1) : room(R) }1 :- askperson(P1,P2,I), person(P1), person(P2), I=0..n-1.
 :- askperson(P1,P2,I), not inroom(P1,R,I) : room(R), at(R,I), person(P1), person(P2), I=0..n.
 :- askperson(P1,P2,I), inroom(P2,R,I), person(P1), person(P2), room(R), I=0..n.
+:- askperson(P1,P2,I), not canknow(P1,P2), person(P1), person(P2), I=0..n.
 :- askperson(P1,P2,I), -know(P1,P2,I), person(P1), person(P2), I=0..n.
-:- askperson(P1,P2,I), P1 = P2.
 
 %fluent know(P1,P2)  P1 knows where P2 is
-1{know(P1,P2,I+1), -know(P1,P2,I+1)}1 :- askperson(P1,P2,I), person(P1), person(P2), I=0..n-1.
--know(P1, P2, I) :- -ingdc(P1,I), canknow(P1,P2), person(P1), person(P2), I=0..n.
+1{ know(P1,P2,I+1), -know(P1,P2,I+1) }1 :- askperson(P1,P2,I), person(P1), person(P2), I=0..n-1.
+-know(P1,P2,I) :- -ingdc(P1,I), canknow(P1,P2), person(P1), person(P2), I=0..n.
 
 %know is inertial
 know(P1,P2,I+1) :- know(P1,P2,I), not -know(P1,P2,I+1), I=0..n-1.
 -know(P1,P2,I+1) :- -know(P1,P2,I), not know(P1,P2,I+1), I=0..n-1.
+
+%fluent inmeeting(P,M,I) person P is in meeting M
+inmeeting(P,M,I) :- inroom(P,R,I), meeting(M,G,R), ingroup(P,G), person(P), group(G), room(R), I=0..n.
+
+%action remind(P,M,R,I)
+inmeeting(P,M,I+1) :- remind(P,M,R,I), meeting(M,G,R), ingroup(P,G), person(P), group(G), room(R), I=0..n-1.
+:- remind(P,M,R1,I), not inroom(P,R2,I) : room(R2), at(R2,I), person(P), I=0..n.
+
+%inmeeting is inertial
+inmeeting(P,M,I+1) :- inmeeting(P,M,I), not -inmeeting(P,M,I+1), I=0..n-1.
+-inmeeting(P,M,I+1) :- -inmeeting(P,M,I), not inmeeting(P,M,I+1), I=0..n-1.
+
+%fluent allinmeeting(M,I)
+allinmeeting(M,I) :- 0{ not inmeeting(P,M,I) : ingroup(P,G) }0, meeting(M,G,R), group(G), room(R), I=0..n.
