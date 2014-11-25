@@ -130,8 +130,8 @@ void AskPerson::run() {
         askPerson = new CallGUI("askPerson", CallGUI::TEXT_QUESTION,  "The room number doesn't exist. Please try again.", 60.0);
       }
 
-      sound_req.arg = "Thank you very much!";
-      CallGUI *thank = new CallGUI("thank", CallGUI::DISPLAY,  "Thank you very much!");
+      sound_req.arg = "Thank you!";
+      CallGUI *thank = new CallGUI("thank", CallGUI::DISPLAY,  "Thank you!");
 
       if (!know) {
         sound_req.arg = "OK, thank you anyway!";
@@ -139,7 +139,7 @@ void AskPerson::run() {
         thank = new CallGUI("thank", CallGUI::DISPLAY,  "OK, thank you anyway!");
       }
 
-      ask_pub.publish(sound_req);
+      //ask_pub.publish(sound_req);
       thank->run();
 
       bwi_kr_execution::UpdateFluents uf;
