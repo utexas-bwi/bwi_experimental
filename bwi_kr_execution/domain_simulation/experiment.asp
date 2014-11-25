@@ -45,5 +45,10 @@ inmeeting(P,M,I+1) :- remind(P,M,R,I), meeting(M,G,R), ingroup(P,G), person(P), 
 inmeeting(P,M,I+1) :- inmeeting(P,M,I), not -inmeeting(P,M,I+1), I=0..n-1.
 -inmeeting(P,M,I+1) :- -inmeeting(P,M,I), not inmeeting(P,M,I+1), I=0..n-1.
 
+%fluent inmeetingornowhere(P,M,I) person P is in meeting or not in gdc
+inmeetingornowhere(P,M,I) :- inmeeting(P,M,I), meeting(M,G,R).
+inmeetingornowhere(P,M,I) :- -ingdc(P,I), meeting(M,G,R).
+
 %fluent allinmeeting(M,I)
-allinmeeting(M,I) :- { not inmeeting(P,M,I) : ingroup(P,G) }0, meeting(M,G,R), group(G), room(R), I=0..n.
+%allinmeeting(M,I) :- { not inmeeting(P,M,I) : ingroup(P,G) }0, meeting(M,G,R), group(G), room(R), I=0..n.
+allinmeeting(M,I) :- { not inmeetingornowhere(P,M,I) : ingroup(P,G) }0, meeting(M,G,R), group(G), room(R), I=0..n.

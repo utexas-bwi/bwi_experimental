@@ -78,6 +78,9 @@ void Remind::run() {
   uf.request.fluents.push_back(fluent);
   krClient.call(uf);
 
+  CallGUI thank("thank", CallGUI::DISPLAY,  "Thank you!");
+  thank.run();
+
   done = true;
 }
 
