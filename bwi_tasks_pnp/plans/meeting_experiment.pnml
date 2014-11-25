@@ -8,7 +8,7 @@
     </name>
     <place id="p1">
       <graphics>
-        <position x="257" y="227" />
+        <position x="515" y="66" />
         <size width="32" height="32" />
       </graphics>
       <name>
@@ -31,13 +31,13 @@
     </place>
     <place id="p2">
       <graphics>
-        <position x="400" y="227" />
+        <position x="515" y="231" />
         <size width="32" height="32" />
       </graphics>
       <name>
-        <value>TaskA.exec</value>
+        <value> </value>
         <graphics>
-          <offset x="-18" y="35" />
+          <offset x="36" y="32" />
         </graphics>
       </name>
       <initialMarking>
@@ -54,13 +54,13 @@
     </place>
     <place id="p3">
       <graphics>
-        <position x="535" y="226" />
+        <position x="516" y="394" />
         <size width="32" height="32" />
       </graphics>
       <name>
-        <value>P2</value>
+        <value>Meeting.exec</value>
         <graphics>
-          <offset x="6" y="36" />
+          <offset x="-23" y="43" />
         </graphics>
       </name>
       <initialMarking>
@@ -77,17 +77,17 @@
     </place>
     <place id="p4">
       <graphics>
-        <position x="396" y="353" />
+        <position x="516" y="564" />
         <size width="32" height="32" />
       </graphics>
       <name>
-        <value>TaskB.exec</value>
+        <value> </value>
         <graphics>
-          <offset x="-17" y="35" />
+          <offset x="36" y="32" />
         </graphics>
       </name>
       <initialMarking>
-        <value>0</value>
+        <value>1</value>
       </initialMarking>
       <toolspecific tool="JARP" version="1.2">
         <FrameColor>
@@ -100,13 +100,13 @@
     </place>
     <transition id="t1">
       <graphics>
-        <position x="341" y="219" />
-        <size width="8" height="48" />
+        <position x="507" y="159" />
+        <size width="48" height="8" />
       </graphics>
       <name>
-        <value>TaskA.start</value>
+        <value>[Meeting]</value>
         <graphics>
-          <offset x="-26" y="51" />
+          <offset x="-8" y="16" />
         </graphics>
       </name>
       <toolspecific tool="JARP" version="1.2">
@@ -120,13 +120,13 @@
     </transition>
     <transition id="t2">
       <graphics>
-        <position x="475" y="219" />
-        <size width="8" height="48" />
+        <position x="508" y="318" />
+        <size width="48" height="8" />
       </graphics>
       <name>
-        <value>TaskA.end</value>
+        <value>Meeting.start</value>
         <graphics>
-          <offset x="-23" y="51" />
+          <offset x="-14" y="15" />
         </graphics>
       </name>
       <toolspecific tool="JARP" version="1.2">
@@ -140,33 +140,13 @@
     </transition>
     <transition id="t3">
       <graphics>
-        <position x="482" y="345" />
-        <size width="8" height="48" />
+        <position x="508" y="503" />
+        <size width="48" height="8" />
       </graphics>
       <name>
-        <value>TaskB.start</value>
+        <value>Meeting.end</value>
         <graphics>
-          <offset x="-26" y="51" />
-        </graphics>
-      </name>
-      <toolspecific tool="JARP" version="1.2">
-        <FrameColor>
-          <value>java.awt.Color[r=0,g=0,b=0]</value>
-        </FrameColor>
-        <FillColor>
-          <value>java.awt.Color[r=128,g=128,b=128]</value>
-        </FillColor>
-      </toolspecific>
-    </transition>
-    <transition id="t4">
-      <graphics>
-        <position x="343" y="346" />
-        <size width="8" height="48" />
-      </graphics>
-      <name>
-        <value>TaskB.end</value>
-        <graphics>
-          <offset x="-23" y="51" />
+          <offset x="-14" y="16" />
         </graphics>
       </name>
       <toolspecific tool="JARP" version="1.2">
@@ -258,7 +238,11 @@
         </ArrowMode>
       </toolspecific>
     </arc>
-    <arc id="a6" source="t3" target="p4">
+    <arc id="a6" source="t3" target="p1">
+      <graphics>
+        <position x="687" y="506" />
+        <position x="687" y="82" />
+      </graphics>
       <inscription>
         <value>1</value>
         <graphics>
@@ -274,7 +258,7 @@
         </ArrowMode>
       </toolspecific>
     </arc>
-    <arc id="a7" source="p4" target="t4">
+    <arc id="a7" source="t3" target="p4">
       <inscription>
         <value>1</value>
         <graphics>
@@ -290,7 +274,11 @@
         </ArrowMode>
       </toolspecific>
     </arc>
-    <arc id="a8" source="t4" target="p1">
+    <arc id="a8" source="p4" target="t2">
+      <graphics>
+        <position x="401" y="580" />
+        <position x="401" y="321" />
+      </graphics>
       <inscription>
         <value>1</value>
         <graphics>
