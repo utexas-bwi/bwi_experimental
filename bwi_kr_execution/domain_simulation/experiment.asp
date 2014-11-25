@@ -51,4 +51,4 @@ inmeetingornowhere(P,M,I) :- -ingdc(P,I), meeting(M,G,R).
 
 %fluent allinmeeting(M,I)
 %allinmeeting(M,I) :- { not inmeeting(P,M,I) : ingroup(P,G) }0, meeting(M,G,R), group(G), room(R), I=0..n.
-allinmeeting(M,I) :- { not inmeetingornowhere(P,M,I) : ingroup(P,G) }0, meeting(M,G,R), group(G), room(R), I=0..n.
+allinmeeting(M,I) :- { not inmeetingornowhere(P,M,I) : ingroup(P,G) }0, at(R), meeting(M,G,R), group(G), room(R), I=0..n.

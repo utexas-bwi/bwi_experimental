@@ -6,6 +6,7 @@ person(matteo).
 person(shiqi). 
 person(jivko). 
 person(stacy).
+person(yuqian).
 
 group(bwi).
 
@@ -13,6 +14,7 @@ ingroup(peter,bwi).
 ingroup(matteo,bwi).
 ingroup(shiqi,bwi).
 ingroup(jivko,bwi).
+ingroup(yuqian,bwi).
 
 meeting(bwi_meeting,bwi,l3_414b).
 
