@@ -1,1 +1,0 @@
-:- not inoffice(matteo, n), not -inoffice(matteo, n).
