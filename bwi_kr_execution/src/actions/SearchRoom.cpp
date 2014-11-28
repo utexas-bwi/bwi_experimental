@@ -105,6 +105,13 @@ void SearchRoom::run() {
   uf.request.fluents.push_back(fluent);
   krClient.call(uf);
 
+  bwi_kr_execution::UpdateFluents uf_know;
+
+  fluent.name = "knowinroom";
+
+  uf_know.request.fluents.push_back(fluent);
+  krClient.call(uf_know);
+
   done = true;
 
 }  

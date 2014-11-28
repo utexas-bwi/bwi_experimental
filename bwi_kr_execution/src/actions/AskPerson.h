@@ -16,7 +16,7 @@ class AskPerson : public actasp::Action{
 public:
   AskPerson();
 
-  int paramNumber() const {return 2;}
+  int paramNumber() const {return 3;}
   
   std::string getName() const {return "askperson";}
   
@@ -33,6 +33,7 @@ private:
  std::vector<std::string> getParameters() const;
  std::string person_to_ask;
  std::string person_to_know;
+ std::string room;
  static ros::Publisher ask_pub;
  static bool pub_set;
  bool done;

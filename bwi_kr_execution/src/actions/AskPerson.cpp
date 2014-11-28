@@ -21,6 +21,7 @@ namespace bwi_krexec {
 AskPerson::AskPerson() : 
             person_to_ask(),
             person_to_know(),
+            room(),
             done(false){
             }
 
@@ -69,7 +70,7 @@ void AskPerson::run() {
     fluent.variables.push_back(person_to_ask);
     fluent.variables.push_back(person_to_know);
 
-    fluent.name = "-know";
+    fluent.name = "-knows";
 
     uf.request.fluents.push_back(fluent);
     krClient.call(uf);
@@ -88,7 +89,7 @@ void AskPerson::run() {
     fluent.variables.push_back(person_to_ask);
     fluent.variables.push_back(person_to_know);
 
-    fluent.name = "-know";
+    fluent.name = "-knows";
 
     uf.request.fluents.push_back(fluent);
     krClient.call(uf);
@@ -149,7 +150,7 @@ void AskPerson::run() {
       fluent.variables.push_back(person_to_ask);
       fluent.variables.push_back(person_to_know);
 
-      fluent.name = (know ? "know" : "-know");
+      fluent.name = (know ? "knows" : "-knows");
 
       uf.request.fluents.push_back(fluent);
       krClient.call(uf);
@@ -164,6 +165,7 @@ actasp::Action* AskPerson::cloneAndInit(const actasp::AspFluent& fluent) const {
   AskPerson *newAction = new AskPerson();
   newAction->person_to_ask = fluent.getParameters().at(0);
   newAction->person_to_know = fluent.getParameters().at(1);
+  newAction->room = fluent.getParameters().at(2);
   
   return newAction;
 }
@@ -172,6 +174,7 @@ std::vector<std::string> AskPerson::getParameters() const {
   vector<string> param;
   param.push_back(person_to_ask);
   param.push_back(person_to_know);
+  param.push_back(room);
   return param;
 }
 
