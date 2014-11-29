@@ -126,12 +126,16 @@ add_subdirectory(actasp/src/)
 ## Declare a cpp executable
 
 set(spexec_SRC)
+set(anyexec_SRC)
 set(lexec_SRC)
 set(krreasoner_SRC)
 
 add_subdirectory(src)
 add_executable(single_plan_executor_node ${spexec_SRC})
 target_link_libraries(single_plan_executor_node ${catkin_LIBRARIES} actasp kractions )
+
+add_executable(any_plan_executor_node ${anyexec_SRC})
+target_link_libraries(any_plan_executor_node ${catkin_LIBRARIES} actasp kractions )
 
 add_executable(learning_executor_node ${lexec_SRC})
 target_link_libraries(learning_executor_node ${catkin_LIBRARIES} actasp kractions )

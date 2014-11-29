@@ -1,7 +1,9 @@
+
 %person(peter). 
 %person(ray). 
 %person(dana). 
 %person(kazunori). 
+
 person(matteo). 
 person(shiqi). 
 person(jivko). 

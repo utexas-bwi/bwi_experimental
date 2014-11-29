@@ -25,7 +25,7 @@ namespace bwi_krexec {
          const std::string& queryDir,
          const std::string& domainDir,
          const actasp::ActionSet& actions,
-         unsigned int max_time) : local(max_n,queryDir,domainDir,actions,max_time) {}
+         unsigned int max_time) : local(max_n,"n",queryDir,domainDir,actions,max_time) {}
   
 actasp::AnswerSet RemoteReasoner::currentStateQuery(const std::vector<actasp::AspRule>& query) const throw() {
   return local.currentStateQuery(query);

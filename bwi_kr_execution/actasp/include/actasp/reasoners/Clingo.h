@@ -20,6 +20,7 @@ class Clingo : public AspKR {
 public:
 
 	Clingo(unsigned int max_n,
+         const std::string& incrementalVar,
 	       const std::string& queryDir,
 	       const std::string& domainDir,
 	       const ActionSet& actions,
@@ -47,18 +48,19 @@ public:
 private:
 
 	unsigned int max_n;
+  std::string incrementalVar;
   unsigned int max_time;
 	std::string queryDir;
 	std::string domainDir;
   ActionSet allActions;
   std::string actionFilter;
 
-	std::string generatePlanQuery(	const std::vector<actasp::AspRule>& goalRules, 
-									unsigned int timeStep, 
+	std::string generatePlanQuery(	const std::vector<actasp::AspRule>& goalRules,
 									bool filterActions) const throw();
 
 	std::vector<actasp::AnswerSet> krQuery(	const std::string& query, 
-											unsigned int timeStep,
+											unsigned int initialTimeStep,
+                      unsigned int finalTimeStep,
 											const std::string& fileName, 
 											unsigned int answerSetsNumber) const throw();
                       
