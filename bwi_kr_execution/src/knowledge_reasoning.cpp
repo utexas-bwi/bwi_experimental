@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
 
   boost::filesystem::create_directories(queryDirectory);
 
-  reasoner = new Clingo(MAX_N,queryDirectory,domainDirectory,actionMapToSet(ActionFactory::actions()));
+  reasoner = new Clingo(MAX_N,"n",queryDirectory,domainDirectory,actionMapToSet(ActionFactory::actions()));
   reasoner->reset();
 
   ros::ServiceServer update_fluents = n.advertiseService("update_fluents", updateFluents);

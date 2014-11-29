@@ -1,3 +1,5 @@
+#base.
+
 person(peter). 
 person(ray). 
 person(dana). 
