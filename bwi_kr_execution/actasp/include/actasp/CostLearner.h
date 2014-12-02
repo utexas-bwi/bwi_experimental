@@ -7,11 +7,26 @@
 #include <map>
 #include <yaml-cpp/yaml.h>
 
+#ifdef HAVE_NEW_YAMLCPP
+namespace YAML {
+  // The >> operator disappeared in yaml-cpp 0.5, so this function is
+  // added to provide support for code written under the yaml-cpp 0.3 API.
+  template<typename T>
+  void operator >> (const YAML::Node& node, T& i)
+  {
+    i = node.as<T>();
+  }
+}
+#endif
+
 namespace actasp {
 
   class CostLearner {
 
     public:
+
+      CostLearner(const std::map<std::string, int>& action_names_to_num_params_map) : 
+        action_names_to_num_params_map(action_names_to_num_params_map) {}
 
       void initializeCostsFromValuesFile(const std::string& file) {
 
@@ -50,15 +65,12 @@ namespace actasp {
         fout << "#begin_lua" << std::endl << std::endl;
 
         // Let's do some pre-process to optimize the lua file.
-        std::set<std::string> action_names;
         std::map<std::string, std::vector<std::set<std::string> > > var_combos;
         for (std::map<AspFluent, float>::const_iterator it = costs.begin(); it != costs.end(); ++it) {
 
-          // Get all unique action names.
-          std::string action_name = it->first.getName(); 
-          action_names.insert(action_name);
+          std::string action_name = it->first.getName();
 
-          // For all each unique action name, get unique set of values each parameter can take.
+          // For all actions names, get unique set of values each parameter can take.
           const std::vector<std::string> params = it->first.getParameters();
           if (var_combos[action_name].size() != params.size()) {
             var_combos[action_name].resize(params.size());
@@ -70,11 +82,14 @@ namespace actasp {
 
         // Now we have a list of unique action names, as well as unique set of values that each parameter for a given
         // action can take. Create a separate cost function for each action.
-        for (std::set<std::string>::const_iterator it = action_names.begin(); it != action_names.end(); ++it) {
+        for (std::map<std::string, int>::const_iterator it = action_names_to_num_params_map.begin(); 
+             it != action_names_to_num_params_map.end(); ++it) {
 
           // Function header.
-          fout << "function " << *it << "_cost(";
-          unsigned num_params = var_combos[*it].size();
+          std::string action_name = it->first;
+          unsigned num_params = it->second;
+
+          fout << "function " << action_name << "_cost(";
           for (unsigned i = 0; i < num_params; ++i) {
             fout << "v" << i;
             if (i != num_params - 1) {
@@ -90,8 +105,8 @@ namespace actasp {
 
           // Print the various parameter combinations recursively.
           std::vector<std::string> empty_param_list(num_params);
-          AspFluent empty_action(*it, empty_param_list);
-          printRecursiveVarList(fout, var_combos[*it], empty_action);
+          AspFluent empty_action(action_name, empty_param_list);
+          printRecursiveVarList(fout, var_combos[action_name], empty_action);
 
           fout << "\treturn 1 -- return 1 for any action not seen previously." << std::endl;
           fout << "end" << std::endl << std::endl;
@@ -160,6 +175,7 @@ namespace actasp {
 
     protected:
 
+      std::map<std::string, int> action_names_to_num_params_map;
       std::map<AspFluent, float> costs;
 
   };

@@ -57,7 +57,9 @@ struct PrintFluent {
 class ExponentialWeightedCostLearner : public CostLearner {
 
   public:
-    ExponentialWeightedCostLearner(float alpha = 0.5f) : alpha(alpha) {}
+    ExponentialWeightedCostLearner(const std::map<std::string, int>& action_names_to_num_params_map, 
+                                   float alpha = 0.5f) : 
+        CostLearner(action_names_to_num_params_map), alpha(alpha) {}
 
     bool addSample(const AspFluent& action, float cost) {
       float orig_cost = (costs.find(action) != costs.end()) ? costs[action] : 1.f;
@@ -73,7 +75,10 @@ class ExponentialWeightedCostLearner : public CostLearner {
 class Observer : public ExecutionObserver, public PlanningObserver {
   
   public:
-    Observer(const std::string domainDirectory) : domainDirectory(domainDirectory) {
+
+    Observer(const std::string domainDirectory, 
+             const std::map<std::string, int>& action_names_to_num_params_map) : 
+        domainDirectory(domainDirectory), learner(action_names_to_num_params_map) {
 
       // Check if the symbolic link for the yaml file exists and can be resolved.
       std::string yaml_costs_file = domainDirectory + "costs.yaml";
@@ -95,6 +100,7 @@ class Observer : public ExecutionObserver, public PlanningObserver {
         }
       } else {
         counter = 0;
+        updateCostsFile();
       }
     }
     
@@ -136,7 +142,7 @@ class Observer : public ExecutionObserver, public PlanningObserver {
         mkdir((domainDirectory + "yaml_costs/").c_str(), 0755);
       }
       std::stringstream current_yaml_file_ss;
-      current_yaml_file_ss << domainDirectory << "yaml_costs/costs.yaml. " << counter;
+      current_yaml_file_ss << domainDirectory << "yaml_costs/costs.yaml." << counter;
       std::string current_yaml_file = domainDirectory + current_yaml_file_ss.str();
       learner.writeValuesFile(current_yaml_file);
       std::string yaml_symlink_file = domainDirectory + "costs.yaml";
@@ -226,7 +232,14 @@ int main(int argc, char**argv) {
   ReplanningActionExecutor *replanner = new ReplanningActionExecutor(reasoner,planner,ActionFactory::actions());
   executor = replanner;
   
-  Observer observer(domainDirectory);
+  // Get the set of action names (required by the cost learning observer).
+  std::map<std::string, int> action_names_to_num_params_map;
+  ActionFactory::ActionMap actionMap(ActionFactory::actions());
+  for (ActionFactory::ActionMap::const_iterator action_it = actionMap.begin(); 
+       action_it != actionMap.end(); ++action_it) {
+    action_names_to_num_params_map[action_it->first] = action_it->second->paramNumber();
+  }
+  Observer observer(domainDirectory,action_names_to_num_params_map);
   executor->addExecutionObserver(&observer);
   replanner->addPlanningObserver(&observer);
 
