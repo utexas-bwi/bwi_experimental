@@ -63,6 +63,12 @@ struct Observer : public ExecutionObserver {
     ROS_INFO_STREAM("Terminating execution: " << action.toString());
   }
 
+  void planExecutionFailed() throw() {
+    ROS_INFO_STREAM("Plan execution failed!");
+  }
+
+  void planExecutionSucceeded() throw() {}
+
 };
 
 std::string rulesToFileName(const vector<AspRule> &rules) {

@@ -60,6 +60,11 @@ struct Observer : public ExecutionObserver, public PlanningObserver {
     ROS_INFO_STREAM("Terminating execution: " << action.toString());
   }
   
+  void planExecutionFailed() throw() {
+    ROS_INFO_STREAM("Current plan execution failed!");
+  }
+  
+  void planExecutionSucceeded() throw() {}
   
   void planChanged(const AnswerSet& newPlan) throw() {
    stringstream planStream;

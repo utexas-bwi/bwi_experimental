@@ -62,14 +62,17 @@ void ReplanningActionExecutor::computePlan() {
   isGoalReached = kr->currentStateQuery(goalRules).isSatisfied();
 
   if (!isGoalReached) {
+    // The goal hasn't been reached yet. Try (re)planning.
     plan = planner->computePlan(goalRules).instantiateActions(actionMap);
     actionCounter = 0;
+    hasFailed = plan.empty();
+    if(!hasFailed) {
+      for_each(planningObservers.begin(),planningObservers.end(),NotifyNewPlan(planToAnswerSet(plan)));
+    }
+  } else {
+    for_each(executionObservers.begin(),executionObservers.end(),NotifyPlanExecutionSucceeded());
+    hasFailed = false;
   }
-
-  hasFailed = plan.empty();
-  
-  if(!hasFailed)
-    for_each(planningObservers.begin(),planningObservers.end(),NotifyNewPlan(planToAnswerSet(plan)));
   
 }
 
@@ -108,14 +111,17 @@ void ReplanningActionExecutor::executeActionStep() {
     
     newAction = true;
 
-    if (plan.empty() || !kr->isPlanValid(planToAnswerSet(plan),goalRules)) {
-      
-      //if not valid, replan
+    if (!plan.empty() && !kr->isPlanValid(planToAnswerSet(plan),goalRules)) {
+      for_each(executionObservers.begin(),executionObservers.end(),NotifyPlanExecutionFailed());
+
+      // Since plan is invalid, delete the plan.
       for_each(plan.begin(),plan.end(),ActionDeleter());
       plan.clear();
+    }
 
+    if (plan.empty()) {
+      // If we don't have a plan, recompute the plan.
       computePlan();
-
     }
 
   }

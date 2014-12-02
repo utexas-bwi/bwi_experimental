@@ -31,6 +31,8 @@ public:
   
   void actionStarted(const actasp::AspFluent& action) throw();
   void actionTerminated(const actasp::AspFluent& action) throw();
+  void planExecutionFailed() throw();
+  void planExecutionSucceeded() throw();
   
   void readFrom(std::istream & fromStream) throw();
   void writeTo(std::ostream & toStream) throw();

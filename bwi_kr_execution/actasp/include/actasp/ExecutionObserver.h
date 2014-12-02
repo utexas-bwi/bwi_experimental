@@ -13,6 +13,9 @@ struct ExecutionObserver {
   virtual void actionStarted(const AspFluent& action) throw() =0 ;
   virtual void actionTerminated(const AspFluent& action) throw() =0;
 
+  virtual void planExecutionFailed() throw() = 0;
+  virtual void planExecutionSucceeded() throw() = 0;
+
   virtual ~ExecutionObserver() {}
 };
 

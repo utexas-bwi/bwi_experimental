@@ -30,6 +30,22 @@ struct NotifyActionStart {
   AspFluent action;
 };
 
+struct NotifyPlanExecutionFailed {
+  
+  void operator()(ExecutionObserver *observer) {
+    observer->planExecutionFailed();
+  }
+
+};
+
+struct NotifyPlanExecutionSucceeded {
+  
+  void operator()(ExecutionObserver *observer) {
+    observer->planExecutionSucceeded();
+  }
+
+};
+
 }
 
 #endif

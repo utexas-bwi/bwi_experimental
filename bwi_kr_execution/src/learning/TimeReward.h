@@ -41,7 +41,12 @@ public:
   }
   
   void actionTerminated(const actasp::AspFluent& action) throw() {
-    
+  }
+
+  void planExecutionFailed() throw() {
+  }
+
+  void planExecutionSucceeded() throw() {
   }
   
   virtual ~TimeReward() {}  

@@ -134,6 +134,12 @@ void QLearningActionSelector::actionTerminated(const AspFluent& action) throw() 
   previousAction = action;
 }
 
+void QLearningActionSelector::planExecutionFailed() throw() {
+}
+
+void QLearningActionSelector::planExecutionSucceeded() throw() {
+}
+
 void QLearningActionSelector::episodeEnded() {
   if(initial.empty())
     return;
