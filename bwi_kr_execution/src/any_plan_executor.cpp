@@ -5,6 +5,7 @@
 #include "actasp/action_utils.h"
 #include "actasp/executors/ReplanningActionExecutor.h"
 #include "actasp/planners/AnyPlan.h"
+#include "actasp/CostLearner.h"
 #include "actasp/ExecutionObserver.h"
 #include "actasp/PlanningObserver.h"
 #include "actasp/AnswerSet.h"
@@ -24,6 +25,9 @@
 #include <boost/filesystem.hpp>
 
 #include <string>
+
+#include <sys/stat.h>
+#include <unistd.h>
 
 const int MAX_N = 20;
 const std::string queryDirectory("/tmp/bwi_action_execution/");
@@ -50,33 +54,106 @@ struct PrintFluent {
   
 };
 
-struct Observer : public ExecutionObserver, public PlanningObserver {
+class ExponentialWeightedCostLearner : public CostLearner {
+
+  public:
+    ExponentialWeightedCostLearner(float alpha = 0.5f) : alpha(alpha) {}
+
+    bool addSample(const AspFluent& action, float cost) {
+      float orig_cost = (costs.find(action) != costs.end()) ? costs[action] : 1.f;
+      float new_cost = (1 - alpha) * orig_cost + alpha * cost;
+      costs[action] = new_cost;
+    }
+
+  private:
+    float alpha;
+
+};
+
+class Observer : public ExecutionObserver, public PlanningObserver {
   
-  void actionStarted(const AspFluent& action) throw() {
-    ROS_INFO_STREAM("Starting execution: " << action.toString());
-  }
+  public:
+    Observer(const std::string domainDirectory) : domainDirectory(domainDirectory) {
+
+      // Check if the symbolic link for the yaml file exists and can be resolved.
+      std::string yaml_costs_file = domainDirectory + "costs.yaml";
+      if (file_exists(yaml_costs_file)) {
+        // Resolve link.
+        char resolved_link[512];
+        int count = readlink(yaml_costs_file.c_str(), resolved_link, sizeof(resolved_link));
+        if (count >= 0) {
+          resolved_link[count] = '\0';
+        }
+        // Extract counter from file name.
+        for (int i = count - 1; i >= 0; --i) {
+          if (resolved_link[i] == '.') {
+            char temp[i];
+            strncpy(temp, resolved_link + i + 1, count - i - 1);
+            counter = atoi(temp);
+            break;
+          }
+        }
+      } else {
+        counter = 0;
+      }
+    }
+    
+    void actionStarted(const AspFluent& action) throw() {
+      ROS_INFO_STREAM("Starting execution: " << action.toString());
+      actionStartTime = ros::Time::now().toSec();
+    }
+    
+    void actionTerminated(const AspFluent& action) throw() {
+      ROS_INFO_STREAM("Terminating execution: " << action.toString());
+      learner.addSample(action, ros::Time::now().toSec() - actionStartTime);
+    }
+    
+    void planExecutionFailed() throw() {
+      ++counter;
+      updateCostsFile();
+    }
+    
+    void planExecutionSucceeded() throw() {
+      ++counter;
+      updateCostsFile();
+    }
+
+    void planChanged(const AnswerSet& newPlan) throw() {
+     stringstream planStream;
+     
+     ROS_INFO_STREAM("plan size: " << newPlan.getFluents().size());
+     
+     copy(newPlan.getFluents().begin(),newPlan.getFluents().end(),ostream_iterator<string>(planStream," "));
+     
+     ROS_INFO_STREAM(planStream.str());
+    }
   
-  void actionTerminated(const AspFluent& action) throw() {
-    ROS_INFO_STREAM("Terminating execution: " << action.toString());
-  }
-  
-  void planExecutionFailed() throw() {
-    ROS_INFO_STREAM("Current plan execution failed!");
-  }
-  
-  void planExecutionSucceeded() throw() {}
-  
-  void planChanged(const AnswerSet& newPlan) throw() {
-   stringstream planStream;
-   
-   ROS_INFO_STREAM("plan size: " << newPlan.getFluents().size());
-   
-   copy(newPlan.getFluents().begin(),newPlan.getFluents().end(),ostream_iterator<string>(planStream," "));
-   
-   ROS_INFO_STREAM(planStream.str());
-  }
-  
-  
+  private:
+
+    void updateCostsFile() {
+      learner.writeLuaFile(domainDirectory + "costlua.asp");
+      if (counter == 0) {
+        mkdir((domainDirectory + "yaml_costs/").c_str(), 0755);
+      }
+      std::stringstream current_yaml_file_ss;
+      current_yaml_file_ss << domainDirectory << "yaml_costs/costs.yaml. " << counter;
+      std::string current_yaml_file = domainDirectory + current_yaml_file_ss.str();
+      learner.writeValuesFile(current_yaml_file);
+      std::string yaml_symlink_file = domainDirectory + "costs.yaml";
+      int retno = symlink(current_yaml_file.c_str(), yaml_symlink_file.c_str());
+    }
+
+    bool file_exists(const std::string& name) {
+      struct stat buffer;   
+      return (stat (name.c_str(), &buffer) == 0); 
+    }
+
+    long start_time;
+    std::string domainDirectory;
+    ExponentialWeightedCostLearner learner;
+    int counter;
+    double actionStartTime;
+
 };
 
 void executePlan(const bwi_kr_execution::ExecutePlanGoalConstPtr& plan, Server* as) {
@@ -149,7 +226,7 @@ int main(int argc, char**argv) {
   ReplanningActionExecutor *replanner = new ReplanningActionExecutor(reasoner,planner,ActionFactory::actions());
   executor = replanner;
   
-  Observer observer;
+  Observer observer(domainDirectory);
   executor->addExecutionObserver(&observer);
   replanner->addPlanningObserver(&observer);
 
