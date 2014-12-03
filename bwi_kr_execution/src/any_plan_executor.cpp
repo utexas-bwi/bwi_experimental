@@ -62,9 +62,11 @@ class ExponentialWeightedCostLearner : public CostLearner {
         CostLearner(action_names_to_num_params_map), alpha(alpha) {}
 
     bool addSample(const AspFluent& action, float cost) {
-      float orig_cost = (costs.find(action) != costs.end()) ? costs[action] : 1.f;
+      AspFluent action_no_timestamp(action.getName(), action.getParameters());
+      float orig_cost = (costs.find(action_no_timestamp) != costs.end()) ? costs[action_no_timestamp] : 1.f;
       float new_cost = (1 - alpha) * orig_cost + alpha * cost;
-      costs[action] = new_cost;
+      std::cout << orig_cost << " " << cost << " " << new_cost << std::endl;
+      costs[action_no_timestamp] = new_cost;
     }
 
   private:
@@ -83,6 +85,7 @@ class Observer : public ExecutionObserver, public PlanningObserver {
       // Check if the symbolic link for the yaml file exists and can be resolved.
       std::string yaml_costs_file = domainDirectory + "costs.yaml";
       if (file_exists(yaml_costs_file)) {
+        learner.initializeCostsFromValuesFile(yaml_costs_file);
         // Resolve link.
         char resolved_link[512];
         int count = readlink(yaml_costs_file.c_str(), resolved_link, sizeof(resolved_link));
@@ -137,16 +140,17 @@ class Observer : public ExecutionObserver, public PlanningObserver {
   private:
 
     void updateCostsFile() {
-      learner.writeLuaFile(domainDirectory + "costlua.asp");
       if (counter == 0) {
         mkdir((domainDirectory + "yaml_costs/").c_str(), 0755);
       }
       std::stringstream current_yaml_file_ss;
       current_yaml_file_ss << domainDirectory << "yaml_costs/costs.yaml." << counter;
-      std::string current_yaml_file = domainDirectory + current_yaml_file_ss.str();
+      std::string current_yaml_file = current_yaml_file_ss.str();
       learner.writeValuesFile(current_yaml_file);
       std::string yaml_symlink_file = domainDirectory + "costs.yaml";
+      unlink(yaml_symlink_file.c_str());
       int retno = symlink(current_yaml_file.c_str(), yaml_symlink_file.c_str());
+      learner.writeLuaFile(domainDirectory + "costlua.asp");
     }
 
     bool file_exists(const std::string& name) {

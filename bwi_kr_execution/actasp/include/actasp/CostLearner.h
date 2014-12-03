@@ -80,6 +80,22 @@ namespace actasp {
           }
         }
 
+        // for (std::map<std::string, int>::const_iterator it = action_names_to_num_params_map.begin(); 
+        //      it != action_names_to_num_params_map.end(); ++it) {
+        //   std::string action_name = it->first;
+        //   unsigned num_params = it->second;
+        //   std::cout << "Action Name: " << action_name << std::endl;
+        //   std::cout << "  Num Params: " << num_params << std::endl;
+        //   if (var_combos.find(action_name) != var_combos.end()) {
+        //     for (int i = 0; i < num_params; ++i) {
+        //       std::set<std::string>& vc = var_combos[action_name][i];
+        //       for (std::set<std::string>::const_iterator it = vc.begin(); it != vc.end(); ++it) {
+        //         std::cout << "  Arg " << i << " has possible value " << *it << std::endl;
+        //       }
+        //     }
+        //   }
+        // }
+
         // Now we have a list of unique action names, as well as unique set of values that each parameter for a given
         // action can take. Create a separate cost function for each action.
         for (std::map<std::string, int>::const_iterator it = action_names_to_num_params_map.begin(); 
@@ -100,13 +116,15 @@ namespace actasp {
 
           // Convert all vars to strings.
           for (unsigned i = 0; i < num_params; ++i) {
-            fout << "s" << i << " = tostring(s" << i << ")" << std::endl;
+            fout << "\ts" << i << " = tostring(v" << i << ")" << std::endl;
           }
 
           // Print the various parameter combinations recursively.
-          std::vector<std::string> empty_param_list(num_params);
-          AspFluent empty_action(action_name, empty_param_list);
-          printRecursiveVarList(fout, var_combos[action_name], empty_action);
+          if (var_combos.find(action_name) != var_combos.end()) {
+            std::vector<std::string> empty_param_list(num_params);
+            AspFluent empty_action(action_name, empty_param_list);
+            printRecursiveVarList(fout, var_combos[action_name], empty_action);
+          }
 
           fout << "\treturn 1 -- return 1 for any action not seen previously." << std::endl;
           fout << "end" << std::endl << std::endl;
@@ -147,29 +165,24 @@ namespace actasp {
                                  int idx = 0, 
                                  std::string indentation = "\t") const {
 
-        if (idx == var_combo.size() - 1) {
-          for (std::set<std::string>::const_iterator it = var_combo[idx - 1].begin(); 
-               it != var_combo[idx - 1].end(); ++it) {
-            fout << indentation << "if s" << idx << "== " << *it << " then return ";
-            std::map<AspFluent, float>::const_iterator cost_it = costs.find(action);
+        for (std::set<std::string>::const_iterator it = var_combo[idx].begin(); 
+             it != var_combo[idx].end(); ++it) {
+          fout << indentation << "if s" << idx << " == \"" << *it << "\" then" << std::endl;
+          std::vector<std::string> action_params = action.getParameters();
+          action_params[idx] = *it;
+          AspFluent next_action(action.getName(), action_params);
+          if (idx == var_combo.size() - 1) {
+            std::map<AspFluent, float>::const_iterator cost_it = costs.find(next_action);
             int value = (cost_it != costs.end()) ? round(cost_it->second) : 1;
-            fout << value << " end";
+            fout << indentation + "\t" << "return " << value;
             if (cost_it == costs.end()) {
-              fout << " -- invalid combo. will never be returned.";
+              fout << " -- combo not sampled.";
             }
             fout << std::endl;
-          }
-        } else {
-          for (std::set<std::string>::const_iterator it = var_combo[idx - 1].begin(); 
-               it != var_combo[idx - 1].end(); ++it) {
-            fout << indentation << "if s" << idx << "== " << *it << " then" << std::endl;
-            std::vector<std::string> action_params = action.getParameters();
-            action_params[idx - 1] = *it;
-            AspFluent next_action(action.getName(), action_params);
+          } else {
             printRecursiveVarList(fout, var_combo, next_action, idx + 1, indentation + "\t");
-            fout << indentation << "end" << std::endl;
           }
-
+          fout << indentation << "end" << std::endl;
         }
       }
 
