@@ -17,6 +17,12 @@ find_package(catkin REQUIRED COMPONENTS
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(YAML_CPP REQUIRED yaml-cpp)
+
+if(NOT ${YAML_CPP_VERSION} VERSION_LESS "0.5")
+  add_definitions(-DHAVE_NEW_YAMLCPP)
+endif()
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -106,6 +112,7 @@ message_runtime
 # include_directories(include)
 include_directories(
   ${catkin_INCLUDE_DIRS}
+  ${YAML_CPP_INCLUDE_DIRS}
   actasp/include
 )
 
@@ -115,13 +122,13 @@ set( actasp_SRC)
 add_subdirectory(actasp/src/)
 ## Declare a cpp library
  add_library(actasp ${actasp_SRC})
- target_link_libraries(actasp ${catkin_LIBRARIES})
+ target_link_libraries(actasp ${catkin_LIBRARIES} ${YAML_CPP_LIBRARIES})
 
  set( kractions_SRC)
  add_subdirectory(src/actions/)
  add_library(kractions ${kractions_SRC})
  add_dependencies(kractions bwi_kr_execution_generate_messages_cpp)
- target_link_libraries(kractions actasp )
+ target_link_libraries(kractions actasp)
 
 ## Declare a cpp executable
 

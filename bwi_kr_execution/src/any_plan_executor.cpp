@@ -65,7 +65,6 @@ class ExponentialWeightedCostLearner : public CostLearner {
       AspFluent action_no_timestamp(action.getName(), action.getParameters());
       float orig_cost = (costs.find(action_no_timestamp) != costs.end()) ? costs[action_no_timestamp] : 1.f;
       float new_cost = (1 - alpha) * orig_cost + alpha * cost;
-      std::cout << orig_cost << " " << cost << " " << new_cost << std::endl;
       costs[action_no_timestamp] = new_cost;
     }
 
@@ -103,8 +102,8 @@ class Observer : public ExecutionObserver, public PlanningObserver {
         }
       } else {
         counter = 0;
-        updateCostsFile();
       }
+      updateCostsFile();
     }
     
     void actionStarted(const AspFluent& action) throw() {

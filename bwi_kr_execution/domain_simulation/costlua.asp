@@ -31,16 +31,6 @@ end
 function searchroom_cost(v0, v1)
 	s0 = tostring(v0)
 	s1 = tostring(v1)
-	if s0 == "jivko" then
-		if s1 == "l3_414b" then
-			return 5
-		end
-	end
-	if s0 == "peter" then
-		if s1 == "l3_414b" then
-			return 23
-		end
-	end
 	return 1 -- return 1 for any action not seen previously.
 end
 
