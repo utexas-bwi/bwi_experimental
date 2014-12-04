@@ -354,6 +354,7 @@ def platform_thread(human_waiting, curr_goal):
     
             while human_waiting.value == False:
                 if client.wait_for_result(timeout = rospy.Duration.from_sec(1.0)):
+                    client.cancel_goal()
                     break
 
     return 1
