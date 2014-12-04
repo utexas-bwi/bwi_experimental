@@ -352,7 +352,9 @@ def platform_thread(human_waiting, curr_goal):
             rospy.loginfo("sending goal: " + loc)
             client.send_goal(goal)
     
-            client.wait_for_result()
+            while human_waiting.value == False:
+                if client.wait_for_result(timeout = rospy.Duration.from_sec(1.0)):
+                    break
 
     return 1
 
