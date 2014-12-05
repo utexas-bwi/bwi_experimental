@@ -6,6 +6,7 @@ import rospy
 import roslib; roslib.load_manifest('bwi_tasks')
 
 import actionlib
+import actionlib_msgs.msg
 from bwi_kr_execution.msg import *
 import segbot_gui.srv
 import bwi_rlg.srv
@@ -351,11 +352,22 @@ def platform_thread(human_waiting, curr_goal):
             
             rospy.loginfo("sending goal: " + loc)
             client.send_goal(goal)
-    
-            while human_waiting.value == False:
-                if client.wait_for_result(timeout = rospy.Duration.from_sec(1.0)):
-                    client.cancel_goal()
+            
+            while client.wait_for_result(
+                    timeout = rospy.Duration.from_sec(1.0)) == False:
+                if human_waiting.value:
                     break
+
+            client.cancel_goal()
+
+            move_base_pub = rospy.Publisher('move_base/cancel',\
+                                            actionlib_msgs.msg.GoalID)
+
+            # for unknown reasons, we have to publish the message at least twice
+            # to make it work
+            for i in range(5):
+                move_base_pub.publish(rospy.Time.now(), '')
+                rospy.sleep(0.2)
 
     return 1
 
