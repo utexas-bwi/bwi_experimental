@@ -5,6 +5,7 @@ import rosbag
 import time
 import datetime
 import os
+import sys
 from time import gmtime, strftime
 
 # if rospy.has_param('bag_file'):
@@ -13,12 +14,19 @@ from time import gmtime, strftime
 # else:
 #   exit('please set the bag_file first: "rosparam set bag_file /path/to/your/bag_file"')
 
-path = '/home/szhang/ros_workspace/catkin_ws/src/bwi_experimental/bwi_logging/log_files/'
+if len(sys.argv) != 2:
+    print('please run it this way: ./get_distance.py /path/to/the/log_files')
+    sys.exit()
+
+path = str(sys.argv[1])
 filenames = os.listdir(path)
 print(filenames)
 output_filename = 'zzz.txt'
 
 for filename in filenames:
+
+    if filename.find('_') != 0 or filename.find('.bag') < 0:
+        continue
 
     print('working on: ' + path+filename)
     bag = rosbag.Bag(path+filename)
