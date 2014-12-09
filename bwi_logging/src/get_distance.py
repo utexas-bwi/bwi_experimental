@@ -20,6 +20,7 @@ if len(sys.argv) != 2:
 
 path = str(sys.argv[1])
 filenames = os.listdir(path)
+filenames.sort()
 print(filenames)
 output_filename = 'zzz.txt'
 
@@ -65,6 +66,11 @@ for filename in filenames:
 
     f = open(path+output_filename, 'a')
     f.write(strftime("%Y-%m-%d %H:%M:%S", gmtime()) + \
+            '  filename: ' + filename + \
             '  time: ' + str(time_consumed) + \
             '  distance: ' + str(distance_traveled) + '\n')
+
+    f.close()
+
+# end of for
 
