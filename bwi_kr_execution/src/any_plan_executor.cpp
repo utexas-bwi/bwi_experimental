@@ -61,12 +61,27 @@ class ExponentialWeightedCostLearner : public CostLearner {
                                    float alpha = 0.5f) : 
         CostLearner(action_names_to_num_params_map), alpha(alpha) {}
 
-    bool addSample(const AspFluent& action, float cost) {
+    bool addSample(const AspFluent& action, const std::set<AspFluent>& current_state, float cost) {
       AspFluent action_no_timestamp(action.getName(), action.getParameters());
       float orig_cost = (costs.find(action_no_timestamp) != costs.end()) ? costs[action_no_timestamp] : 1.f;
       float new_cost = (1 - alpha) * orig_cost + alpha * cost;
       costs[action_no_timestamp] = new_cost;
     }
+
+    static std::map<std::string, int> getActionNamesToNumParamsMap() {
+      // TODO use the string from the action messages here.
+      std::map<std::string, int> return_map;
+      return_map["approach"] = 3;
+      return_map["askperson"] = 1;
+      return_map["gothrough"] = 1;
+      return_map["opendoor"] = 2;
+      return_map["remind"] = 0;
+      return_map["searchroom"] = 1;
+      return return_map;
+    }
+
+    static std::vector<std::string> getCostParametersForAction(const AspFluent& action,
+                                                               const std::set<AspFluent>& current_state)
 
   private:
     float alpha;
@@ -77,9 +92,9 @@ class Observer : public ExecutionObserver, public PlanningObserver {
   
   public:
 
-    Observer(const std::string domainDirectory, 
-             const std::map<std::string, int>& action_names_to_num_params_map) : 
-        domainDirectory(domainDirectory), learner(action_names_to_num_params_map) {
+    Observer(const std::string domainDirectory) : 
+        domainDirectory(domainDirectory), 
+        learner(ExponentialWeightedCostLearner::getActionNamesToNumParamsMap()) {
 
       // Check if the symbolic link for the yaml file exists and can be resolved.
       std::string yaml_costs_file = domainDirectory + "costs.yaml";
@@ -236,13 +251,7 @@ int main(int argc, char**argv) {
   executor = replanner;
   
   // Get the set of action names (required by the cost learning observer).
-  std::map<std::string, int> action_names_to_num_params_map;
-  ActionFactory::ActionMap actionMap(ActionFactory::actions());
-  for (ActionFactory::ActionMap::const_iterator action_it = actionMap.begin(); 
-       action_it != actionMap.end(); ++action_it) {
-    action_names_to_num_params_map[action_it->first] = action_it->second->paramNumber();
-  }
-  Observer observer(domainDirectory,action_names_to_num_params_map);
+  Observer observer(domainDirectory);
   executor->addExecutionObserver(&observer);
   replanner->addPlanningObserver(&observer);
 

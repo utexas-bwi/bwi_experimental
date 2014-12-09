@@ -91,6 +91,8 @@ void ReplanningActionExecutor::executeActionStep() {
     return;
 
 
+  kr->currentStateQuery(std::vector<actasp::AspRule>()).getFluents();
+
   Action *current = plan.front();
 
   if(newAction) {
@@ -104,6 +106,7 @@ void ReplanningActionExecutor::executeActionStep() {
   if (current->hasFinished()) {
     //destroy the action and pop a new one
     
+    current->hasFailed() add to NotifyActionTermination
     for_each(executionObservers.begin(),executionObservers.end(),NotifyActionTermination(current->toFluent(actionCounter++)));
     
     delete current;
