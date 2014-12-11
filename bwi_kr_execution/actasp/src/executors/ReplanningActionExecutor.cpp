@@ -90,13 +90,13 @@ void ReplanningActionExecutor::executeActionStep() {
   if (isGoalReached || hasFailed)
     return;
 
-
-  kr->currentStateQuery(std::vector<actasp::AspRule>()).getFluents();
-
   Action *current = plan.front();
 
   if(newAction) {
-      for_each(executionObservers.begin(),executionObservers.end(),NotifyActionStart(current->toFluent(actionCounter)));
+      const std::set<AspFluent>& currentState = kr->currentStateQuery(std::vector<actasp::AspRule>()).getFluents();
+      for_each(executionObservers.begin(),
+               executionObservers.end(),
+               NotifyActionStart(current->toFluent(actionCounter), currentState));
       newAction = false;
   }
  
@@ -106,8 +106,8 @@ void ReplanningActionExecutor::executeActionStep() {
   if (current->hasFinished()) {
     //destroy the action and pop a new one
     
-    current->hasFailed() add to NotifyActionTermination
-    for_each(executionObservers.begin(),executionObservers.end(),NotifyActionTermination(current->toFluent(actionCounter++)));
+    for_each(executionObservers.begin(), executionObservers.end(),
+             NotifyActionTermination(current->toFluent(actionCounter++), current->hasFailed()));
     
     delete current;
     plan.pop_front();

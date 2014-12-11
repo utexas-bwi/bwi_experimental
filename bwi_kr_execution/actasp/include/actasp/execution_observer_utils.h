@@ -10,24 +10,27 @@ namespace actasp {
   
 struct NotifyActionTermination {
   
-  NotifyActionTermination(const AspFluent& action) : action(action) {}
+  NotifyActionTermination(const AspFluent& action, bool failed) : action(action), failed(failed) {}
   
   void operator()(ExecutionObserver *observer) {
-    observer->actionTerminated(action);
+    observer->actionTerminated(action, failed);
   }
   
   AspFluent action;
+  bool failed;
 };
 
 struct NotifyActionStart {
   
-  NotifyActionStart(const AspFluent& action) : action(action) {}
+  NotifyActionStart(const AspFluent& action, const std::set<AspFluent>& startState) : 
+    action(action), startState(startState) {}
   
   void operator()(ExecutionObserver *observer) {
-    observer->actionStarted(action);
+    observer->actionStarted(action, startState);
   }
   
   AspFluent action;
+  std::set<AspFluent> startState;
 };
 
 struct NotifyPlanExecutionFailed {
