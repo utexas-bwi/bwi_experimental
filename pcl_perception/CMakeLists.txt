@@ -145,6 +145,9 @@ include_directories(
 add_executable(background_person_detector src/background_person_detector.cpp)
 target_link_libraries(background_person_detector ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 
+add_executable(skeleton_data_receiver src/skeleton_data_receiver.cpp src/utils/comlib/SkeletonListener.cpp src/utils/comlib/UDP.cpp src/utils/comlib/Error.cpp)
+target_link_libraries(skeleton_data_receiver ${catkin_LIBRARIES} )
+
 
 #############
 ## Install ##
