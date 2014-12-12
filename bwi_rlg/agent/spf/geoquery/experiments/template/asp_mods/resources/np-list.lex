@@ -1,4 +1,5 @@
 i :- NP : me:pe
+me :- NP : me:pe
 you :- NP : self:self
 yourself :- NP : self:self
 peter stone :- NP : peter:pe
@@ -9,6 +10,8 @@ matteo leonetti :- NP : matteo:pe
 shiqi zhang :- NP : shiqi:pe
 jivko sinapov :- NP : jivko:pe
 stacy miller :- NP : stacy:pe
+piyush khandelwal :- NP : piyush:pe
+daniel urieli :- NP : daniel:pe
 3402 :- NP : l3_402:ro
 3404 :- NP : l3_404:ro
 3416 :- NP : l3_416:ro
@@ -31,5 +34,7 @@ stacy miller :- NP : stacy:pe
 3516 :- NP : l3_516:ro
 counter :- NP : coffeecounter:sc
 coffee :- NP : coffee:it
-bread :- NP : bread:it
-sandwich :- NP : sandwich:it
+hamburger :- NP : hamburger:it
+cell phone :- NP : phone:it
+trashcan :- NP : trashcan:it
+calendar :- NP : calendar:it

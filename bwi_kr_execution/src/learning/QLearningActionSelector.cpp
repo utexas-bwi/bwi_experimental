@@ -10,9 +10,21 @@
 
 #include <sstream>
 #include <iostream>
+#include <fstream>
 
+#define ROSOUTPUT 0
+#if ROSOUTPUT
 #include <ros/console.h>
+#else
+#include <iostream>
+// #define ROS_DEBUG( X ) std::cout << "* "<< X << std::endl;
+// #define ROS_DEBUG_STREAM( X ) std::cout << "* " << X << std::endl;
+// #define ROS_INFO_STREAM( X ) std::cout << "** " << X<< std::endl ;
 
+#define ROS_DEBUG( X )
+#define ROS_DEBUG_STREAM( X ) 
+#define ROS_INFO_STREAM( X ) 
+#endif
 #define EPSILON 0.1
 
 using namespace actasp;
@@ -197,7 +209,22 @@ void QLearningActionSelector::writeTo(std::ostream & toStream) throw() {
 
   StateActionMap::const_iterator stateIt = value.begin();
   //for each state
+      ofstream stat("stats.txt", ios::app);
+    AspFluent initialState("pos(2,0,0)");
+  
   for (; stateIt != value.end(); ++stateIt) {
+    
+
+    if(stateIt->first.find(initialState) != stateIt->first.end()) {
+        ActionValueMap::const_iterator actionIt= stateIt->second.begin();
+        for (; actionIt != stateIt->second.end(); ++actionIt) {
+           if(stateIt->first.find(initialState) != stateIt->first.end())
+            stat << value[stateIt->first][actionIt->first] << " ";
+        }
+        
+     }
+     
+
 
     //write the state in a line
     copy(stateIt->first.begin(), stateIt->first.end(), ostream_iterator<string>(toStream, " "));
@@ -217,6 +244,8 @@ void QLearningActionSelector::writeTo(std::ostream & toStream) throw() {
     //a separator for the next state
     toStream << endl << "-----" << endl;
   }
+       stat << endl;
+     stat.close();
 
 }
 }

@@ -21,7 +21,16 @@ namespace bwi_krexec {
 LogicalNavigation::LogicalNavigation(const std::string& name, const std::vector<std::string>& parameters) :
 			name(name),
 			parameters(parameters),
-			done(false){}
+			done(false),
+      request_in_progress(false) {}
+
+LogicalNavigation::~LogicalNavigation() {
+  if (request_in_progress) {
+    // The goal was sent but the action is being terminated before being allowed to finish. Cancel that command!
+    lnac->cancelGoal();
+    delete lnac;
+  }
+}
 
 
 struct PlannerAtom2AspFluent {
@@ -44,28 +53,39 @@ void LogicalNavigation::run() {
   
   ROS_DEBUG_STREAM("Executing " << name);
 
-	NodeHandle n;
-	ros::ServiceClient navClient = n.serviceClient<bwi_planning_common::PlannerInterface> ( "execute_logical_goal" );
-	navClient.waitForExistence();
-	
-	bwi_planning_common::PlannerInterface pi;
-	
-	pi.request.command.name = name;
-	pi.request.command.value = parameters;
-	
-	navClient.call(pi);
-        
+  if (!request_in_progress) {
+    lnac = new actionlib::SimpleActionClient<segbot_logical_translator::LogicalNavigationAction>("execute_logical_goal",
+                                                                                                 true);
+    lnac->waitForServer();
+    goal.command.name = name;
+    goal.command.value = parameters;
+    lnac->sendGoal(goal);
+    request_in_progress = true;
+  }
 
-	ros::ServiceClient krClient = n.serviceClient<bwi_kr_execution::UpdateFluents> ( "update_fluents" );
-	krClient.waitForExistence();
-  
-  bwi_kr_execution::UpdateFluents uf;
-  
-  transform(pi.response.observations.begin(),pi.response.observations.end(),back_inserter(uf.request.fluents),PlannerAtom2AspFluent());
+  bool finished_before_timeout = lnac->waitForResult(ros::Duration(0.5f));
 
-	krClient.call(uf);
-	
-	done = true;
+  // If the action finished, need to do some work here.
+  if (finished_before_timeout) {
+    segbot_logical_translator::LogicalNavigationResultConstPtr result = lnac->getResult();
+    
+    // Update fluents based on the result of the logical nav request.
+    NodeHandle n;
+    ros::ServiceClient krClient = n.serviceClient<bwi_kr_execution::UpdateFluents> ( "update_fluents" );
+    krClient.waitForExistence();
+    bwi_kr_execution::UpdateFluents uf;
+    transform(result->observations.begin(),
+              result->observations.end(),
+              back_inserter(uf.request.fluents),PlannerAtom2AspFluent());
+    krClient.call(uf);
+
+    // Mark the request as completed.
+    done = true;
+
+    // Cleanup the simple action client.
+    request_in_progress = false;
+    delete lnac;
+  }
 	
 }
 

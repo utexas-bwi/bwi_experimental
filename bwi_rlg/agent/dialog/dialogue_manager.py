@@ -253,6 +253,9 @@ class dialogue_manager:
 			for utterance_class in self.utterance_class_keywords:
 				for keyword in self.utterance_class_keywords[utterance_class]:
 					if (keyword in utterance_text):
+						#ad-hoc check for kazunori's name; definitely needs to be removed eventually
+						if (keyword == 'no' and 'kazunori' in utterance_text):
+							continue
 						utterance_class_scores[utterance_class] += 1
 					
 		maximum_score,max_utterance_class = self.max_argmax(utterance_class_scores)
@@ -283,7 +286,10 @@ class dialogue_manager:
 				else: #multiple parses
 					j = 1 if ' WRONG: ' in lines[i] else 2
 					while (' Had correct parses: ' not in lines[i+j]):
-						p = lines[i+j][lines[i+j].index('[')+2:]
+						if ('[S' not in lines[i+j]):
+							p = lines[i+j][lines[i+j].index('[')+2:]
+						else:
+							p = lines[i+j].split(']')[2][1:]
 						s = float(lines[i+j+1].split()[3])
 						print s #DEBUG
 						parses.append((p,s))
@@ -499,7 +505,7 @@ class dialogue_manager:
 		
 		#if asked to verbalize partial, check whether last verbalization was identical and apologize for needing additional clarification
 		if (self.last_apr != None and apr[self.asp_role_map["action"]] == self.last_apr[self.asp_role_map["action"]] and apr[self.asp_role_map["patient"]] == self.last_apr[self.asp_role_map["patient"]] and apr[self.asp_role_map["recipient"]] == self.last_apr[self.asp_role_map["recipient"]] and role_requested == self.last_role_requested):
-			self.vocalize("Sorry; I couldn't pinpoint what you meant by that.",request_type="no_clarification_gained",role_requested=None)
+			self.vocalize("I'm sorry, but I couldn't pinpoint what you meant by that.",request_type="no_clarification_gained",role_requested=None)
 		self.last_apr = apr
 		self.last_role_requested = role_requested
 		
@@ -552,8 +558,11 @@ class dialogue_manager:
 				elif (apr[self.asp_role_map["action"]] == "at"):
 					return "Where should I walk?"
 			else:
-				if (apr[self.asp_role_map["action"]] == None and patient_ref != None):
-					return "So "+patient_ref+" is for "+recipient_ref+"?"
+				if (apr[self.asp_role_map["action"]] == None):
+					if (patient_ref != None):
+						return "So "+patient_ref+" is for "+recipient_ref+"?"
+					else:
+						return "I should do something involving "+recipient_ref+"?"
 				elif (apr[self.asp_role_map["action"]] == "served" and patient_ref == None):
 					return "I am to deliver something to "+recipient_ref+"?"
 
@@ -571,6 +580,11 @@ class dialogue_manager:
 				relatively_confident_about[self.asp_role_map[role]] = self.current_best_asp_understanding[self.asp_role_map[role]][0]
 				if (relatively_confident_about[self.asp_role_map[role]] not in [False,None]):
 					confident_about_at_least_one = True
+		
+		#ad-hoc check for a situation where an action requiring a patient is chosen but the patient confidence is False; will ask for patient
+		if (relatively_confident_about[self.asp_role_map["action"]] == "served" and relatively_confident_about[self.asp_role_map["patient"]] == False):
+			relatively_confident_about[self.asp_role_map["patient"]] = None
+		
 		if (confident_about_at_least_one == False):
 			verbal_query = "Sorry I couldn't understand that. Could you reword your original request?"
 			self.request_type = "user_initiative"
@@ -613,8 +627,13 @@ class dialogue_manager:
 		#if relatively confident about all arguments, ask for global confirmation
 		else:
 			if (relatively_confident_about[self.asp_role_map["action"]] == "query"):
-				self.role_requested = "patient"
-				verbal_query = "'"+self.verbalize_apr_tuple(relatively_confident_about)+"', does that answer your question?"
+				if (self.role_requested == "action"):
+					self.role_requested = "patient"
+					#verbal_query = "Are you asking a question about '"+self.verbalize_apr_tuple(relatively_confident_about)+"'?"
+					verbal_query = "'"+self.verbalize_apr_tuple(relatively_confident_about)+"', does that answer your question?"
+				else:
+					self.role_requested = "action"
+					verbal_query = "Are you asking me a question?"
 			else:
 				verbal_query = "You want me to "+self.verbalize_apr_tuple(relatively_confident_about)+"?"
 	
@@ -634,15 +653,26 @@ class dialogue_manager:
 			return None
 		elif (utterance_class == "no"):
 			self.vocalize("Sorry I misunderstood",request_type="failed_guess",role_requested=None)
-			if (self.role_requested != None and self.current_best_asp_understanding[self.asp_role_map[self.role_requested]][0] != None): #the user is rejecting a clarification on an argument
+			if (self.current_best_asp_understanding[self.asp_role_map["action"]][0] != "query" and self.role_requested != None and self.current_best_asp_understanding[self.asp_role_map[self.role_requested]][0] != None): #the user is rejecting a clarification on an argument
 				self.current_asp_confidence[self.asp_role_map[self.role_requested]][self.current_best_asp_understanding[self.asp_role_map[self.role_requested]][0]] = 0
 			else: #the user is rejecting an assumption that the system has made; this is the same as a termination request
+				#temporarily, we are rejecting when 'query' was rejecting too
 				self.request_type = "terminate"
 				self.role_requested = None
 			return None
 		elif (utterance_class == "nevermind"):
 			self.request_type = "terminate"
 			self.role_requested = None
+			return None
+			
+		#if this is a system-initiative response with no requested role, it is a confirmation, so if no confirmation/denial was given, we should re-try for it
+		if (self.role_requested == None):
+			self.vocalize("I'm not sure whether that means I have the right idea.")
+			return None
+			
+		#if sure we're requesting confirmation and confirmation/denial was not given, need to do an exit to re-clarify
+		if (self.roles_relatively_confident_about[self.asp_role_map[self.role_requested]] != None):
+			self.vocalize("Let me get a handle on what you want, first.")
 			return None
 			
 		#make a pass at understanding by parsing

@@ -110,6 +110,8 @@ run_offline = None
 log_filename = None
 restart_master_parser = False
 retrain_master_parser = False
+exclude_test_goals = False
+test_goals = ['query(gave-up)','at(l3_512,n)','at(l3_416,n)','served(shiqi,phone,n)','served(shiqi,trashcan,n)','served(shiqi,coffee,n)','served(kazunori,calendar,n)','served(kazunori,hamburger,n)','served(stacy,calendar,n)','served(stacy,trashcan,n)','served(peter,calendar,n)','served(daniel,trashcan,n)','served(matteo,phone,n)']
 if (len(sys.argv) >= 3 and sys.argv[2] == "retrain"):
 		run_offline = True
 		log_filename = False
@@ -131,9 +133,25 @@ elif (len(sys.argv) >= 4):
 for i in range(2,len(sys.argv)):
 	if (sys.argv[i] == "-restart_parser"):
 		restart_master_parser = True
+	elif (sys.argv[i] == "-exclude_test_goals"):
+		exclude_test_goals = True
 if (run_offline == None or log_filename == None):
-	print "USE: $python main.py [path_to_main] [retrain/online/offline] session_id [-restart_parser]"
+	print "USE: $python main.py [path_to_main] [retrain/online/offline] session_id [-restart_parser] [-exclude_test_goals]"
 	sys.exit()
+	
+#if excluding test goals, we need to read in the list of bad data IDs
+bad_data_ids = []
+if (exclude_test_goals == True):
+	print "getting list of bad data IDs to exclude as well..."
+	try:
+		f = open(os.path.join(path_to_main,'list_of_bad_data.txt'),'r')
+		for line in f:
+			bad_data_ids.append(line[:-4])
+		f.close()
+	except:
+		print "\tcouldn't find list_of_bad_data.txt"
+	print bad_data_ids #DEBUG
+	print "done"
 	
 #train parser
 if (restart_master_parser == True):
@@ -155,8 +173,26 @@ if (retrain_master_parser == True):
 	for root,dirs,files in os.walk(os.path.join(path_to_main,"offline_data","alignments")):
 		for f in files:
 			if (f.split('.')[1] == "txt"): #right filetype
+			
+				#maybe exclude user based on goal
+				if (exclude_test_goals == True):
+					user_id = "_".join(f.split("_")[:-1])
+					if (user_id in bad_data_ids):
+						print "DEBUG: skipped user '"+user_id+"' because they are marked as bad data"
+						continue
+					if (not os.path.exists(os.path.join(path_to_main,"offline_data","commands",user_id+"_command.txt"))):
+						print "DEBUG: skipped user '"+user_id+"' because their dialog produced no command"
+						continue
+					g = open(os.path.join(path_to_main,"offline_data","commands",user_id+"_command.txt"),'r')
+					command = g.read().strip()
+					if (command in test_goals):
+						print "DEBUG: skipped user '"+user_id+"' because their dialog led to test goal '"+command+"'"
+						continue
+			
 				alog_f = open(os.path.join(root,f),'r')
 				alog_f_lines = alog_f.read().strip().split("\n")
+				if (len(alog_f_lines) < 2): #blank
+					continue
 				i = 0
 				while (i < len(alog_f_lines)):
 					utterance_parse_pairs.append((alog_f_lines[i],alog_f_lines[i+1]))
@@ -192,14 +228,20 @@ if (run_offline == True):
 	if (asp_goal_state == None):
 		sys.exit("WARNING: reached main before shutting down")
 	elif (asp_goal_state == False):
-		sys.exit("WARNING: user gave up on achieving goal")
+		print "WARNING: user gave up on achieving goal"
+		asp_goal_state = "query(gave-up)" #ensures segbot dialog manager won't crash on no command
+		f = open(command_filename,'w')
+		f.write(asp_goal_state)
+		f.close()
+		os.system("rm -R "+os.path.join(path_to_master_dir,session_master)) #remove user-specific parsing model to save disk space
+		dm.write_core_elements_to_pickle_and_shutdown() #write output vocalization(s) and save final core
 	else:
 		print asp_goal_state
 		f = open(command_filename,'w')
 		f.write(asp_goal_state)
 		f.close()
-		dm.write_core_elements_to_pickle_and_shutdown() #write output vocalization(s) and safe final core
 		os.system("rm -R "+os.path.join(path_to_master_dir,session_master)) #remove user-specific parsing model to save disk space
+		dm.write_core_elements_to_pickle_and_shutdown() #write output vocalization(s) and save final core
 
 #online command loop
 else:

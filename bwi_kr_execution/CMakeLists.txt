@@ -90,8 +90,8 @@ add_action_files(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES bwi_kr_execution
+  INCLUDE_DIRS actasp/include
+  LIBRARIES actasp
 #  CATKIN_DEPENDS roscpp std_msgs
   DEPENDS system_lib
 message_runtime
@@ -126,12 +126,16 @@ add_subdirectory(actasp/src/)
 ## Declare a cpp executable
 
 set(spexec_SRC)
+set(anyexec_SRC)
 set(lexec_SRC)
 set(krreasoner_SRC)
 
 add_subdirectory(src)
 add_executable(single_plan_executor_node ${spexec_SRC})
 target_link_libraries(single_plan_executor_node ${catkin_LIBRARIES} actasp kractions )
+
+add_executable(any_plan_executor_node ${anyexec_SRC})
+target_link_libraries(any_plan_executor_node ${catkin_LIBRARIES} actasp kractions )
 
 add_executable(learning_executor_node ${lexec_SRC})
 target_link_libraries(learning_executor_node ${catkin_LIBRARIES} actasp kractions )
@@ -173,11 +177,11 @@ target_link_libraries(asp_formatter actasp)
 # )
 
 ## Mark cpp header files for installation
-# install(DIRECTORY include/${PROJECT_NAME}/
-#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-#   FILES_MATCHING PATTERN "*.h"
+ install(DIRECTORY include/${PROJECT_NAME}/
+   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+   FILES_MATCHING PATTERN "*.h"
 #   PATTERN ".svn" EXCLUDE
-# )
+ )
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
 # install(FILES

@@ -140,6 +140,10 @@ std::string AspFluent::toString(unsigned int timeStep) const throw() {
   return cachedBase + ss.str();
 }
 
+std::string AspFluent::toString(const string& timeStepVar) const throw() {   
+  return cachedBase + timeStepVar + ")";
+}
+
 std::string AspFluent::toString() const throw () {
 	return this->toString(this->timeStep);
 }

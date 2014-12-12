@@ -20,3 +20,9 @@ again, the system will read 'offline_data/inputs/[USER_ID]_input.txt' for a sing
 
 When dialogue concludes, the ASP goal settled on by the system will be written to 'offline_data/commands/[USER_ID]_command.txt'
 Negating this and appending it to an asp world text, clingo should be able to generate a plan to accomplish the user's goals
+
+--- Temporary for AAMAS experiment
+
+You can now exclude dialogs that led to 'testing' goals during retraining with
+
+$python dialog/main.py dialog/ retrain -exclude_test_goals

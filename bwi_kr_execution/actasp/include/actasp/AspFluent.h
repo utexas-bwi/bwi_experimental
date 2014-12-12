@@ -31,6 +31,7 @@ public:
 
 	std::string toString() const throw();
 	std::string toString(unsigned int timeStep) const throw();
+  std::string toString(const std::string& timeStepVar) const throw();
   
   operator std::string() const { return this->toString(); } 
 

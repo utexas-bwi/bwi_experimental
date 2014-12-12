@@ -1,7 +1,5 @@
 #include "CallGUI.h"
 
-#include "segbot_gui/QuestionDialog.h"
-
 #include <ros/ros.h>
 
 #include <stdexcept>
@@ -27,17 +25,34 @@ void CallGUI::run() {
   ros::ServiceClient client = n.serviceClient<segbot_gui::QuestionDialog> ( "question_dialog" );
   client.waitForExistence();
 
-  segbot_gui::QuestionDialog req;
-
   req.request.type = type;
   req.request.message = message;
   req.request.options = options;
   req.request.timeout = timeOut;
 
+  client.waitForExistence();
   client.call ( req );
 
   done = true;
 
+}
+
+string CallGUI::getResponse() {
+  if ((done) && (req.response.index == segbot_gui::QuestionDialogRequest::TEXT_RESPONSE)) {
+    return req.response.text;
+  }
+  else {
+    return "";
+  }
+}
+
+int CallGUI::getResponseIndex() {
+  if (done) {
+    return req.response.index;
+  }
+  else {
+    return segbot_gui::QuestionDialogRequest::NO_RESPONSE;
+  }
 }
 
 actasp::Action *CallGUI::cloneAndInit(const actasp::AspFluent & fluent) const {

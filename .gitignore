@@ -52,3 +52,15 @@ coverage.xml
 # Sphinx documentation
 docs/_build/
 
+# log files for people detection
+*.pcd
+
+# bag files
+*.bag
+
+# dialog history
+bwi_rlg/agent/dialog/last_comm_time.txt
+bwi_rlg/agent/dialog/list_of_bad_data.txt
+bwi_rlg/agent/dialog/offline_data*
+bwi_rlg/agent/spf/geoquery/experiments/template/dialog_*
+bwi_rlg/agent/spf/geoquery/experiments/template/ID-*

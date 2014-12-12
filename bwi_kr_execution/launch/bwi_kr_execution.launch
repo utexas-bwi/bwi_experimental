@@ -4,6 +4,8 @@
  <arg name="domain" default="$(find bwi_kr_execution)/domain/" />
  <arg name="executor" default="learning_executor_node" />
  
+<!-- available executors: single_plan_executor_node   any_plan_executor_node   learning_executor_node -->
+ 
  <param name="/bwi_kr_execution/domain_directory" type="str" value="$(arg domain)" />
  
 <node name="bwi_kr" pkg="bwi_kr_execution" type="knowledge_reasoning_node">
