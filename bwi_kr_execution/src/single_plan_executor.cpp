@@ -51,11 +51,11 @@ struct PrintFluent {
 
 struct Observer : public ExecutionObserver, public PlanningObserver {
   
-  void actionStarted(const AspFluent& action) throw() {
+  void actionStarted(const AspFluent& action, const std::set<AspFluent>&) throw() {
     ROS_INFO_STREAM("Starting execution: " << action.toString());
   }
   
-  void actionTerminated(const AspFluent& action) throw() {
+  void actionTerminated(const AspFluent& action, bool) throw() {
     ROS_INFO_STREAM("Terminating execution: " << action.toString());
   }
   

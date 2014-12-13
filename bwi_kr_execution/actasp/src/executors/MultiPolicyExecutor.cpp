@@ -85,7 +85,7 @@ void MultiPolicyExecutor::executeActionStep() {
       const std::set<AspFluent>& currentState = kr->currentStateQuery(std::vector<actasp::AspRule>()).getFluents();
       for_each(executionObservers.begin(),
                executionObservers.end(),
-               NotifyActionStart(current->toFluent(actionCounter), currentState));
+               NotifyActionStart(active->toFluent(actionCounter), currentState));
       newAction = false;
     } 
 
@@ -96,7 +96,7 @@ void MultiPolicyExecutor::executeActionStep() {
 
     if (active != NULL) {
       for_each(executionObservers.begin(), executionObservers.end(),
-               NotifyActionTermination(current->toFluent(actionCounter++), current->hasFailed()));
+               NotifyActionTermination(active->toFluent(actionCounter++), active->hasFailed()));
     }
 
     isGoalReached = kr->currentStateQuery(goalRules).isSatisfied();

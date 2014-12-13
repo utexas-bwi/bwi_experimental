@@ -61,11 +61,14 @@ class ExponentialWeightedCostLearner : public CostLearner {
                                    float alpha = 0.5f) : 
         CostLearner(action_names_to_num_params_map), alpha(alpha) {}
 
-    bool addSample(const AspFluent& action, const std::set<AspFluent>& current_state, float cost) {
-      AspFluent action_no_timestamp(action.getName(), action.getParameters());
-      float orig_cost = (costs.find(action_no_timestamp) != costs.end()) ? costs[action_no_timestamp] : 1.f;
-      float new_cost = (1 - alpha) * orig_cost + alpha * cost;
-      costs[action_no_timestamp] = new_cost;
+    bool addSample(const AspFluent& action, 
+                   const std::set<AspFluent>& currentState, 
+                   bool failed,
+                   float cost) {
+      AspFluent actionNoTimestamp(action.getName(), action.getParameters());
+      float origCost = (costs.find(actionNoTimestamp) != costs.end()) ? costs[actionNoTimestamp] : 1.f;
+      float newCost = (1 - alpha) * origCost + alpha * cost;
+      costs[actionNoTimestamp] = newCost;
     }
 
     static std::map<std::string, int> getActionNamesToNumParamsMap() {
@@ -80,8 +83,9 @@ class ExponentialWeightedCostLearner : public CostLearner {
       return return_map;
     }
 
+    // TODO define this function.
     static std::vector<std::string> getCostParametersForAction(const AspFluent& action,
-                                                               const std::set<AspFluent>& current_state)
+                                                               const std::set<AspFluent>& currentState);
 
   private:
     float alpha;
@@ -121,14 +125,15 @@ class Observer : public ExecutionObserver, public PlanningObserver {
       updateCostsFile();
     }
     
-    void actionStarted(const AspFluent& action) throw() {
+    void actionStarted(const AspFluent& action, const std::set<AspFluent>& currentState) throw() {
       ROS_INFO_STREAM("Starting execution: " << action.toString());
       actionStartTime = ros::Time::now().toSec();
+      originalState = currentState;
     }
     
-    void actionTerminated(const AspFluent& action) throw() {
+    void actionTerminated(const AspFluent& action, bool failed) throw() {
       ROS_INFO_STREAM("Terminating execution: " << action.toString());
-      learner.addSample(action, ros::Time::now().toSec() - actionStartTime);
+      learner.addSample(action, originalState, failed, ros::Time::now().toSec() - actionStartTime);
     }
     
     void planExecutionFailed() throw() {
@@ -176,7 +181,9 @@ class Observer : public ExecutionObserver, public PlanningObserver {
     std::string domainDirectory;
     ExponentialWeightedCostLearner learner;
     int counter;
+    
     double actionStartTime;
+    std::set<AspFluent> origState;
 
 };
 

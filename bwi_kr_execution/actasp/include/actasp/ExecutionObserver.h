@@ -10,8 +10,8 @@ class AnswerSet;
 
 struct ExecutionObserver {
 
-  virtual void actionStarted(const AspFluent& action) throw() =0 ;
-  virtual void actionTerminated(const AspFluent& action) throw() =0;
+  virtual void actionStarted(const AspFluent& action, const std::set<AspFluent>& current_state) throw() =0 ;
+  virtual void actionTerminated(const AspFluent& action, bool failed) throw() =0;
 
   virtual void planExecutionFailed() throw() = 0;
   virtual void planExecutionSucceeded() throw() = 0;

@@ -153,7 +153,10 @@ namespace actasp {
         fout.close();
       }
 
-      virtual bool addSample(const AspFluent& action, float cost) = 0;
+      virtual bool addSample(const AspFluent& action, 
+                             const std::set<AspFluent>& currentState, 
+                             bool actionFailed, 
+                             float cost) = 0;
 
       virtual ~CostLearner() {}
 
