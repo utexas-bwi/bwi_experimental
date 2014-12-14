@@ -120,13 +120,28 @@ namespace actasp {
           }
 
           // Print the various parameter combinations recursively.
+          bool printDefault = true;
           if (var_combos.find(action_name) != var_combos.end()) {
             std::vector<std::string> empty_param_list(num_params);
             AspFluent empty_action(action_name, empty_param_list);
-            printRecursiveVarList(fout, var_combos[action_name], empty_action);
-          }
+            if (num_params != 0) {
+              printRecursiveVarList(fout, var_combos[action_name], empty_action);
+            } else {
+              // So we need to print the cost for a non-parametric action.
+              std::map<AspFluent, float>::const_iterator cost_it = costs.find(empty_action);
+              int value = (cost_it != costs.end()) ? round(cost_it->second) : 1;
+              fout << "\treturn " << value;
+              if (cost_it == costs.end()) {
+                fout << " -- default value.";
+              }
+              fout << std::endl;
+              printDefault = false;
+            }
+          } 
 
-          fout << "\treturn 1 -- return 1 for any action not seen previously." << std::endl;
+          if (printDefault) {
+            fout << "\treturn 1 -- return 1 for any action not seen previously." << std::endl;
+          }
           fout << "end" << std::endl << std::endl;
 
         }

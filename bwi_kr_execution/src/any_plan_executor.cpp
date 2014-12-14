@@ -65,14 +65,33 @@ class ExponentialWeightedCostLearner : public CostLearner {
                    const std::set<AspFluent>& currentState, 
                    bool failed,
                    float cost) {
-      AspFluent actionNoTimestamp(action.getName(), action.getParameters());
-      float origCost = (costs.find(actionNoTimestamp) != costs.end()) ? costs[actionNoTimestamp] : 1.f;
+
+      // Don't store samples for navigation actions that have failed.
+      if ((action.getName() == "approach" || action.getName() == "gothrough") && failed) {
+        return false;
+      }
+
+      std::vector<std::string> costParams = getCostParametersForAction(action, currentState);
+      AspFluent actionWithCostParams(action.getName(), costParams);
+
+      // Lookup old cost and balance old cost with the new cost here.
+      float origCost = (costs.find(actionWithCostParams) != costs.end()) ? costs[actionWithCostParams] : 1.f;
       float newCost = (1 - alpha) * origCost + alpha * cost;
-      costs[actionNoTimestamp] = newCost;
+      costs[actionWithCostParams] = newCost;
+
+      std::cout << "Adding sample for " << action.getName() << "(";
+      for (unsigned i = 0; i < costParams.size(); ++i) {
+        std::cout << costParams[i];
+        if (i != costParams.size() - 1) {
+          std::cout << ", ";
+        }
+      }
+      std::cout << ") - Old Cost = " << origCost << ", sample = " << cost << ", new cost = " << newCost << std::endl;
+
+      return true;
     }
 
     static std::map<std::string, int> getActionNamesToNumParamsMap() {
-      // TODO use the string from the action messages here.
       std::map<std::string, int> return_map;
       return_map["approach"] = 3;
       return_map["askperson"] = 1;
@@ -83,9 +102,56 @@ class ExponentialWeightedCostLearner : public CostLearner {
       return return_map;
     }
 
-    // TODO define this function.
     static std::vector<std::string> getCostParametersForAction(const AspFluent& action,
-                                                               const std::set<AspFluent>& currentState);
+                                                               const std::set<AspFluent>& currentState) {
+      std::vector<std::string> retVal;
+
+      if (action.getName() == "approach") {
+        retVal.push_back(action.getParameters()[0]); // The door name.
+        std::string besidesDoor = "none", startLoc;
+        int searchCounter = 2;
+        for (std::set<AspFluent>::const_iterator i = currentState.begin(); i != currentState.end(); ++i) {
+          if (i->getName() == "at") {
+            startLoc = i->getParameters()[0];
+            --searchCounter;
+          } else if (i->getName() == "beside") {
+            besidesDoor = i->getParameters()[0];
+            --searchCounter;
+          }
+          if (searchCounter == 0) {
+            break;
+          }
+        }
+        retVal.push_back(besidesDoor); // The door we're starting next to ("none" if not starting next to any door.)
+        retVal.push_back(startLoc); // The start location of a door.
+      } else if (action.getName() == "askperson" || action.getName() == "searchroom") {
+        // We only need the room where we are.
+        std::string loc;
+        for (std::set<AspFluent>::const_iterator i = currentState.begin(); i != currentState.end(); ++i) {
+          if (i->getName() == "at") {
+            loc = i->getParameters()[0];
+            break;
+          }
+        }
+        retVal.push_back(loc); // The room where we're asking the question.
+      } else if (action.getName() == "gothrough") {
+        retVal.push_back(action.getParameters()[0]); // The door we're trying to go through.
+      } else if (action.getName() == "opendoor") {
+        retVal.push_back(action.getParameters()[0]); // The door we're trying to open.
+        std::string loc;
+        for (std::set<AspFluent>::const_iterator i = currentState.begin(); i != currentState.end(); ++i) {
+          if (i->getName() == "at") {
+            loc = i->getParameters()[0];
+            break;
+          }
+        }
+        retVal.push_back(loc); // The side of the door from where we're trying to open it.
+      } else if (action.getName() == "remind") {
+        // Do Nothing.
+      }
+
+      return retVal;
+    }
 
   private:
     float alpha;
@@ -183,7 +249,7 @@ class Observer : public ExecutionObserver, public PlanningObserver {
     int counter;
     
     double actionStartTime;
-    std::set<AspFluent> origState;
+    std::set<AspFluent> originalState;
 
 };
 

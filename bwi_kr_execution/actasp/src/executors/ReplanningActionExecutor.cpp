@@ -93,7 +93,7 @@ void ReplanningActionExecutor::executeActionStep() {
   Action *current = plan.front();
 
   if(newAction) {
-      const std::set<AspFluent>& currentState = kr->currentStateQuery(std::vector<actasp::AspRule>()).getFluents();
+      const std::set<AspFluent> currentState = kr->currentStateQuery(std::vector<actasp::AspRule>()).getFluents();
       for_each(executionObservers.begin(),
                executionObservers.end(),
                NotifyActionStart(current->toFluent(actionCounter), currentState));

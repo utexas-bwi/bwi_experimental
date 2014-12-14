@@ -29,8 +29,8 @@ public:
   
   void episodeEnded();
   
-  void actionStarted(const actasp::AspFluent& action) throw();
-  void actionTerminated(const actasp::AspFluent& action) throw();
+  void actionStarted(const actasp::AspFluent& action, const std::set<actasp::AspFluent>& currentState) throw();
+  void actionTerminated(const actasp::AspFluent& action, bool failed) throw();
   void planExecutionFailed() throw();
   void planExecutionSucceeded() throw();
   

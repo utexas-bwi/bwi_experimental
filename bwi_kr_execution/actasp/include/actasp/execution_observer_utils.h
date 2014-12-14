@@ -22,8 +22,8 @@ struct NotifyActionTermination {
 
 struct NotifyActionStart {
   
-  NotifyActionStart(const AspFluent& action, const std::set<AspFluent>& startState) : 
-    action(action), startState(startState) {}
+  NotifyActionStart(const AspFluent& action, const std::set<AspFluent>& state) : 
+    action(action), startState(state) {}
   
   void operator()(ExecutionObserver *observer) {
     observer->actionStarted(action, startState);

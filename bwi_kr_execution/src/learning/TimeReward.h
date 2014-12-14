@@ -31,7 +31,7 @@ public:
     
   }
   
-  void actionStarted(const actasp::AspFluent& action) throw() {
+  void actionStarted(const actasp::AspFluent& action, const std::set<actasp::AspFluent>&) throw() {
     
     if( startingTimes.find(action) != startingTimes.end())
       startingTimes.erase(action);
@@ -40,7 +40,7 @@ public:
     
   }
   
-  void actionTerminated(const actasp::AspFluent& action) throw() {
+  void actionTerminated(const actasp::AspFluent& action, bool) throw() {
   }
 
   void planExecutionFailed() throw() {
