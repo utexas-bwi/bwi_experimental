@@ -79,14 +79,14 @@ class ExponentialWeightedCostLearner : public CostLearner {
       float newCost = (1 - alpha) * origCost + alpha * cost;
       costs[actionWithCostParams] = newCost;
 
-      std::cout << "Adding sample for " << action.getName() << "(";
-      for (unsigned i = 0; i < costParams.size(); ++i) {
-        std::cout << costParams[i];
-        if (i != costParams.size() - 1) {
-          std::cout << ", ";
-        }
-      }
-      std::cout << ") - Old Cost = " << origCost << ", sample = " << cost << ", new cost = " << newCost << std::endl;
+      // std::cout << "Adding sample for " << action.getName() << "(";
+      // for (unsigned i = 0; i < costParams.size(); ++i) {
+      //   std::cout << costParams[i];
+      //   if (i != costParams.size() - 1) {
+      //     std::cout << ", ";
+      //   }
+      // }
+      // std::cout << ") - Old Cost = " << origCost << ", sample = " << cost << ", new cost = " << newCost << std::endl;
 
       return true;
     }
