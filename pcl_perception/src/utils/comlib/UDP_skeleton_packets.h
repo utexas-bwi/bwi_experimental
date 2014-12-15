@@ -19,14 +19,22 @@ struct Body
     Joint5D joints[25];
 };
 
-struct Skeletons
+struct AudioKinectPacket {
+	float angle;
+	float confidence;
+};
+
+struct SkeletonKinectPacket
 {
-	double timestamp;
     Body bodies[6];
     int ids[6];
     int n_skels;
 };
 
-
+struct KinectPacket {
+	double timestamp;
+	SkeletonKinectPacket skeletonPacket;
+	AudioKinectPacket audioPacket;
+};
 
 #endif

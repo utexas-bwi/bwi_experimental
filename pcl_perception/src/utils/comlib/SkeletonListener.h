@@ -14,12 +14,14 @@ class SkeletonListener : public CallbackAble {
 		
 		void listen();
 		
-		struct Skeletons* getPacket();
+		struct KinectPacket* getPacket();
+		bool receivedNewPacket();
 	
 	private:
 		RecvChannel* rChannel;
-		struct Skeletons* latest_packet;
+		struct KinectPacket* latest_packet;
 		int count;
+		bool hasNewPacket;
 };
 
 #endif

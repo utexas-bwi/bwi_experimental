@@ -42,8 +42,6 @@ int main (int argc, char** argv)
 	ros::init (argc, argv, "skeleton_data_receiver");
 	ros::NodeHandle nh;
 	
-	printf("Size of double is %i, size of int is %i\n",sizeof(double),sizeof(int));
-	
 	//register ctrl-c
 	signal(SIGINT, sig_handler);
 
@@ -51,6 +49,8 @@ int main (int argc, char** argv)
 	SkeletonListener* SL = new SkeletonListener(10000);
 	
 	ros::Rate r(25);
+
+	struct KinectPacket *packet;
 
 	// Main loop:
 	while (/*!viewer.wasStopped()*/ !g_caught_sigint && ros::ok())
@@ -64,6 +64,17 @@ int main (int argc, char** argv)
 		//listen for packets
 		SL->listen();
 		
+		if (SL->receivedNewPacket()){
+			packet = SL->getPacket();
+			
+			if (packet->skeletonPacket.n_skels > 0){ //we have skeleton data
+				
+			}
+			
+			if (packet->audioPacket.confidence > 0.0){ //we have audio data
+				
+			}
+		}
 		
 		
 		r.sleep();
