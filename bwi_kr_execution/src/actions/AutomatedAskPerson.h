@@ -36,7 +36,7 @@ private:
  bool done;
  
  bool started;
- ros::Time starTime;
+ ros::Time startTime;
  
  static std::map<std::string, std::string> person_location_map;
  static bool person_location_available;

@@ -28,7 +28,7 @@ void AutomatedSearchRoom::run() {
   }
 
   if (!started) {
-    startTime = ros::time::now();
+    startTime = ros::Time::now();
     started = true;
   } else {
     if ((ros::Time::now() - startTime) > ros::Duration(15.0)) {

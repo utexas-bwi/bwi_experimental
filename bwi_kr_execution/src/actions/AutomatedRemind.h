@@ -34,7 +34,7 @@ private:
  bool done;
 
  bool started;
- ros::Time starTime;
+ ros::Time startTime;
  
 };
 

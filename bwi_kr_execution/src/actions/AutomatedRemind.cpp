@@ -2,8 +2,6 @@
 
 #include "ActionFactory.h"
 
-#include "CallGUI.h"
-
 #include "bwi_kr_execution/AspFluent.h"
 
 #include <bwi_kr_execution/UpdateFluents.h>
@@ -25,24 +23,24 @@ AutomatedRemind::AutomatedRemind() :
 void AutomatedRemind::run() {
 
   if (!started) {
-    startTime = ros::time::now();
+    startTime = ros::Time::now();
     started = true;
   } else {
     if ((ros::Time::now() - startTime) > ros::Duration(15.0)) {
-      bwi_kr_execution::UpdateFluents uf;
-      bwi_kr_execution::AspFluent fluent;
 
+      ros::NodeHandle n;
+      ros::ServiceClient krClient = n.serviceClient<bwi_kr_execution::UpdateFluents> ( "update_fluents" );
+      krClient.waitForExistence();
+
+      bwi_kr_execution::AspFluent fluent;
       fluent.timeStep = 0;
+      fluent.name = "inmeeting";
       fluent.variables.push_back(person_to_remind);
       fluent.variables.push_back(meeting);
 
-      fluent.name = "inmeeting";
-
+      bwi_kr_execution::UpdateFluents uf;
       uf.request.fluents.push_back(fluent);
       krClient.call(uf);
-
-      CallGUI thank("thank", CallGUI::DISPLAY,  "Thank you!");
-      thank.run();
 
       done = true;
     }
