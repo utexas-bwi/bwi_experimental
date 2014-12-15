@@ -5,19 +5,6 @@
 
 #include <fstream>
 #include <map>
-#include <yaml-cpp/yaml.h>
-
-#ifdef HAVE_NEW_YAMLCPP
-namespace YAML {
-  // The >> operator disappeared in yaml-cpp 0.5, so this function is
-  // added to provide support for code written under the yaml-cpp 0.3 API.
-  template<typename T>
-  void operator >> (const YAML::Node& node, T& i)
-  {
-    i = node.as<T>();
-  }
-}
-#endif
 
 namespace actasp {
 
@@ -31,25 +18,17 @@ namespace actasp {
       void initializeCostsFromValuesFile(const std::string& file) {
 
         std::ifstream fin(file.c_str());
-
-        YAML::Node doc;
-#ifdef HAVE_NEW_YAMLCPP
-        doc = YAML::Load(fin);
-#else
-        YAML::Parser parser(fin);
-        parser.GetNextDocument(doc);
-#endif
-
-        for (size_t action_idx = 0; action_idx < doc.size(); ++action_idx) {
+        std::string line;
+        while (std::getline(fin, line))
+        {
+          std::istringstream iss(line);
           std::string name;
-          std::vector<std::string> vars;
           float cost;
-          doc[action_idx]["name"] >> name;
-          doc[action_idx]["cost"] >> cost;
-          const YAML::Node &vars_node = doc[action_idx]["vars"];
-          for (size_t var_idx = 0; var_idx < vars_node.size(); ++var_idx) {
-            std::string var;
-            vars_node[var_idx] >> var;
+          iss >> name;
+          iss >> cost;
+          std::vector<std::string> vars;
+          std::string var;
+          while (iss >> var) {
             vars.push_back(var);
           }
           AspFluent fluent(name, vars);
@@ -153,17 +132,16 @@ namespace actasp {
       void writeValuesFile(const std::string& file) const {
         std::ofstream fout(file.c_str());
         for (std::map<AspFluent, float>::const_iterator it = costs.begin(); it != costs.end(); ++it) {
-          fout << " - name: " << it->first.getName() << std::endl;
-          fout << "   cost: " << it->second << std::endl;
-          fout << "   vars: [";
+          fout << it->first.getName() << " ";
+          fout << it->second << " ";
           std::vector<std::string> params = it->first.getParameters();
           for (int param_idx = 0; param_idx < params.size(); ++param_idx) {
             fout << params[param_idx];
             if (param_idx != params.size() - 1) {
-              fout << ", ";
+              fout << " ";
             }
           }
-          fout << "]" << std::endl;
+          fout << std::endl;
         }
         fout.close();
       }

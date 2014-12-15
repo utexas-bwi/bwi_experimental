@@ -166,13 +166,13 @@ class Observer : public ExecutionObserver, public PlanningObserver {
         domainDirectory(domainDirectory), 
         learner(ExponentialWeightedCostLearner::getActionNamesToNumParamsMap()) {
 
-      // Check if the symbolic link for the yaml file exists and can be resolved.
-      std::string yaml_costs_file = domainDirectory + "costs.yaml";
-      if (file_exists(yaml_costs_file)) {
-        learner.initializeCostsFromValuesFile(yaml_costs_file);
+      // Check if the symbolic link for the values file exists and can be resolved.
+      std::string txt_costs_file = domainDirectory + "costs.txt";
+      if (file_exists(txt_costs_file)) {
+        learner.initializeCostsFromValuesFile(txt_costs_file);
         // Resolve link.
         char resolved_link[512];
-        int count = readlink(yaml_costs_file.c_str(), resolved_link, sizeof(resolved_link));
+        int count = readlink(txt_costs_file.c_str(), resolved_link, sizeof(resolved_link));
         if (count >= 0) {
           resolved_link[count] = '\0';
         }
@@ -226,15 +226,15 @@ class Observer : public ExecutionObserver, public PlanningObserver {
 
     void updateCostsFile() {
       if (counter == 0) {
-        mkdir((domainDirectory + "yaml_costs/").c_str(), 0755);
+        mkdir((domainDirectory + "txt_costs/").c_str(), 0755);
       }
-      std::stringstream current_yaml_file_ss;
-      current_yaml_file_ss << domainDirectory << "yaml_costs/costs.yaml." << counter;
-      std::string current_yaml_file = current_yaml_file_ss.str();
-      learner.writeValuesFile(current_yaml_file);
-      std::string yaml_symlink_file = domainDirectory + "costs.yaml";
-      unlink(yaml_symlink_file.c_str());
-      int retno = symlink(current_yaml_file.c_str(), yaml_symlink_file.c_str());
+      std::stringstream current_txt_file_ss;
+      current_txt_file_ss << domainDirectory << "txt_costs/costs.txt." << counter;
+      std::string current_txt_file = current_txt_file_ss.str();
+      learner.writeValuesFile(current_txt_file);
+      std::string txt_symlink_file = domainDirectory + "costs.txt";
+      unlink(txt_symlink_file.c_str());
+      int retno = symlink(current_txt_file.c_str(), txt_symlink_file.c_str());
       learner.writeLuaFile(domainDirectory + "costlua.asp");
     }
 
