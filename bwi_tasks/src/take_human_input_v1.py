@@ -6,6 +6,7 @@ import rospy
 import roslib; roslib.load_manifest('bwi_tasks')
 
 import actionlib
+import actionlib_msgs.msg
 from bwi_kr_execution.msg import *
 import segbot_gui.srv
 import bwi_rlg.srv
@@ -42,7 +43,7 @@ door_list = ['d3_502', 'd3_504', 'd3_508', 'd3_510', 'd3_512', 'd3_516',
              'd3_422', 'd3_430', 'd3_432', 'd3_414a1', 'd3_414a2', 'd3_414b1',
              'd3_414b2']
 
-resting_time = 300
+resting_time = 120
 cnt = 0
 last_loc = ''
 
@@ -351,8 +352,22 @@ def platform_thread(human_waiting, curr_goal):
             
             rospy.loginfo("sending goal: " + loc)
             client.send_goal(goal)
-    
-            client.wait_for_result()
+            
+            while client.wait_for_result(
+                    timeout = rospy.Duration.from_sec(1.0)) == False:
+                if human_waiting.value:
+                    break
+
+            client.cancel_goal()
+
+            move_base_pub = rospy.Publisher('move_base/cancel',\
+                                            actionlib_msgs.msg.GoalID)
+
+            # for unknown reasons, we have to publish the message at least twice
+            # to make it work
+            for i in range(5):
+                move_base_pub.publish(rospy.Time.now(), '')
+                rospy.sleep(0.2)
 
     return 1
 

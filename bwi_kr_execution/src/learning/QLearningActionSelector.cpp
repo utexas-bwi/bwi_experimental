@@ -123,15 +123,21 @@ actasp::ActionSet::const_iterator QLearningActionSelector::choose(const actasp::
 
 }
 
-void QLearningActionSelector::actionStarted(const AspFluent&) throw() {
-
+void QLearningActionSelector::actionStarted(const AspFluent&, const std::set<AspFluent>& currentState) throw() {
+  // TODO now that we're passing in the current state, we should just reuse that instead of calling the reasoner here.
   initial = reasoner->currentStateQuery(vector<AspRule>()).getFluents();
 }
 
 
-void QLearningActionSelector::actionTerminated(const AspFluent& action) throw() {
+void QLearningActionSelector::actionTerminated(const AspFluent& action, bool) throw() {
   final = reasoner->currentStateQuery(vector<AspRule>()).getFluents();
   previousAction = action;
+}
+
+void QLearningActionSelector::planExecutionFailed() throw() {
+}
+
+void QLearningActionSelector::planExecutionSucceeded() throw() {
 }
 
 void QLearningActionSelector::episodeEnded() {
