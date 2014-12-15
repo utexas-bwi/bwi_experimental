@@ -14,7 +14,7 @@
 
  <node name="action_executor" pkg="bwi_kr_execution" type="$(arg executor)">
    <param name="simulation" type="bool" value="$(arg simulation)" />
-   <param name="person_location_map_file" type="string" value="$(arg domain)/person_locations.txt" />
+   <param name="automated_person_location_file" type="string" value="$(arg domain)/person_locations.txt" />
  </node>
 
 </launch>

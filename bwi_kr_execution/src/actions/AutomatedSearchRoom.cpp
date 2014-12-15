@@ -69,6 +69,6 @@ std::vector<std::string> AutomatedSearchRoom::getParameters() const {
 }
 
 
-ActionFactory AutomatedSearchRoomFactory(new AutomatedSearchRoom(), true);
+ActionFactory automatedSearchRoomFactory(new AutomatedSearchRoom(), true);
   
 }

@@ -64,6 +64,6 @@ std::vector<std::string> AutomatedRemind::getParameters() const {
 }
 
 
-ActionFactory AutomatedRemindFactory(new AutomatedRemind(), true);
+ActionFactory automatedRemindFactory(new AutomatedRemind(), true);
   
 }

@@ -52,7 +52,7 @@ function approach_cost(v0, v1, v2)
 				return 1 -- combo not sampled.
 			end
 			if s2 == "l3_414b" then
-				return 6
+				return 8
 			end
 			if s2 == "l3_418" then
 				return 1 -- combo not sampled.
@@ -240,7 +240,7 @@ function searchroom_cost(v0)
 		return 21
 	end
 	if s0 == "l3_414b" then
-		return 20
+		return 16
 	end
 	return 1 -- return 1 for any action not seen previously.
 end

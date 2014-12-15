@@ -73,6 +73,6 @@ std::vector<std::string> AutomatedAskPerson::getParameters() const {
 }
 
 
-ActionFactory AutomatedAskPersonFactory(new AutomatedAskPerson(), true);
+ActionFactory automatedAskPersonFactory(new AutomatedAskPerson(), true);
   
 }

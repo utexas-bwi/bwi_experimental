@@ -12,18 +12,27 @@ namespace bwi_krexec {
     // Get the file from the ros parameter.
     ros::NodeHandle private_nh("~");
     std::string automated_person_locations_file;
-    private_nh.getParam("automated_person_locations_file", automated_person_locations_file);
+    private_nh.getParam("automated_person_location_file", automated_person_locations_file);
 
     // Read in the person and their locations.
     std::ifstream fin(automated_person_locations_file.c_str());
-    std::string person, location;
-    fin >> person;
-    fin >> location;
-    while (!fin.eof()) {
-      person_location_map[person] = location;
-      fin >> person;
-      fin >> location;
+    if (!fin) {
+      // File was not opened correctly.
+      ROS_ERROR_STREAM("Unable to read automated person location file: " << automated_person_locations_file);
+      return;
     }
+    
+    std::string person, location;
+    while (!fin.eof()) {
+      fin >> person;
+      if (fin.eof()) {
+        break;
+      }
+      fin >> location;
+      person_location_map[person] = location;
+    }
+
+    fin.close();
 
   }
 
