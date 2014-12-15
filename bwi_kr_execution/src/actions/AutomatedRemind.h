@@ -1,19 +1,16 @@
-#ifndef bwi_krexec_Remind_h__guard
-#define bwi_krexec_Remind_h__guard
+#ifndef bwi_krexec_AutomatedRemind_h__guard
+#define bwi_krexec_AutomatedRemind_h__guard
 
 #include "actasp/Action.h"
 
 #include <ros/ros.h>
-
-#include <sound_play/SoundRequest.h>
-
 #include <string>
 
 namespace bwi_krexec {
 
-class Remind : public actasp::Action{
+class AutomatedRemind : public actasp::Action{
 public:
-  Remind();
+  AutomatedRemind();
 
   int paramNumber() const {return 3;}
   
@@ -25,7 +22,7 @@ public:
   
   actasp::Action *cloneAndInit(const actasp::AspFluent & fluent) const;
   
-  virtual actasp::Action *clone() const {return new Remind(*this);}
+  virtual actasp::Action *clone() const {return new AutomatedRemind(*this);}
   
 private:
   
@@ -33,9 +30,11 @@ private:
  std::string person_to_remind;
  std::string meeting;
  std::string room;
- static ros::Publisher remind_pub;
- static bool pub_set;
+
  bool done;
+
+ bool started;
+ ros::Time starTime;
  
 };
 

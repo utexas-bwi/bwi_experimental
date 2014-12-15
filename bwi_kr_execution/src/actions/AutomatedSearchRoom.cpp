@@ -1,17 +1,11 @@
 #include "AutomatedSearchRoom.h"
-
 #include "ActionFactory.h"
-
 #include "AutomatedPersonLocation.h"
 
 #include "bwi_kr_execution/AspFluent.h"
-
-#include "bwi_kr_execution/CurrentStateQuery.h"
 #include <bwi_kr_execution/UpdateFluents.h>
 
 #include <ros/ros.h>
-#include <sound_play/sound_play.h>
-
 #include <string>
 #include <iostream>
 
@@ -20,13 +14,11 @@ using namespace std;
 namespace bwi_krexec {
 
 AutomatedSearchRoom::AutomatedSearchRoom() : 
-            person(),
-            room(),
             done(false),
             started(false) {}
 
-std::map<std::string, std::stringros::Publisher SearchRoom::ask_pub;
-bool SearchRoom::pub_set(false);
+std::map<std::string, std::string> AutomatedSearchRoom::person_location_map;
+bool AutomatedSearchRoom::person_location_available(false);
   
 void AutomatedSearchRoom::run() {
 
@@ -41,6 +33,7 @@ void AutomatedSearchRoom::run() {
   } else {
     if ((ros::Time::now() - startTime) > ros::Duration(15.0)) {
 
+      ros::NodeHandle n;
       ros::ServiceClient krClient = n.serviceClient<bwi_kr_execution::UpdateFluents> ( "update_fluents" );
       krClient.waitForExistence();
 
@@ -76,6 +69,6 @@ std::vector<std::string> AutomatedSearchRoom::getParameters() const {
 }
 
 
-ActionFactory AutomatedSearchRoomFactory(new AutomatedSearchRoom());
+ActionFactory AutomatedSearchRoomFactory(new AutomatedSearchRoom(), true);
   
 }
