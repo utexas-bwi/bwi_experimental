@@ -30,6 +30,7 @@ namespace bwi_krexec {
       }
       fin >> location;
       person_location_map[person] = location;
+      ROS_INFO_STREAM("AutomatedPersonLocation: " << person << " is in " << location);
     }
 
     fin.close();

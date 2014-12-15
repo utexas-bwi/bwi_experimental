@@ -39,7 +39,6 @@ void AutomatedAskPerson::run() {
       ros::ServiceClient krClient = n.serviceClient<bwi_kr_execution::UpdateFluents> ( "update_fluents" );
       krClient.waitForExistence();
 
-
       bwi_kr_execution::AspFluent fluent;
       fluent.timeStep = 0;
       fluent.name = "inroom";

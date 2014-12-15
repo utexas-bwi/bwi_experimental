@@ -44,7 +44,7 @@ void AutomatedSearchRoom::run() {
       fluent.variables.push_back(room);
 
       bool response = (person_location_map[person] == room);
-      fluent.name = ((response == 0) ? "inroom" : "-inroom");
+      fluent.name = (response) ? "inroom" : "-inroom";
 
       uf.request.fluents.push_back(fluent);
       krClient.call(uf);

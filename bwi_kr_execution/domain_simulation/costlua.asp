@@ -240,7 +240,7 @@ function searchroom_cost(v0)
 		return 21
 	end
 	if s0 == "l3_414b" then
-		return 16
+		return 15
 	end
 	return 1 -- return 1 for any action not seen previously.
 end
