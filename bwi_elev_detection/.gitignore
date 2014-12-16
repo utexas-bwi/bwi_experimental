@@ -1,0 +1,42 @@
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+build/*
+Project
+CMakeFiles/*
+src/CMakeFiles/*
+src/audio_sandbox/CMakeFiles/*
+src/audio_sandbox/Makefile
+**.cmake
+CMakeCache.txt
+Makefile
+src/Makefile
+
+#Audacity files
+audacity/

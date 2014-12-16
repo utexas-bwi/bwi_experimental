@@ -1,0 +1,4 @@
+<launch>
+	<include file="$(find elevators)/launch/fft_launch.launch"/>
+	<include file="$(find segbot_sensors)/launch/ptgrey/usbcam.launch"/>
+</launch>
