@@ -75,6 +75,8 @@ namespace bwi_interruptable_action_server {
 
       boost::recursive_mutex lock_;
 
+      std::string interruptable_server_name_;
+
       GoalHandle current_goal_, original_goal_, next_goal_;
 
       bool original_goal_available_;

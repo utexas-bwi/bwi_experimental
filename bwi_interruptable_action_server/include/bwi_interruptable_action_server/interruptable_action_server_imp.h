@@ -46,20 +46,20 @@ namespace bwi_interruptable_action_server {
       pursue_current_goal_(false),
       pursuing_current_goal_(false) {
 
-    std::string interruptable_server_name = name + "_interruptable";
+    interruptable_server_name_ = name + "_interruptable";
 
     // create the action server.
     as_.reset(new actionlib::ActionServer<ActionSpec>(n_, 
-                                                      interruptable_server_name,
+                                                      interruptable_server_name_,
                                                       boost::bind(&InterruptableActionServer::goalCallback, this, _1),
                                                       boost::bind(&InterruptableActionServer::cancelCallback, this, _1),
                                                       false));
 
     // create the pause and resume services.
-    pause_server_ = n_.advertiseService(interruptable_server_name + "/pause", 
+    pause_server_ = n_.advertiseService(interruptable_server_name_ + "/pause", 
                                         &InterruptableActionServer::pause, 
                                         this);
-    resume_server_ = n_.advertiseService(interruptable_server_name + "/resume", 
+    resume_server_ = n_.advertiseService(interruptable_server_name_ + "/resume", 
                                          &InterruptableActionServer::resume, 
                                          this);
 
@@ -87,10 +87,10 @@ namespace bwi_interruptable_action_server {
     boost::recursive_mutex::scoped_lock lock(lock_);
     bool ret_val = true;
     if (original_goal_available_) {
-      ROS_ERROR_STREAM("InterruptableActionServer : Already paused one goal, cannot pause another.");
+      ROS_ERROR_STREAM(interruptable_server_name_ + " : Already paused one goal, cannot pause another.");
       ret_val = false;
     } else if (!pursue_current_goal_) {
-      ROS_ERROR_STREAM("InterruptableActionServer : Not currently actively pursuing a goal, cannot pause.");
+      ROS_ERROR_STREAM(interruptable_server_name_ + " : Not currently actively pursuing a goal, cannot pause.");
       ret_val = false;
     } else {
       pursue_current_goal_ = false;
@@ -105,7 +105,7 @@ namespace bwi_interruptable_action_server {
     boost::recursive_mutex::scoped_lock lock(lock_);
     bool ret_val = true;
     if (!original_goal_available_) {
-      ROS_ERROR_STREAM("InterruptableActionServer : No paused goal available, cannot resume goal.");
+      ROS_ERROR_STREAM(interruptable_server_name_ + " : No paused goal available, cannot resume goal.");
       ret_val = false;
     } else {
       // Restart the current goal again.
@@ -116,18 +116,20 @@ namespace bwi_interruptable_action_server {
   template <class ActionSpec>
   void InterruptableActionServer<ActionSpec>::goalCallback(GoalHandle goal) {
     boost::recursive_mutex::scoped_lock lock(lock_);
-    //check that the timestamp is past or equal to that of the current goal and the next goal
-    if((!current_goal_.getGoal() || goal.getGoalID().stamp >= current_goal_.getGoalID().stamp)
+    // check that the timestamp is past or equal to that of the current goal and the next goal
+    if ((!current_goal_.getGoal() || goal.getGoalID().stamp >= current_goal_.getGoalID().stamp)
         && (!next_goal_.getGoal() || goal.getGoalID().stamp >= next_goal_.getGoalID().stamp)) {
 
       //if next_goal has not been accepted already... its going to get bumped, but we need to let the client know we're preempting
-      if(next_goal_.getGoal() && (!current_goal_.getGoal() || next_goal_ != current_goal_)) {
+      if (next_goal_available_) {
         next_goal_.setCanceled(Result(), "This goal was canceled because another goal was recieved by the simple action server");
+        next_goal_available_ = false;
       }
 
       next_goal_ = goal;
       next_goal_available_ = true; 
       
+      ROS_INFO_STREAM(interruptable_server_name
     } else {
       goal.setCanceled(Result(), "This goal was canceled because another goal was recieved by the simple action server");
     }
@@ -140,10 +142,11 @@ namespace bwi_interruptable_action_server {
     if (goal == current_goal_) {
       pursue_current_goal_ = false;
     } else if (goal == next_goal_) {
-      next_goal_.setCanceled();
+      next_goal_.setCanceled(Result());
       next_goal_available_ = false;
     } else if (goal == original_goal_ && original_goal_available_) {
       // Don't pursue the original goal again.
+      original_goal_.setCanceled(Result());
       original_goal_available_ = false;
     }
   }
@@ -158,13 +161,13 @@ namespace bwi_interruptable_action_server {
 
       // Switch to original goal if resume was called.
       if (switch_to_original_goal_) {
-        if (pursue_current_goal_) {
-          current_goal_.setCanceled();
+        if (pursuing_current_goal_) {
+          current_goal_.setCanceled(Result(), "This goal was preempted as a paused goal was resumed.");
           pursuing_current_goal_ = false;
         }
         if (next_goal_available_) {
           next_goal_available_ = false;
-          next_goal_.setCanceled();
+          next_goal_.setCanceled(Result(), "This goal was preempted as a paused goal was resumed.");
         }
         current_goal_ = original_goal_;
         original_goal_available_ = false;
@@ -174,11 +177,13 @@ namespace bwi_interruptable_action_server {
       
       // Switch to a new goal if a new goal is available.
       if (next_goal_available_) {
-        if (pursue_current_goal_) {
-          current_goal_.setCanceled();
+        if (pursuing_current_goal_) {
+          current_goal_.setCanceled(Result(), "This goal was preempted by a new goal");
           pursuing_current_goal_ = false;
         }
         current_goal_ = next_goal_;
+        current_goal_.setAccepted();
+        pursue_current_goal_ = true;
         next_goal_available_ = false;
       } 
       
@@ -189,9 +194,9 @@ namespace bwi_interruptable_action_server {
                       typename actionlib::SimpleActionClient<ActionSpec>::SimpleDoneCallback(),
                       typename actionlib::SimpleActionClient<ActionSpec>::SimpleActiveCallback(),
                       boost::bind(&InterruptableActionServer::publishFeedback, this, _1));
-        pursue_current_goal_ = true;
+        pursuing_current_goal_ = true;
       } else if (pursuing_current_goal_ && !pursue_current_goal_) {
-        // We were pursuing the current goal, but we shouldn't any more.
+        // We were pursuing a goal that we do not need to pursue any more.
         ac_->cancelGoal();
         pursuing_current_goal_ = false;
       } else if (pursuing_current_goal_ && pursue_current_goal_) {
@@ -210,6 +215,10 @@ namespace bwi_interruptable_action_server {
           } else {
             current_goal_.setCanceled(*result);
           }
+
+          // Since the goal got completed, we no longer wish to pursue this goal.
+          pursuing_current_goal_ = false;
+          pursue_current_goal_ = false;
         }
       }
       r.sleep();
