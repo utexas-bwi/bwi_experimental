@@ -38,19 +38,23 @@
 #include <boost/thread/condition.hpp>
 #include <ros/ros.h>
 #include <actionlib/server/action_server.h>
+#include <actionlib/client/simple_action_client.h>
 #include <actionlib/action_definition.h>
+#include <std_srvs/Empty.h>
 
-namespace actionlib {
+namespace bwi_interruptable_action_server {
   template <class ActionSpec>
   class InterruptableActionServer {
     public:
-      typedef typename ActionServer<ActionSpec>::GoalHandle GoalHandle;
 
+      ACTION_DEFINITION(ActionSpec);
+
+      typedef typename actionlib::ActionServer<ActionSpec>::GoalHandle GoalHandle;
+      
       InterruptableActionServer(ros::NodeHandle n, std::string name);
-
       ~InterruptableActionServer();
 
-      void start();
+      void spin();
 
     private:
 
@@ -59,17 +63,28 @@ namespace actionlib {
       void goalCallback(GoalHandle goal);
       void cancelCallback(GoalHandle preempt);
 
+      void publishFeedback(const FeedbackConstPtr& feedback);
+
       ros::NodeHandle n_;
 
       ros::ServiceServer pause_server_;
       ros::ServiceServer resume_server_;
 
-      boost::shared_ptr<ActionServer<ActionSpec> > as_;
-      boost::shared_ptr<SimpleActionClient<ActionSpec> > ac_;
+      boost::shared_ptr<actionlib::ActionServer<ActionSpec> > as_;
+      boost::shared_ptr<actionlib::SimpleActionClient<ActionSpec> > ac_;
 
+      boost::recursive_mutex lock_;
+
+      GoalHandle current_goal_, original_goal_, next_goal_;
+
+      bool original_goal_available_;
+      bool switch_to_original_goal_;
+      bool next_goal_available_;
+      bool pursue_current_goal_;
+      bool pursuing_current_goal_;
   };
 };
 
 //include the implementation here
-#include <actionlib/server/interruptable_action_server_imp.h>
+#include <bwi_interruptable_action_server/interruptable_action_server_imp.h>
 #endif
