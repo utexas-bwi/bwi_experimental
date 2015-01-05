@@ -75,327 +75,124 @@
 namespace actionlib {
 
   template <class ActionSpec>
-  InterruptableActionServer<ActionSpec>::InterruptableActionServer(std::string name, ExecuteCallback execute_callback, bool auto_start)
-    : new_goal_(false), preempt_request_(false), new_goal_preempt_request_(false), execute_callback_(execute_callback), need_to_terminate_(false) {
+  InterruptableActionServer<ActionSpec>::InterruptableActionServer(ros::NodeHandle n, std::string name) : n_(n) {
 
-    if (execute_callback_ != NULL)
-    {
-      execute_thread_ = new boost::thread(boost::bind(&InterruptableActionServer::executeLoop, this));
-    }
+    std::string interruptable_server_name = name + "_interruptable"
 
-    //create the action server
-    as_ = boost::shared_ptr<ActionServer<ActionSpec> >(new ActionServer<ActionSpec>(n_, name,
+    // create the action server.
+    as_ = boost::shared_ptr<ActionServer<ActionSpec> >(new ActionServer<ActionSpec>(n_, interruptable_server_name,
           boost::bind(&InterruptableActionServer::goalCallback, this, _1),
-          boost::bind(&InterruptableActionServer::preemptCallback, this, _1),
-          auto_start));
+          boost::bind(&InterruptableActionServer::cancelCallback, this, _1),
+          false));
 
+    // create the pause and resume services.
+    pause_server_ = n_.advertiseService(interruptable_server_name + "/pause", &InterruptableActionServer::pause, this);
+    resume_server_ = n_.advertiseService(interruptable_server_name + "/resume", &InterruptableActionServer::resume, this);
+
+    // Create the lower level simple action client to the uninterruptable action server.
+    ac_ = boost::shared_ptr<actionlib::SimpleActionClient<ActionSpec> >(new actionlib::SimpleActionClient<ActionSpec>(name, true));
   }
 
   template <class ActionSpec>
-  InterruptableActionServer<ActionSpec>::InterruptableActionServer(std::string name, bool auto_start)
-    : new_goal_(false), preempt_request_(false), new_goal_preempt_request_(false), execute_callback_(NULL), need_to_terminate_(false) {
-
-    //create the action server
-    as_ = boost::shared_ptr<ActionServer<ActionSpec> >(new ActionServer<ActionSpec>(n_, name,
-          boost::bind(&InterruptableActionServer::goalCallback, this, _1),
-          boost::bind(&InterruptableActionServer::preemptCallback, this, _1),
-          auto_start));
-
-    if (execute_callback_ != NULL)
-    {
-      execute_thread_ = new boost::thread(boost::bind(&InterruptableActionServer::executeLoop, this));
-    }
-  }
-
-  template <class ActionSpec>
-  InterruptableActionServer<ActionSpec>::InterruptableActionServer(std::string name, ExecuteCallback execute_callback)
-    : new_goal_(false), preempt_request_(false), new_goal_preempt_request_(false), execute_callback_(execute_callback), need_to_terminate_(false) {
-
-    //create the action server
-    as_ = boost::shared_ptr<ActionServer<ActionSpec> >(new ActionServer<ActionSpec>(n_, name,
-          boost::bind(&InterruptableActionServer::goalCallback, this, _1),
-          boost::bind(&InterruptableActionServer::preemptCallback, this, _1),
-          true));
-
-    if (execute_callback_ != NULL)
-    {
-      execute_thread_ = new boost::thread(boost::bind(&InterruptableActionServer::executeLoop, this));
-    }
-  }
-
-
-  template <class ActionSpec>
-  InterruptableActionServer<ActionSpec>::InterruptableActionServer(ros::NodeHandle n, std::string name, ExecuteCallback execute_callback, bool auto_start)
-    : n_(n), new_goal_(false), preempt_request_(false), new_goal_preempt_request_(false), execute_callback_(execute_callback), need_to_terminate_(false) {
-
-    //create the action server
-    as_ = boost::shared_ptr<ActionServer<ActionSpec> >(new ActionServer<ActionSpec>(n, name,
-          boost::bind(&InterruptableActionServer::goalCallback, this, _1),
-          boost::bind(&InterruptableActionServer::preemptCallback, this, _1),
-          auto_start));
-
-    if (execute_callback_ != NULL)
-    {
-      execute_thread_ = new boost::thread(boost::bind(&InterruptableActionServer::executeLoop, this));
-    }
-  }
-
-  template <class ActionSpec>
-  InterruptableActionServer<ActionSpec>::InterruptableActionServer(ros::NodeHandle n, std::string name, bool auto_start)
-    : n_(n), new_goal_(false), preempt_request_(false), new_goal_preempt_request_(false), execute_callback_(NULL), need_to_terminate_(false) {
-
-    //create the action server
-    as_ = boost::shared_ptr<ActionServer<ActionSpec> >(new ActionServer<ActionSpec>(n, name,
-          boost::bind(&InterruptableActionServer::goalCallback, this, _1),
-          boost::bind(&InterruptableActionServer::preemptCallback, this, _1),
-          auto_start));
-
-    if (execute_callback_ != NULL)
-    {
-      execute_thread_ = new boost::thread(boost::bind(&InterruptableActionServer::executeLoop, this));
-    }
-  }
-
-  template <class ActionSpec>
-  InterruptableActionServer<ActionSpec>::InterruptableActionServer(ros::NodeHandle n, std::string name, ExecuteCallback execute_callback)
-    : n_(n), new_goal_(false), preempt_request_(false), new_goal_preempt_request_(false), execute_callback_(execute_callback), need_to_terminate_(false) {
-
-    //create the action server
-    as_ = boost::shared_ptr<ActionServer<ActionSpec> >(new ActionServer<ActionSpec>(n, name,
-          boost::bind(&InterruptableActionServer::goalCallback, this, _1),
-          boost::bind(&InterruptableActionServer::preemptCallback, this, _1),
-          true));
-
-    if (execute_callback_ != NULL)
-    {
-      execute_thread_ = new boost::thread(boost::bind(&InterruptableActionServer::executeLoop, this));
-    }
-  }
-
-  template <class ActionSpec>
-  InterruptableActionServer<ActionSpec>::~InterruptableActionServer()
-  {
-    if(execute_thread_)
-      shutdown();
-  }
-
-  template <class ActionSpec>
-  void InterruptableActionServer<ActionSpec>::shutdown()
-  {
-    if (execute_callback_)
-    {
-      {
-        boost::mutex::scoped_lock terminate_lock(terminate_mutex_);
-        need_to_terminate_ = true;
-      }
-
-      assert(execute_thread_);
-      execute_thread_->join();
-      delete execute_thread_;
-      execute_thread_ = NULL;
-    }
-  }
-
-  template <class ActionSpec>
-  boost::shared_ptr<const typename InterruptableActionServer<ActionSpec>::Goal> InterruptableActionServer<ActionSpec>::acceptNewGoal(){
+  bool InterruptableActionServer<ActionSpec>::pause() {
     boost::recursive_mutex::scoped_lock lock(lock_);
-
-    if(!new_goal_ || !next_goal_.getGoal()){
-      ROS_ERROR_NAMED("actionlib", "Attempting to accept the next goal when a new goal is not available");
-      return boost::shared_ptr<const Goal>();
+    bool ret_val = true;
+    if (original_goal_available_) {
+      ROS_ERROR_STREAM("InterruptableActionServer : Already paused one goal, cannot pause another.");
+      ret_val = false;
+    } else if (!pursue_current_goal_) {
+      ROS_ERROR_STREAM("InterruptableActionServer : Not currently actively pursuing a goal, cannot pause.");
+      ret_val = false;
+    } else {
+      pursue_current_goal_ = false;
+      original_goal_ = current_goal_;
+      original_goal_available_ = true;
     }
+    return ret_val;
+  }
 
-    //check if we need to send a preempted message for the goal that we're currently pursuing
-    if(isActive()
-        && current_goal_.getGoal()
-        && current_goal_ != next_goal_){
-      current_goal_.setCanceled(Result(), "This goal was canceled because another goal was recieved by the simple action server");
+  template <class ActionSpec>
+  bool InterruptableActionServer<ActionSpec>::resume() {
+    boost::recursive_mutex::scoped_lock lock(lock_);
+    bool ret_val = true;
+    if (!original_goal_available_) {
+      ROS_ERROR_STREAM("InterruptableActionServer : No paused goal available, cannot resume goal.");
+      ret_val = false;
+    } else {
+      // Restart the current goal again.
+      switch_to_original_goal_ = true;
     }
-
-    ROS_DEBUG_NAMED("actionlib", "Accepting a new goal");
-
-    //accept the next goal
-    current_goal_ = next_goal_;
-    new_goal_ = false;
-
-    //set preempt to request to equal the preempt state of the new goal
-    preempt_request_ = new_goal_preempt_request_;
-    new_goal_preempt_request_ = false;
-
-    //set the status of the current goal to be active
-    current_goal_.setAccepted("This goal has been accepted by the simple action server");
-
-    return current_goal_.getGoal();
+    paused_ = false;
   }
 
   template <class ActionSpec>
-  bool InterruptableActionServer<ActionSpec>::isNewGoalAvailable(){
-    return new_goal_;
-  }
-
-
-  template <class ActionSpec>
-  bool InterruptableActionServer<ActionSpec>::isPreemptRequested(){
-    return preempt_request_;
-  }
-
-  template <class ActionSpec>
-  bool InterruptableActionServer<ActionSpec>::isActive(){
-    if(!current_goal_.getGoal())
-      return false;
-    unsigned int status = current_goal_.getGoalStatus().status;
-    return status == actionlib_msgs::GoalStatus::ACTIVE || status == actionlib_msgs::GoalStatus::PREEMPTING;
-  }
-
-  template <class ActionSpec>
-  void InterruptableActionServer<ActionSpec>::setSucceeded(const Result& result, const std::string& text){
+  void InterruptableActionServer<ActionSpec>::goalCallback(GoalHandle goal) {
     boost::recursive_mutex::scoped_lock lock(lock_);
-    ROS_DEBUG_NAMED("actionlib", "Setting the current goal as succeeded");
-    current_goal_.setSucceeded(result, text);
-  }
-
-  template <class ActionSpec>
-  void InterruptableActionServer<ActionSpec>::setAborted(const Result& result, const std::string& text){
-    boost::recursive_mutex::scoped_lock lock(lock_);
-    ROS_DEBUG_NAMED("actionlib", "Setting the current goal as aborted");
-    current_goal_.setAborted(result, text);
-  }
-
-  template <class ActionSpec>
-  void InterruptableActionServer<ActionSpec>::setPreempted(const Result& result, const std::string& text){
-    boost::recursive_mutex::scoped_lock lock(lock_);
-    ROS_DEBUG_NAMED("actionlib", "Setting the current goal as canceled");
-    current_goal_.setCanceled(result, text);
-  }
-
-  template <class ActionSpec>
-  void InterruptableActionServer<ActionSpec>::registerGoalCallback(boost::function<void ()> cb){
-    // Cannot register a goal callback if an execute callback exists
-    if (execute_callback_)
-      ROS_WARN_NAMED("actionlib", "Cannot call InterruptableActionServer::registerGoalCallback() because an executeCallback exists. Not going to register it.");
-    else
-      goal_callback_ = cb;
-  }
-
-  template <class ActionSpec>
-  void InterruptableActionServer<ActionSpec>::registerPreemptCallback(boost::function<void ()> cb){
-    preempt_callback_ = cb;
-  }
-
-  template <class ActionSpec>
-  void InterruptableActionServer<ActionSpec>::publishFeedback(const FeedbackConstPtr& feedback)
-  {
-    current_goal_.publishFeedback(*feedback);
-  }
-
-  template <class ActionSpec>
-  void InterruptableActionServer<ActionSpec>::publishFeedback(const Feedback& feedback)
-  {
-    current_goal_.publishFeedback(feedback);
-  }
-
-  template <class ActionSpec>
-  void InterruptableActionServer<ActionSpec>::goalCallback(GoalHandle goal){
-    boost::recursive_mutex::scoped_lock lock(lock_);
-    ROS_DEBUG_NAMED("actionlib", "A new goal has been recieved by the single goal action server");
-
     //check that the timestamp is past or equal to that of the current goal and the next goal
     if((!current_goal_.getGoal() || goal.getGoalID().stamp >= current_goal_.getGoalID().stamp)
-        && (!next_goal_.getGoal() || goal.getGoalID().stamp >= next_goal_.getGoalID().stamp)){
+        && (!next_goal_.getGoal() || goal.getGoalID().stamp >= next_goal_.getGoalID().stamp)) {
 
       //if next_goal has not been accepted already... its going to get bumped, but we need to let the client know we're preempting
-      if(next_goal_.getGoal() && (!current_goal_.getGoal() || next_goal_ != current_goal_)){
+      if(next_goal_.getGoal() && (!current_goal_.getGoal() || next_goal_ != current_goal_)) {
         next_goal_.setCanceled(Result(), "This goal was canceled because another goal was recieved by the simple action server");
       }
 
       next_goal_ = goal;
-      new_goal_ = true;
-      new_goal_preempt_request_ = false;
-
-      //if the server is active, we'll want to call the preempt callback for the current goal
-      if(isActive()){
-        preempt_request_ = true;
-        //if the user has registered a preempt callback, we'll call it now
-        if(preempt_callback_)
-          preempt_callback_();
-      }
-
-      //if the user has defined a goal callback, we'll call it now
-      if(goal_callback_)
-        goal_callback_();
-
+      next_goal_available_ = true; 
+      
       // Trigger runLoop to call execute()
       execute_condition_.notify_all();
-    }
-    else{
-      //the goal requested has already been preempted by a different goal, so we're not going to execute it
+    } else {
       goal.setCanceled(Result(), "This goal was canceled because another goal was recieved by the simple action server");
     }
-  }
 
+  }
+  
   template <class ActionSpec>
-  void InterruptableActionServer<ActionSpec>::preemptCallback(GoalHandle preempt){
+  void InterruptableActionServer<ActionSpec>::cancelCallback(GoalHandle goal) {
     boost::recursive_mutex::scoped_lock lock(lock_);
-    ROS_DEBUG_NAMED("actionlib", "A preempt has been received by the InterruptableActionServer");
-
-    //if the preempt is for the current goal, then we'll set the preemptRequest flag and call the user's preempt callback
-    if(preempt == current_goal_){
-      ROS_DEBUG_NAMED("actionlib", "Setting preempt_request bit for the current goal to TRUE and invoking callback");
-      preempt_request_ = true;
-
-      //if the user has registered a preempt callback, we'll call it now
-      if(preempt_callback_)
-        preempt_callback_();
-    }
-    //if the preempt applies to the next goal, we'll set the preempt bit for that
-    else if(preempt == next_goal_){
-      ROS_DEBUG_NAMED("actionlib", "Setting preempt request bit for the next goal to TRUE");
-      new_goal_preempt_request_ = true;
+    if (goal == current_goal_) {
+      pursue_current_goal_ = false;
+    } else if (goal == next_goal_) {
+      next_goal_.setCanceled();
+      next_goal_available_ = false;
+    } else if (goal == original_goal_ && original_goal_available_) {
+      // Don't pursue the original goal again.
+      original_goal_available_ = false;
     }
   }
 
-  template <class ActionSpec>
-  void InterruptableActionServer<ActionSpec>::executeLoop(){
 
-    ros::Duration loop_duration = ros::Duration().fromSec(.1);
-
-    while (n_.ok())
-    {
-      {
-        boost::mutex::scoped_lock terminate_lock(terminate_mutex_);
-        if (need_to_terminate_)
-          break;
-      }
-
+  {
+    while (n_.ok()) {
       boost::recursive_mutex::scoped_lock lock(lock_);
-      if (isActive())
-        ROS_ERROR_NAMED("actionlib", "Should never reach this code with an active goal");
-      else if (isNewGoalAvailable())
-      {
-        GoalConstPtr goal = acceptNewGoal();
-
-        ROS_FATAL_COND(!execute_callback_, "execute_callback_ must exist. This is a bug in InterruptableActionServer");
-
-        // Make sure we're not locked when we call execute
-        lock.unlock();
-        execute_callback_(goal);
-        lock.lock();
-
-        if (isActive())
-        {
-          ROS_WARN_NAMED("actionlib", "Your executeCallback did not set the goal to a terminal status.\n"
-                   "This is a bug in your ActionServer implementation. Fix your code!\n"
-                   "For now, the ActionServer will set this goal to aborted");
-          setAborted(Result(), "This goal was aborted by the simple action server. The user should have set a terminal status on this goal and did not");
+      if (switch_to_original_goal_) {
+        if (pursue_current_goal_) {
+          current_goal_.setCanceled();
         }
+        if (next_goal_available_) {
+          next_goal_available_ = false;
+          next_goal_.setCanceled();
+        }
+        current_goal_ = original_goal_;
+        original_goal_available_ = false;
+        switch_to_original_goal_ = false;
+        pursue_current_goal_ = true;
+      } else if (next_goal_available_) {
+        if (pursue_current_goal_) {
+          current_goal_.setCanceled();
+        }
+        current_goal_ = next_goal_;
+        next_goal_available_ = false;
+      } else if (pursue_current_goal_) {
+        // Make call to action client to check status of current goal. Publish feedback 
+
       }
-      else
-        execute_condition_.timed_wait(lock, boost::posix_time::milliseconds(loop_duration.toSec() * 1000.0f));
     }
   }
 
   template <class ActionSpec>
-  void InterruptableActionServer<ActionSpec>::start(){
+  void InterruptableActionServer<ActionSpec>::start() {
     as_->start();
   }
 
