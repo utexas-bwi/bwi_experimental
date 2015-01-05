@@ -70,15 +70,15 @@ namespace bwi_interruptable_action_server {
   template <class ActionSpec>
   InterruptableActionServer<ActionSpec>::~InterruptableActionServer() {
     if (original_goal_available_) {
-      original_goal_.setCanceled();
+      original_goal_.setCanceled(Result(), "The goal was cancelled as the action server is shutting down.");
     }
 
     if (pursuing_current_goal_ || pursue_current_goal_) {
-      current_goal_.setCanceled();
+      current_goal_.setCanceled(Result(), "The goal was cancelled as the action server is shutting down.");
     }
 
     if (next_goal_available_) {
-      next_goal_.setCanceled();
+      next_goal_.setCanceled(Result(), "The goal was cancelled as the action server is shutting down.");
     }
   }
 
@@ -129,7 +129,7 @@ namespace bwi_interruptable_action_server {
       next_goal_ = goal;
       next_goal_available_ = true; 
       
-      ROS_INFO_STREAM(interruptable_server_name
+      ROS_INFO_STREAM(interruptable_server_name_ + " : Received new goal! Passing it to low level action server.");
     } else {
       goal.setCanceled(Result(), "This goal was canceled because another goal was recieved by the simple action server");
     }
