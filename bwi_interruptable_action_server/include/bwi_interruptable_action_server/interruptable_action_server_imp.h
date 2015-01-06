@@ -145,9 +145,15 @@ namespace bwi_interruptable_action_server {
       next_goal_.setCanceled(Result());
       next_goal_available_ = false;
     } else if (goal == original_goal_ && original_goal_available_) {
-      // Don't pursue the original goal again.
+      // Don't need to pursue the original goal again. Since we were in paused state, we might be pursuing a goal
+      // currently. Cancel the current and next goals as well.
       original_goal_.setCanceled(Result());
       original_goal_available_ = false;
+      if (next_goal_available_) {
+        next_goal_.setCanceled(Result());
+        next_goal_available_ = false;
+      }
+      pursue_current_goal_ = false;
     }
   }
 
