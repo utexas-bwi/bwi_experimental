@@ -1,0 +1,4 @@
+roslaunch bwi_kr_execution environment_3d_krr2014.launch
+roslaunch bwi_kr_execution bwi_kr_execution_simulation.launch --screen
+rosrun bwi_tasks bwi_back_and_forth_node --screen
+
