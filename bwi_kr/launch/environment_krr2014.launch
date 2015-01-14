@@ -6,8 +6,8 @@
   <arg name="door_file" default="$(arg data_directory)/doors.yaml" />
 
   <!-- launch gazebo simulation environment and map server -->
-  <include file="$(find utexas_gdc)/launch/3ne.launch" />
-  <include file="$(find utexas_gdc)/launch/3ne_map.launch" />
+  <include file="$(find utexas_gdc)/launch/simulation_3ne.launch" />
+  <include file="$(find utexas_gdc)/launch/simulation_3ne_map_server.launch" />
 
   <!-- launch the base robot + autonomous navigation -->
   <include file="$(find segbot_gazebo)/launch/segbot_mobile_base.launch">
