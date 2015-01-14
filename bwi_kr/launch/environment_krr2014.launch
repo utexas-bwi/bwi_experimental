@@ -2,8 +2,6 @@
 
   <arg name="data_directory" default="$(find bwi_kr)/config/simulation" />
   <arg name="map_file" default="$(find utexas_gdc)/maps/simulation/3ne/3ne.yaml" />
-  <arg name="location_file" default="$(arg data_directory)/locations.yaml" />
-  <arg name="door_file" default="$(arg data_directory)/doors.yaml" />
 
   <!-- launch gazebo simulation environment and map server -->
   <include file="$(find utexas_gdc)/launch/simulation_3ne.launch" />
@@ -22,14 +20,12 @@
   <!-- launch logical navigator -->
   <node name="segbot_logical_navigator" pkg="segbot_logical_translator"
         type="segbot_logical_navigator">
-    <param name="map_file" value="$(arg map_file)" />
-    <param name="door_file" value="$(arg door_file)" />
-    <param name="location_file" value="$(arg location_file)" />
+    <param name="data_directory" value="$(arg data_directory)" />
   </node>
 
   <!-- launch the simulation door handler -->
   <include file="$(find segbot_simulation_apps)/launch/door_handler.launch">
-    <arg name="door_file" value="$(arg door_file)" />
+    <arg name="data_directory" value="$(arg data_directory)" />
   </include>
 
   <!-- launch rviz for navigation visualization -->
