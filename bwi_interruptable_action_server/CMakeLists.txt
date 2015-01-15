@@ -76,7 +76,7 @@ find_package(catkin REQUIRED COMPONENTS actionlib actionlib_tutorials roscpp std
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
+INCLUDE_DIRS include
 #  LIBRARIES bwi_interruptable_action_server
 CATKIN_DEPENDS actionlib actionlib_tutorials roscpp std_srvs
 #  DEPENDS system_lib
