@@ -111,6 +111,7 @@ namespace bwi_interruptable_action_server {
       // Restart the current goal again.
       switch_to_original_goal_ = true;
     }
+    return ret_val;
   }
 
   template <class ActionSpec>
