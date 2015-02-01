@@ -121,6 +121,7 @@ add_subdirectory(actasp/src/)
  add_subdirectory(src/actions/)
  add_library(kractions ${kractions_SRC})
  add_dependencies(kractions bwi_kr_execution_generate_messages_cpp)
+ add_dependencies(kractions bwi_kr_generate_messages_cpp)
  target_link_libraries(kractions actasp )
 
 ## Declare a cpp executable
