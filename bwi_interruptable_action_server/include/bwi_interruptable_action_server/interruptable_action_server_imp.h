@@ -38,13 +38,20 @@
 namespace bwi_interruptable_action_server {
 
   template <class ActionSpec>
-  InterruptableActionServer<ActionSpec>::InterruptableActionServer(ros::NodeHandle n, std::string name) : 
+  InterruptableActionServer<ActionSpec>::InterruptableActionServer(ros::NodeHandle n, 
+                                                                   std::string name,
+                                                                   int max_attempts,
+                                                                   NewGoalCallback new_goal_callback,
+                                                                   ResultCallback result_callback) :
       n_(n),
       original_goal_available_(false),
       switch_to_original_goal_(false),
       next_goal_available_(false),
       pursue_current_goal_(false),
-      pursuing_current_goal_(false) {
+      pursuing_current_goal_(false),
+      max_attempts_(max_attempts),
+      result_callback_(result_callback),
+      new_goal_callback_(new_goal_callback) {
 
     interruptable_server_name_ = name + "_interruptable";
 
@@ -176,6 +183,7 @@ namespace bwi_interruptable_action_server {
           next_goal_available_ = false;
           next_goal_.setCanceled(Result(), "This goal was preempted as a paused goal was resumed.");
         }
+        current_attempts_ = 0;
         current_goal_ = original_goal_;
         original_goal_available_ = false;
         switch_to_original_goal_ = false;
@@ -188,8 +196,12 @@ namespace bwi_interruptable_action_server {
           current_goal_.setCanceled(Result(), "This goal was preempted by a new goal");
           pursuing_current_goal_ = false;
         }
+        current_attempts_ = 0;
         current_goal_ = next_goal_;
         current_goal_.setAccepted();
+        if (new_goal_callback_) {
+          new_goal_callback_(current_goal_.getGoal());
+        }
         pursue_current_goal_ = true;
         next_goal_available_ = false;
       } 
@@ -214,18 +226,34 @@ namespace bwi_interruptable_action_server {
           // This means that the the goal is no longer being pursued. Publish the result here from whatever information
           // we've received from the regular action client.
           ResultConstPtr result = ac_->getResult();
+          current_attempts_ += 1;
+          if (result_callback_) {
+            result_callback_(result, state, current_attempts_);
+          }
           if (state == actionlib::SimpleClientGoalState::SUCCEEDED) {
             current_goal_.setSucceeded(*result);
+            // The goal should not be pursued again.
+            pursuing_current_goal_ = false;
+            pursue_current_goal_ = false;
           } else if (state == actionlib::SimpleClientGoalState::ABORTED || 
                      state == actionlib::SimpleClientGoalState::REJECTED) {
-            current_goal_.setAborted(*result);
+            if (current_attempts_ < max_attempts_) {
+              ++current_attempts_;
+              // This wall cause the same goal to be resent.
+              pursuing_current_goal_ = false;
+            } else {
+              current_goal_.setAborted(*result);
+              // The goal should not be pursued again.
+              pursuing_current_goal_ = false;
+              pursue_current_goal_ = false;
+            }
           } else {
             current_goal_.setCanceled(*result);
+            // Since the goal got completed, we no longer wish to pursue this goal.
+            pursuing_current_goal_ = false;
+            pursue_current_goal_ = false;
           }
 
-          // Since the goal got completed, we no longer wish to pursue this goal.
-          pursuing_current_goal_ = false;
-          pursue_current_goal_ = false;
         }
       }
       r.sleep();

@@ -50,13 +50,19 @@ namespace bwi_interruptable_action_server {
       ACTION_DEFINITION(ActionSpec);
 
       typedef typename actionlib::ActionServer<ActionSpec>::GoalHandle GoalHandle;
+      typedef boost::function<void(const ResultConstPtr&, const actionlib::SimpleClientGoalState&, int)> ResultCallback;
+      typedef boost::function<void(const GoalConstPtr&)> NewGoalCallback;
       
-      InterruptableActionServer(ros::NodeHandle n, std::string name);
+      InterruptableActionServer(ros::NodeHandle n, 
+                                std::string name, 
+                                int max_attempts = 1, 
+                                NewGoalCallback new_goal_callback = 0,
+                                ResultCallback result_callback = 0);
       ~InterruptableActionServer();
 
       void spin();
 
-    private:
+    protected:
 
       bool pause(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res);
       bool resume(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res);
@@ -84,6 +90,12 @@ namespace bwi_interruptable_action_server {
       bool next_goal_available_;
       bool pursue_current_goal_;
       bool pursuing_current_goal_;
+
+      int max_attempts_;
+      int current_attempts_;
+      ResultCallback result_callback_;
+
+      NewGoalCallback new_goal_callback_;
   };
 };
 
