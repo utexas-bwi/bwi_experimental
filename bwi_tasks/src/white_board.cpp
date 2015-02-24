@@ -1,6 +1,6 @@
 
 #include "ros/ros.h"
-#include "geometry_msgs/PoseStamped"
+#include "geometry_msgs/PoseStamped.h"
 
 #include <pcl_ros/point_cloud.h>
 #include <pcl/point_types.h>
@@ -13,7 +13,7 @@
 #include <opencv2/highgui/highgui.hpp>
 
 #include <iostream>
-#include <cstudio>
+#include <cstdio>
 #include <ctime>
 
 typedef pcl::PointCloud<pcl::PointXYZRGB> PointCloud;
@@ -23,32 +23,31 @@ sensor_msgs::ImageConstPtr image;
 struct my_pose {
     float x; 
     float y;
-} a, b, c, d; 
+} p1, p2; 
 
 /*
     a           b
-        m
+       p1   p2
     c           d
 */
 
 void callback(const geometry_msgs::PoseStamped::ConstPtr& msg)
 {
-    a.x = 59.9426460266;
-    a.y = 5.25176143646;
-    b.x = 60.0549316406;
-    b.y = 9.36225509644;
-    c.x = 61.6946525574;
-    c.y = 5.01872062683;
-    d.x = 61.9057197571;
-    d.y = 9.26733779907; 
+    p1.x = 61.099;
+    p1.y = 7.479;
+    p2.x = 60.981;
+    p2.y = 6.310;
+    float range= 1.0;
 
-    my_pose pose = msg->pose; 
+    geometry_msgs::PoseStampedConstPtr poseStamped = msg; 
 
-    am = (a.x - pose.Point.x) * (a.y - pose.Point.y); 
-    ab = (a.x - b.x) * (a.y - b.y); 
-    ad = (a.x - d.x) * (a.y - d.y); 
+    float x = poseStamped->pose.position.x;
+    float y = poseStamped->pose.position.y; 
 
-    if (am*ab > 0 && am*ab < ab*ab && am*ad > 0 && am*ad < ad*ad) 
+    float dis_p1 = pow(pow(p1.x-x, 2.0) + pow(p1.y - y, 2.0), 0.5); 
+    float dis_p2 = pow(pow(p2.x-x, 2.0) + pow(p2.y - y, 2.0), 0.5); 
+
+    if (dis_p1 < 1.0 || dis_p2 < 1.0) 
     {
         std::time_t rawtime;
         std::tm* timeinfo;
@@ -62,9 +61,10 @@ void callback(const geometry_msgs::PoseStamped::ConstPtr& msg)
 
         ROS_INFO("People detected in frout of a white board, picture saved.");
 
+        cv_bridge::CvImageConstPtr cv_ptr;
         try 
         {
-            cv_bridge::CvImageConstPtr cv_ptr;
+            cv_ptr = cv_bridge::toCvShare(image, sensor_msgs::image_encodings::BGR8);
             cv::imwrite("/home/bwi/Desktop/write_board_" + str + ".jpg",
                         cv_ptr->image);
         }
