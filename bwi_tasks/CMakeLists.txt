@@ -4,13 +4,25 @@ project(bwi_tasks)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
+find_package(PCL 1.7 REQUIRED)
+find_package(OpenCV)
+
+include_directories(${PCL_INCLUDE_DIRS})
+include_directories(${OpenCV_INCLUDE_DIRS})
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
+
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
   actionlib
   bwi_kr_execution
+  pcl_ros
+  cv_bridge
+  image_transport
 )
+
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -117,13 +129,40 @@ add_executable(between_doors src/between_doors.cpp)
 add_dependencies(between_doors ${catkin_EXPORTED_TARGETS})
 target_link_libraries(between_doors ${catkin_LIBRARIES})
 
+add_executable(go_to_location_lab src/go_to_location_lab.cpp)
+add_dependencies(go_to_location_lab ${catkin_EXPORTED_TARGETS})
+target_link_libraries(go_to_location_lab ${catkin_LIBRARIES})
+
+add_executable(back_and_forth_outside_lab src/back_and_forth_outside_lab.cpp)
+add_dependencies(back_and_forth_outside_lab ${catkin_EXPORTED_TARGETS})
+target_link_libraries(back_and_forth_outside_lab ${catkin_LIBRARIES})
+
+add_executable(back_and_forth_through src/back_and_forth_through.cpp)
+add_dependencies(back_and_forth_through ${catkin_EXPORTED_TARGETS})
+target_link_libraries(back_and_forth_through ${catkin_LIBRARIES})
+
 add_executable(visit_door_list src/visit_door_list.cpp)
 add_dependencies(visit_door_list ${catkin_EXPORTED_TARGETS})
 target_link_libraries(visit_door_list ${catkin_LIBRARIES})
 
+add_executable(visit_door_list_outside_lab src/visit_door_list_outside_lab.cpp)
+add_dependencies(visit_door_list_outside_lab ${catkin_EXPORTED_TARGETS})
+target_link_libraries(visit_door_list_outside_lab ${catkin_LIBRARIES})
+
+add_executable(visit_door_list_outside_lab_l src/visit_door_list_outside_lab_l.cpp)
+add_dependencies(visit_door_list_outside_lab_l ${catkin_EXPORTED_TARGETS})
+target_link_libraries(visit_door_list_outside_lab_l ${catkin_LIBRARIES})
+
 add_executable(meeting_experiment src/meeting_experiment.cpp)
 add_dependencies(meeting_experiment ${catkin_EXPORTED_TARGETS})
 target_link_libraries(meeting_experiment ${catkin_LIBRARIES})
+
+add_executable(back_and_forth_object src/back_and_forth_object.cpp)
+add_dependencies(back_and_forth_object ${catkin_EXPORTED_TARGETS})
+target_link_libraries(back_and_forth_object ${catkin_LIBRARIES})
+
+add_executable(blue_shirt src/blue_shirt.cpp)
+target_link_libraries(blue_shirt ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 
 #############
 ## Install ##
