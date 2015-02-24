@@ -164,6 +164,8 @@ target_link_libraries(back_and_forth_object ${catkin_LIBRARIES})
 add_executable(blue_shirt src/blue_shirt.cpp)
 target_link_libraries(blue_shirt ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 
+add_executable(white_board src/white_board.cpp)
+target_link_libraries(white_board ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 #############
 ## Install ##
 #############
