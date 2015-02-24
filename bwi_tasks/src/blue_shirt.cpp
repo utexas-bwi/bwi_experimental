@@ -42,10 +42,9 @@ void callback_human_detection(const PointCloud::ConstPtr& msg)
     if (pt.y < min_y)
       min_y = pt.y;
 
-    if (pt.y > -0.9 && pt.y < -0.2) {
+    if (pt.y > -0.9 && pt.y < -0.1) {
       // distance to BLUE (0, 0, 255)
-      // dis = pow(pow(pt.r-0.0, 2.0) + pow(pt.g-0.0, 2.0) + pow(pt.b-255.0, 2.0), 0.5);
-      dis = pow(pow(pt.r-175.0, 2.0) + pow(pt.g-255.0, 2.0) + pow(pt.b-175.0, 2.0), 0.5);
+      dis = pow(pow(pt.r-0.0, 2.0) + pow(pt.g-0.0, 2.0) + pow(pt.b-255.0, 2.0), 0.5);
       if (dis < 200)
         blue_cnt++;
     }
@@ -54,9 +53,9 @@ void callback_human_detection(const PointCloud::ConstPtr& msg)
   float ratio = (float)blue_cnt/(float)cnt;
   printf("ratio: %f\n", ratio);
 
-  if (ratio > 0.30) { 
+  if (ratio > 0.25) { 
 
-    printf("person with GREEN SHIRT!!! \n"); 
+    ROS_INFO("person with BLUE SHIRT!!! \n"); 
     
     cv_bridge::CvImageConstPtr cv_ptr;
     try {
@@ -84,7 +83,6 @@ int main(int argc, char** argv)
 
   image_transport::ImageTransport it(nh);
   image_transport::Subscriber sub2 = it.subscribe("/nav_kinect/rgb/image_color", 1, callback_image_saver);
-  // ros::Subscriber sub2 = nh.subscribe<sensor_msgs::Image>("/nav_kinect/rgb/image_color", 1, callback_image_saver);
 
   ros::spin();
 }
