@@ -65,7 +65,7 @@ void callback_human_detection(const PointCloud::ConstPtr& msg)
       std::string str(dt);
 
       cv_ptr = cv_bridge::toCvShare(image, sensor_msgs::image_encodings::BGR8);
-      cv::imwrite("/home/bwi/Desktop/" + str + ".jpg", cv_ptr->image);
+      cv::imwrite("/home/bwi/Desktop/blueshirt_" + str + ".jpg", cv_ptr->image);
     } 
     catch (cv_bridge::Exception& e) {
       ROS_ERROR("cv_bridge exception: %s", e.what());

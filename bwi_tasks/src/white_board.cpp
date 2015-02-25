@@ -65,7 +65,7 @@ void callback(const geometry_msgs::PoseStamped::ConstPtr& msg)
         try 
         {
             cv_ptr = cv_bridge::toCvShare(image, sensor_msgs::image_encodings::BGR8);
-            cv::imwrite("/home/bwi/Desktop/write_board_" + str + ".jpg",
+            cv::imwrite("/home/bwi/Desktop/whiteboard_" + str + ".jpg",
                         cv_ptr->image);
         }
         catch (cv_bridge::Exception& e) 
