@@ -47,7 +47,7 @@ void callback(const geometry_msgs::PoseStamped::ConstPtr& msg)
     float dis_p1 = pow(pow(p1.x-x, 2.0) + pow(p1.y - y, 2.0), 0.5); 
     float dis_p2 = pow(pow(p2.x-x, 2.0) + pow(p2.y - y, 2.0), 0.5); 
 
-    if (dis_p1 < 1.0 || dis_p2 < 1.0) 
+    if (dis_p1 < range || dis_p2 < range) 
     {
         std::time_t rawtime;
         std::tm* timeinfo;
