@@ -12,7 +12,7 @@ floor(l2_elev_west, 2).
 floor(l1_elev_east, 1).
 floor(l1_elev_west, 1).
 
-location(l2_atrium).
+
 
 sameroom(l4_elev_east, l3_elev_east).
 sameroom(l3_elev_east, l2_elev_east).
@@ -47,15 +47,21 @@ elevdoor(d2_elev_west).
 
 door(D) :- elevdoor(D). 
 
+hasdoor(l2_elev_east, d2_elev_east).
+hasdoor(l2_elev_west, d2_elev_west).
+hasdoor(l2_302, d2_elev_east).
+hasdoor(l2_302, d2_elev_west).
+
 hasdoor(l3_elev_east, d3_elev_east).
 hasdoor(l3_elev_west, d3_elev_west).
 hasdoor(l3_200, d3_elev_east).
 hasdoor(l3_200, d3_elev_west).
 
-hasdoor(l2_elev_east, d2_elev_east).
-hasdoor(l2_elev_west, d2_elev_west).
-hasdoor(l2_atrium, d2_elev_east).
-hasdoor(l2_atrium, d2_elev_west).
+hasdoor(l3_200,d3_elev_east). 
+hasdoor(l3_elev_east,d3_elev_east).
+
+hasdoor(l3_200,d3_elev_west). 
+hasdoor(l3_elev_west,d3_elev_west). 
 
 
 %hide non fluents

@@ -15,6 +15,7 @@
   callelevator(E,O,I) : elevator(E) : orientation(O)
 }1 :- not noop(I), I=0..n-2.
 
+
 %removes the warning about noop not being defined, shouldn't have any consequences
 
 %iclingo doesn't seem to like this, commenting.
