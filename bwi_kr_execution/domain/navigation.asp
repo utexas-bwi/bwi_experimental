@@ -26,6 +26,8 @@ open(D,I+1) :- opendoor(D,I), door(D), I=0..n-2.
 :- opendoor(D,I), not facing(D,I), door(D), I=0..n-1.
 :- opendoor(D,I), open(D,I), door(D), I=0..n-1.
 
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 %  Static laws

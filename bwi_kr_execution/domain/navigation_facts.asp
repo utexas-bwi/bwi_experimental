@@ -1,5 +1,4 @@
 
-% DO NOT use room(a ; b). Computation takes forever.
 
 room(l3_414a).
 room(l3_402).
@@ -39,10 +38,7 @@ location(l3_200).
 location(l3_300).
 location(l3_302).
 
-%elevator(l3_ele1).
-%elevator(l3_ele2).
 
-%location(E) :- elevator(E).
 location(R) :- room(R).
 
 door(d3_400).
@@ -76,13 +72,6 @@ door(d3_512).
 door(d3_516a).
 door(d3_516b).
 
-%door(d3_ele1).
-%door(d3_ele2).
-
-%hasdoor(l3_ele1, d3_ele1).
-%hasdoor(l3_200, d3_ele1).
-%hasdoor(l3_ele2, d3_ele2).
-%hasdoor(l3_200, d3_ele2).
 
 hasdoor(l3_200, d3_500).
 hasdoor(l3_500, d3_500).
@@ -168,7 +157,7 @@ acc(l3_518,l3_500).
 
 
 
-dooracc(R1,D,R2) :- hasdoor(R1,D), hasdoor(R2,D), R1 != R2, door(D), room(R1),
+dooracc(R1,D,R2) :- hasdoor(R1,D), hasdoor(R2,D), R1 != R2, door(D), location(R1),
 location(R2).
 dooracc(R1,D,R2) :- dooracc(R2,D,R1).
 
