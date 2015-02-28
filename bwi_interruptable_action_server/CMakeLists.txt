@@ -1,18 +1,10 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(bwi_kr_execution)
+project(bwi_interruptable_action_server)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS
-  roscpp
-  std_msgs
-  roslib
-  message_generation
-  genmsg 
-  actionlib_msgs 
-  actionlib
-)
+find_package(catkin REQUIRED COMPONENTS actionlib actionlib_tutorials roscpp std_srvs)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -48,37 +40,31 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
- add_message_files(
-   FILES
-   AspFluent.msg
-   AspRule.msg
-   AnswerSet.msg
- )
+# add_message_files(
+#   FILES
+#   Message1.msg
+#   Message2.msg
+# )
 
 ## Generate services in the 'srv' folder
- add_service_files(
-   FILES
-   UpdateFluents.srv
-   CurrentStateQuery.srv
-   ComputePlan.srv
-   ComputeAllPlans.srv
-   IsPlanValid.srv
- )
+# add_service_files(
+#   FILES
+#   Service1.srv
+#   Service2.srv
+# )
 
 ## Generate actions in the 'action' folder
-add_action_files(
-   FILES
-   ExecutePlan.action
-)
+# add_action_files(
+#   FILES
+#   Action1.action
+#   Action2.action
+# )
 
 ## Generate added messages and services with any dependencies listed here
- generate_messages(
-   DEPENDENCIES
-   std_msgs
-   actionlib_msgs
- )
- 
- 
+# generate_messages(
+#   DEPENDENCIES
+#   std_msgs  # Or other packages containing msgs
+# )
 
 ###################################
 ## catkin specific configuration ##
@@ -90,11 +76,10 @@ add_action_files(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  INCLUDE_DIRS actasp/include
-  LIBRARIES actasp
-#  CATKIN_DEPENDS roscpp std_msgs
-  DEPENDS system_lib
-message_runtime
+INCLUDE_DIRS include
+#  LIBRARIES bwi_interruptable_action_server
+CATKIN_DEPENDS actionlib actionlib_tutorials roscpp std_srvs
+#  DEPENDS system_lib
 )
 
 ###########
@@ -103,58 +88,24 @@ message_runtime
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-# include_directories(include)
-include_directories(
-  ${catkin_INCLUDE_DIRS}
-  actasp/include
-)
+include_directories(include)
 
-
-set( actasp_SRC)
-
-add_subdirectory(actasp/src/)
 ## Declare a cpp library
- add_library(actasp ${actasp_SRC})
- target_link_libraries(actasp ${catkin_LIBRARIES})
-
- set( kractions_SRC)
- add_subdirectory(src/actions/)
- add_library(kractions ${kractions_SRC})
- add_dependencies(kractions bwi_kr_execution_generate_messages_cpp)
- add_dependencies(kractions bwi_kr_generate_messages_cpp)
- target_link_libraries(kractions actasp )
+# add_library(bwi_interruptable_action_server
+#   src/${PROJECT_NAME}/bwi_interruptable_action_server.cpp
+# )
 
 ## Declare a cpp executable
-
-set(spexec_SRC)
-set(anyexec_SRC)
-set(lexec_SRC)
-set(krreasoner_SRC)
-
-add_subdirectory(src)
-add_executable(single_plan_executor_node ${spexec_SRC})
-target_link_libraries(single_plan_executor_node ${catkin_LIBRARIES} actasp kractions )
-
-add_executable(any_plan_executor_node ${anyexec_SRC})
-target_link_libraries(any_plan_executor_node ${catkin_LIBRARIES} actasp kractions )
-
-add_executable(learning_executor_node ${lexec_SRC})
-target_link_libraries(learning_executor_node ${catkin_LIBRARIES} actasp kractions )
- 
-add_executable(knowledge_reasoning_node  ${krreasoner_SRC})
-target_link_libraries( knowledge_reasoning_node ${catkin_LIBRARIES} actasp kractions )
-
-add_executable(asp_formatter src/asp_formatter.cpp)
-target_link_libraries(asp_formatter actasp)
-
+add_executable(fibonacci_server src/fibonacci.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
-# add_dependencies(bwi_kr_execution_node bwi_kr_execution_generate_messages_cpp)
+# add_dependencies(bwi_interruptable_navigator_node bwi_interruptable_navigator_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-
- 
+target_link_libraries(fibonacci_server
+  ${catkin_LIBRARIES}
+)
 
 #############
 ## Install ##
@@ -171,18 +122,18 @@ target_link_libraries(asp_formatter actasp)
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS bwi_kr_execution bwi_kr_execution_node
+# install(TARGETS bwi_interruptable_action_server bwi_interruptable_navigator_node
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 # )
 
 ## Mark cpp header files for installation
- install(DIRECTORY include/${PROJECT_NAME}/
-   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-   FILES_MATCHING PATTERN "*.h"
+# install(DIRECTORY include/${PROJECT_NAME}/
+#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+#   FILES_MATCHING PATTERN "*.h"
 #   PATTERN ".svn" EXCLUDE
- )
+# )
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
 # install(FILES
@@ -196,7 +147,7 @@ target_link_libraries(asp_formatter actasp)
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_bwi_kr_execution.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_bwi_interruptable_navigator.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
