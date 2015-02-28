@@ -1,11 +1,11 @@
 #!/bin/bash
-xterm -e roscore &
+#xterm -e roscore &
 sleep 5
-xterm -e "roslaunch bwi_kr_execution environment_2d_krr2014.launch" &
+konsole -e "roslaunch bwi_kr_execution environment_2d_krr2014.launch" &
 sleep 15
-xterm -e "roslaunch bwi_kr_execution bwi_kr_execution_simulation.launch --screen" &
+konsole -e "roslaunch bwi_kr_execution bwi_kr_execution_simulation.launch --screen" &
 sleep 15
-xterm -e "rosrun bwi_tasks bwi_back_and_forth_node --screen" &
+konsole -e "rosrun bwi_tasks bwi_back_and_forth_node --screen" &
 
 
 

@@ -31,6 +31,9 @@
   <!-- include file="$(find segbot_simulation_apps)/launch/door_handler.launch">
     <arg name="door_file" value="$(arg door_file)" />
   </include -->
+  
+    <!-- launch the gui -->
+  <node name="segbot_gui" pkg="segbot_gui" type="question_dialog_plugin" />
 
   <!-- launch rviz for navigation visualization -->
   <include file="$(find segbot_navigation)/launch/rviz.launch" />

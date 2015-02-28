@@ -137,8 +137,8 @@ int main(int argc, char**argv) {
   
   boost::filesystem::create_directories(queryDirectory);
 
-  AspKR *reasoner = new RemoteReasoner(MAX_N,queryDirectory,domainDirectory,actionMapToSet(ActionFactory::actions()));
-  Planner *planner = new AnyPlan(reasoner,1.);
+  AspKR *reasoner = new RemoteReasoner(MAX_N,queryDirectory,domainDirectory,actionMapToSet(ActionFactory::actions()),15);
+  Planner *planner = new AnyPlan(reasoner,1.5);
   
   //need a pointer to the specific type for the observer
   ReplanningActionExecutor *replanner = new ReplanningActionExecutor(reasoner,planner,ActionFactory::actions());
