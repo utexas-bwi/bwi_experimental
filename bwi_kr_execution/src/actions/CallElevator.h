@@ -20,7 +20,7 @@ struct CallElevator : public actasp::Action {
   
   actasp::Action *cloneAndInit(const actasp::AspFluent & fluent) const;
   
-  actasp::Action *clone() const {return new ChangeFloor(*this);}
+  actasp::Action *clone() const {return new CallElevator(*this);}
 
 private:
  
