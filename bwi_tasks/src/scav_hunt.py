@@ -20,9 +20,9 @@ def scav_hunt():
     tasks.append('* find a person wearing blue shirt')
     tasks.append('* interact with a person through natural language (testing)')
     tasks.append('* find a person standing in front of a whiteboard')
-    tasks.append('* take a picture of something with a longhorn logo')
+    tasks.append('* take a picture of something with a "Starbucks Coffee" logo')
 
-    task_names = ['blueshirt', 'interaction', 'whiteboard', 'longhorn']
+    task_names = ['blueshirt', 'interaction', 'whiteboard', 'logo']
 
     blueshirt_pic = ''
     interaction_txt = ''
@@ -66,13 +66,13 @@ def scav_hunt():
             todo = todo + '\n\t' + tasks[2]
 
         for f in files:
-            if f.find('longhorn') >= 0:
-                whiteboard_pic = f
+            if f.find('logo') >= 0:
+                logo_pic = f
                 finished = finished + '\n\t' + tasks[3]
-                buttons.append('longhorn')
+                buttons.append('logo')
                 break
         else:
-            todo = todo + '\n\t' + tasks[2]
+            todo = todo + '\n\t' + tasks[3]
 
         # print to screen
         try: 
@@ -101,6 +101,8 @@ def scav_hunt():
             img = subprocess.Popen(["gedit", path_to_files + interaction_txt])
         elif buttons[res.index] == 'whiteboard':
             img = subprocess.Popen(["eog", path_to_files + whiteboard_pic])
+        elif buttons[res.index] == 'logo':
+            img = subprocess.Popen(["eog", path_to_files + logo_pic])
 
 if __name__ == "__main__":
 

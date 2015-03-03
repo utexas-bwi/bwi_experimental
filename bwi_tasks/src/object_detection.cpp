@@ -144,7 +144,7 @@ int main( int argc, char** argv )
     //-- Show detected matches
 
     if (dis > 500) {
-      imwrite("/home/bwi/Desktop/captured_" + str + ".jpg", frame);
+      imwrite("/home/bwi/Desktop/logo_" + str + ".jpg", frame);
       break;
     }
 
