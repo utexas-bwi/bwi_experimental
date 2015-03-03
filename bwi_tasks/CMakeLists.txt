@@ -166,6 +166,12 @@ target_link_libraries(blue_shirt ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 
 add_executable(white_board src/white_board.cpp)
 target_link_libraries(white_board ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+
+add_executable(white_board src/img_capture.cpp)
+target_link_libraries(img_capture ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+
+add_executable(white_board src/object_detection.cpp)
+target_link_libraries(object_detection ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 #############
 ## Install ##
 #############
