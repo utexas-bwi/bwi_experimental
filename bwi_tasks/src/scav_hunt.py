@@ -18,10 +18,11 @@ def scav_hunt():
 
     tasks = []
     tasks.append('* find a person wearing blue shirt')
-    tasks.append('* interact with a person through natural language')
+    tasks.append('* interact with a person through natural language (testing)')
     tasks.append('* find a person standing in front of a whiteboard')
+    tasks.append('* take a picture of something with a longhorn logo')
 
-    task_names = ['blueshirt', 'interaction', 'whiteboard']
+    task_names = ['blueshirt', 'interaction', 'whiteboard', 'longhorn']
 
     blueshirt_pic = ''
     interaction_txt = ''
@@ -64,18 +65,33 @@ def scav_hunt():
         else:
             todo = todo + '\n\t' + tasks[2]
 
+        for f in files:
+            if f.find('longhorn') >= 0:
+                whiteboard_pic = f
+                finished = finished + '\n\t' + tasks[3]
+                buttons.append('longhorn')
+                break
+        else:
+            todo = todo + '\n\t' + tasks[2]
+
         # print to screen
         try: 
             handle = rospy.ServiceProxy('question_dialog', QuestionDialog)
-            # in case some tasks have been finished
-            if len(finished) > 20: 
-                res = handle(1, finished + '\n' + todo + '\n' + ending, buttons, 5)
-            else:
-                res = handle(1, finished + '\n' + todo, buttons, 5)
 
+            # in case some tasks have been finished
+            if finished != finished_last: 
+
+                if len(finished) > 20: 
+                    res = handle(1, finished + '\n' + todo + '\n' + ending, buttons, 5)
+                else:
+                    res = handle(1, finished + '\n' + todo, buttons, 5)
+    
         except rospy.ServiceException, e:
             ROS_ERRR("Service call failed: %s"%e)
- 
+
+        # used for checking if necessary to update segbot_gui
+        finished_last = finished
+
         # which picture/text to view? 
         if res.index < 0: 
             continue
@@ -89,3 +105,4 @@ def scav_hunt():
 if __name__ == "__main__":
 
     scav_hunt()
+

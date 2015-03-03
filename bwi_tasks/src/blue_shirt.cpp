@@ -11,6 +11,7 @@
 #include <opencv2/highgui/highgui.hpp>
 
 #include <iostream>
+#include <cstdio>
 #include <ctime>
 
 typedef pcl::PointCloud<pcl::PointXYZRGB> PointCloud;
@@ -59,10 +60,15 @@ void callback_human_detection(const PointCloud::ConstPtr& msg)
     
     cv_bridge::CvImageConstPtr cv_ptr;
     try {
+      std::time_t rawtime;
+      std::tm* timeinfo;
+      char buffer [80];
 
-      time_t now = time(0);
-      char* dt = ctime(&now);
-      std::string str(dt);
+      std::time(&rawtime);
+      timeinfo = std::localtime(&rawtime);
+      std::strftime(buffer, 80, "%Y-%m-%d-%H-%M-%S", timeinfo);
+      std::puts(buffer);
+      std::string str(buffer);
 
       cv_ptr = cv_bridge::toCvShare(image, sensor_msgs::image_encodings::BGR8);
       cv::imwrite("/home/bwi/Desktop/blueshirt_" + str + ".jpg", cv_ptr->image);
