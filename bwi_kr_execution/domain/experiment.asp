@@ -1,4 +1,4 @@
-#cumulative n.
+% #cumulative n.
 
 %action searchroom(P,R,I)  ask if person P is in room R
 1{ inroom(P,R,I+1), -inroom(P,R,I+1) }1 :- searchroom(P,R,I), person(P), room(R), I=0..n-2.
