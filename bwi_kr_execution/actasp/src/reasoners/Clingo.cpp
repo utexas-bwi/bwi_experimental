@@ -665,7 +665,7 @@ std::list< std::list<AspAtom> > Clingo::query(const std::string &queryString, un
   iterations << "--imin=" << initialTimeStep << " --imax=" << finalTimeStep;
 
 
-  commandLine << "iclingo " << iterations.str() << " " << queryPath << " " << domainDir << "*.asp " << " > " << outputFilePath << " 0";
+  commandLine << "iclingo " << iterations.str() << " " << domainDir <<  "*.asp " << " " << queryPath <<  " > " << outputFilePath << " 0";
 
 
   if (!system(commandLine.str().c_str())) {
