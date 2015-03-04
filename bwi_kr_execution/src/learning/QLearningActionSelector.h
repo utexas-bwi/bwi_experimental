@@ -37,7 +37,7 @@ public:
   
  
   typedef std::map< actasp::AspFluent, double, actasp::ActionComparator> ActionValueMap;
-  typedef std::map< State , ActionValueMap , actasp::StateComparator> StateActionMap;
+  typedef std::map< State , ActionValueMap , actasp::StateComparator<actasp::AspFluent> > StateActionMap;
   
 private:
   actasp::AspKR *reasoner;

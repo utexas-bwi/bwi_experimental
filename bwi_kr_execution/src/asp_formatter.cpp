@@ -117,7 +117,7 @@ static std::vector<actasp::AnswerSet> readAnswerSets(istream &input) {
 
 				set<AspFluent> fluents = parseAnswerSet(eachAnswerset);
 
-				allSets.push_back(AnswerSet(true, fluents));
+				allSets.push_back(AnswerSet(fluents.begin(), fluents.end()));
 			}
 		}
 	}

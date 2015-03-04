@@ -27,9 +27,14 @@ public:
          unsigned int max_time = 0
         ) throw();
 
+  ActionSet availableActions() const throw();
+        
 	AnswerSet currentStateQuery(const std::vector<actasp::AspRule>& query) const throw();
 	
 	bool updateFluents(const std::vector<actasp::AspFluent> &observations) throw();
+  
+  std::list< std::list<AspAtom> > query(const std::string &queryString, unsigned int initialTimeStep,
+                                   unsigned int finalTimeStep) const throw();
 	
 	bool isPlanValid(const AnswerSet& plan, const std::vector<actasp::AspRule>& goal)  const throw();
   
@@ -58,7 +63,7 @@ private:
 	std::string generatePlanQuery(	const std::vector<actasp::AspRule>& goalRules,
 									bool filterActions) const throw();
 
-	std::vector<actasp::AnswerSet> krQuery(	const std::string& query, 
+	std::list<actasp::AnswerSet> krQuery(	const std::string& query, 
 											unsigned int initialTimeStep,
                       unsigned int finalTimeStep,
 											const std::string& fileName, 

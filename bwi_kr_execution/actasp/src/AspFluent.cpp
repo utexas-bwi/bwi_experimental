@@ -7,27 +7,8 @@ using namespace std;
 
 namespace actasp {
 
-static vector<string> tokenizeCommas(string input) {
-
-	vector<string> stuff;
-
-	while (!input.empty()) {
-
-		int firstComma = input.find(",");
-		stuff.push_back(input.substr(0, std::min(firstComma, (int) input.length())));
-
-		if (firstComma == string::npos)
-			input = "";
-		else
-			input = input.substr(firstComma+1);
-	}
-	return stuff;
-}
-
 
 AspFluent::AspFluent(const std::string& formula) throw (std::invalid_argument) :
-      name(),
-      variables(),
       timeStep(),
 			cachedBase(){
         
@@ -36,49 +17,24 @@ AspFluent::AspFluent(const std::string& formula) throw (std::invalid_argument) :
    bool inName = true;   
    bool valid = false;
    string current;
-   current.reserve(100);
-   cachedBase.reserve(100);
+   //current.reserve(100);
+   size_t first_par = formula.find_first_of('(');
+   size_t last_par = formula.find_last_of(')');
+   size_t last_comma = formula.find_last_of(',');
    
-   for(int i=0, size = formula.length(); i < size; ++i) {
-     
-     if(inName) {
-       if(formula.at(i) != '(')
-         name += formula.at(i);
-       else {
-         cachedBase += name;
-         cachedBase += '(';
-         inName = false;
-       }
-     }
-     else {
-       if(formula.at(i) == ')') {
-         timeStep = atoi(current.c_str());
-
-           
-         valid = true;
-         break; //ignore anything else
-       }
-       if(formula.at(i) != ',')
-         current += formula.at(i);
-       else {
-         variables.push_back(current);
-         cachedBase += current;
-         cachedBase += ',';
-         current.clear();
-       }
-     }
-   }
-
-   if(inName)
-     throw std::invalid_argument("AspFluent: The string " + formula + " does not contain a '(', therefore is not a valid fluent");
+   if(first_par == string::npos)
+    throw std::invalid_argument("AspFluent: The string " + formula + " does not contain a '(', therefore is not a valid fluent");
    
-   if(!valid)
+   if(last_par == string::npos)
      throw std::invalid_argument("The string " + formula + " does not contain a ')', therefore is not a valid fluent");
+   
+   size_t time_begins = (last_comma == string::npos)? first_par+1 : last_comma+1;
+   timeStep = atoi(&formula[time_begins]);
+   cachedBase.assign(&formula[0],time_begins);
+  
 }
 
 AspFluent::AspFluent(const std::string &name, const std::vector<std::string> &variables, unsigned int timeStep) throw () : 
-		name(name),
-		variables(variables),
 		timeStep(timeStep),
 		cachedBase() {
   stringstream ss;
@@ -94,7 +50,7 @@ AspFluent::AspFluent(const std::string &name, const std::vector<std::string> &va
 }
 
 unsigned int AspFluent::arity() const  throw() {
-	return this->variables.size() + 1;
+	return this->getParameters().size() + 1;
 }
 
 void AspFluent::setTimeStep(unsigned int timeStep) throw() {
@@ -109,11 +65,24 @@ unsigned int AspFluent::getTimeStep() const throw() {
 }
 
 string AspFluent::getName() const throw() {
-	return name;
+	return cachedBase.substr(0,cachedBase.find_first_of('('));
 }
 
 vector<string> AspFluent::getParameters() const throw() {
-	return variables;
+  
+  size_t start = cachedBase.find_first_of('(')+1;
+  
+  vector<string> params;
+  
+  size_t comma = cachedBase.find_first_of(',',start);
+  
+  while(comma != string::npos) {
+    params.push_back(cachedBase.substr(start,comma-start));
+    start = comma+1;
+    comma = cachedBase.find_first_of(',',comma+1);
+  }
+  
+	return params;
 }
 
 bool AspFluent::operator<(const AspFluent& other) const throw(){

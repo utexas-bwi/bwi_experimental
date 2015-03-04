@@ -94,16 +94,17 @@ actasp::ActionSet::const_iterator QLearningActionSelector::choose(const actasp::
   ss << endl;
 
   AnswerSet currentState = reasoner->currentStateQuery(vector<AspRule>());
+  State state(currentState.getFluents().begin(), currentState.getFluents().end());
 
   ActionSet::const_iterator optIt = options.begin();
   for (; optIt != options.end(); ++optIt) {
-    ActionValueMap &thisState = value[currentState.getFluents()];
+    ActionValueMap &thisState = value[state];
     
     if(thisState.find(*optIt) == thisState.end()) {
       //initialize to default
       thisState[*optIt] = defval->value(*optIt);
     }
-    ss << value[currentState.getFluents()][*optIt] << " ";
+    ss << value[state][*optIt] << " ";
   }
 
   ROS_INFO_STREAM(ss.str());
@@ -117,20 +118,24 @@ actasp::ActionSet::const_iterator QLearningActionSelector::choose(const actasp::
     return chosen;
   }
 
-  actasp::ActionSet::const_iterator best = max_element(options.begin(), options.end(),CompareValues(value[currentState.getFluents()]));
+  actasp::ActionSet::const_iterator best = max_element(options.begin(), options.end(),CompareValues(value[state]));
 
   return best;
 
 }
 
 void QLearningActionSelector::actionStarted(const AspFluent&) throw() {
-
-  initial = reasoner->currentStateQuery(vector<AspRule>()).getFluents();
+  initial.clear();
+ 
+  AnswerSet currentState = reasoner->currentStateQuery(vector<AspRule>());
+  initial.insert(currentState.getFluents().begin(), currentState.getFluents().end());
 }
 
 
 void QLearningActionSelector::actionTerminated(const AspFluent& action) throw() {
-  final = reasoner->currentStateQuery(vector<AspRule>()).getFluents();
+  AnswerSet currentState = reasoner->currentStateQuery(vector<AspRule>());
+  final.clear();
+  final.insert(currentState.getFluents().begin(), currentState.getFluents().end());
   previousAction = action;
 }
 

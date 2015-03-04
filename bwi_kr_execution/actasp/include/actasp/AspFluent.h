@@ -36,8 +36,6 @@ public:
   operator std::string() const { return this->toString(); } 
 
 private:
-	std::string name;
-	std::vector<std::string> variables;
 	unsigned int timeStep;
 	std::string cachedBase; //cached for optimization
 	
@@ -58,7 +56,33 @@ struct ActionEquality : public std::binary_function<const AspFluent&, const AspF
  }
 };
 
+struct TimeStepComparator : public std::binary_function<const AspFluent&, const AspFluent&, bool>{
+ bool operator()(const AspFluent& first, const AspFluent& second) const {
+   return first.getTimeStep() < second.getTimeStep();
+ }
+};
+
 typedef std::set<AspFluent, ActionComparator> ActionSet;
+
+struct AspFluentRef {
+  
+  AspFluentRef(const AspFluent &inobj) :  const_obj(&inobj) {}
+  
+  operator const AspFluent&() const {
+    return *const_obj;
+  }
+  
+  bool operator<(const AspFluent& other) const throw() {
+    return *const_obj < other;
+  }
+  bool operator==(const AspFluent& other) const throw() {
+    return *const_obj == other;
+  }
+  
+  operator std::string() const { return const_obj->toString(); } 
+  
+  const AspFluent *const_obj;
+};
 
 }
 #endif

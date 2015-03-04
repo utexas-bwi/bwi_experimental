@@ -33,7 +33,7 @@ AnswerSet planToAnswerSet(const std::list<Action*>& plan) {
     fluents.insert((*actIt)->toFluent(timeStep));
   }
 
-  return AnswerSet(true,fluents);
+  return AnswerSet(fluents.begin(), fluents.end());
 }
 
 ActionSet actionMapToSet(const std::map<std::string, Action *>& actionMap) {

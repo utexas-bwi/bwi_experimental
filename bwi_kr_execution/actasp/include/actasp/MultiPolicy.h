@@ -24,7 +24,7 @@ public:
 	bool empty()const throw();
 	
 private:
-	std::map<std::set<AspFluent>, ActionSet, StateComparator > policy;
+	std::map<std::set<AspFluent>, ActionSet, StateComparator<AspFluent> > policy;
   ActionSet allActions;
 	
 };

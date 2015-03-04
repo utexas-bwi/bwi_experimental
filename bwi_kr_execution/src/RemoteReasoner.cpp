@@ -31,6 +31,15 @@ actasp::AnswerSet RemoteReasoner::currentStateQuery(const std::vector<actasp::As
   return local.currentStateQuery(query);
 }
 
+actasp::ActionSet RemoteReasoner::availableActions() const throw() {
+   return local.availableActions();
+}
+
+std::list< std::list<actasp::AspAtom> > RemoteReasoner::query(const std::string &queryString, unsigned int initialTimeStep,
+                                   unsigned int finalTimeStep) const throw() {
+  return local.query(queryString,initialTimeStep,finalTimeStep);
+}
+
 bool RemoteReasoner::updateFluents(const std::vector<actasp::AspFluent> &observations) throw() {
   NodeHandle n;
   ros::ServiceClient updateClient = n.serviceClient<bwi_kr_execution::UpdateFluents> ( "update_fluents" );
