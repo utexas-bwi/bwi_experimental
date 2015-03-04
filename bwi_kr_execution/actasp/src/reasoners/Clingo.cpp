@@ -1,8 +1,13 @@
 #include <actasp/reasoners/Clingo.h>
 
+#include "IsNotLocallyOptimal.h"
+#include "LexComparator.h"
+
 #include <actasp/AnswerSet.h>
 #include <actasp/action_utils.h>
 #include <actasp/Action.h>
+
+#include <ctime>
 
 #include <sstream>
 #include <ostream>
@@ -10,6 +15,9 @@
 #include <algorithm>
 #include <fstream>
 #include <cmath> //for floor
+
+#include <iostream>
+#include <ctime>
 
 #define CURRENT_STATE_FILE "current.asp"
 
@@ -114,68 +122,51 @@ static string aspString(const std::vector<actasp::AspRule>& query, unsigned int 
   return aspString(query,vs.str());
 }
 
-
-struct CreateFluent {
-  AspFluent operator()(const std::string & fluentDescription) const {
-    return AspFluent(fluentDescription);
-  }
-};
-
-static std::set<actasp::AspFluent> parseAnswerSet(const std::string& answerSetContent) {
+static std::list<AspFluent> parseAnswerSet(const std::string& answerSetContent) {
 
   stringstream predicateLine(answerSetContent);
 
-  set<AspFluent> predicates;
+  list<AspFluent> predicates;
 
   //split the line based on spaces
-  transform(istream_iterator<string>(predicateLine),
+  copy(istream_iterator<string>(predicateLine),
             istream_iterator<string>(),
-            inserter(predicates,predicates.begin()),
-            CreateFluent());
+            back_inserter(predicates));
 
   return predicates;
 }
 
-static std::vector<actasp::AnswerSet> readAnswerSets(const std::string& filePath) {
+
+static std::list<actasp::AnswerSet> readAnswerSets(const std::string& filePath) {
 
   ifstream file(filePath.c_str());
-
-  stringstream answerSetContent;
-
-  copy(istreambuf_iterator<char>(file),
-       istreambuf_iterator<char>(),
-       ostreambuf_iterator<char>(answerSetContent));
-
-  size_t pos = answerSetContent.str().find_last_of("SATISFIABLE");
-
-  bool satisfiable = answerSetContent.str().substr(pos-2,13) != "UNSATISFIABLE";
-
-  vector<AnswerSet> allSets;
-
-  if (satisfiable) {
-
-    string firstLine;
-    string eachAnswerset;
-
-    while (answerSetContent) {
-
-      getline(answerSetContent,firstLine);
-      if (firstLine.find("Answer") != string::npos) {
-        getline(answerSetContent,eachAnswerset);
+  
+  list<AnswerSet> allSets;
+  bool answerFound = false;
+  
+  string line;
+  while(file) {
+    
+    getline(file,line);
+    
+    if(answerFound && line == "UNSATISFIABLE")
+      return list<AnswerSet>();
+    
+    if(line.find("Answer") != string::npos) {
+      getline(file,line);
         try {
-          set<AspFluent> fluents = parseAnswerSet(eachAnswerset);
-          allSets.push_back(AnswerSet(true, fluents));
+          list<AspFluent> fluents = parseAnswerSet(line);
+          allSets.push_back(AnswerSet(fluents.begin(), fluents.end()));
         } catch (std::invalid_argument& arg) {
           //swollow it and skip this answer set.
         }
-      }
     }
   }
-
-  return allSets;
+ 
+ return allSets;
 }
 
-std::vector<actasp::AnswerSet> Clingo::krQuery(const std::string& query,
+std::list<actasp::AnswerSet> Clingo::krQuery(const std::string& query,
     unsigned int initialTimeStep,
     unsigned int finalTimeStep,
     const std::string& fileName,
@@ -230,11 +221,26 @@ string Clingo::generatePlanQuery(const std::vector<actasp::AspRule>& goalRules,
   return goal.str();
 }
 
-//TODO continue here
+
+
+ActionSet Clingo::availableActions() const throw() {
+  list<AnswerSet> actions = krQuery(generatePlanQuery(vector<AspRule>(), true),1,1,"planQuery.asp",0);
+
+  ActionSet computed;
+
+  //the first answer set contains the current state and no actions
+  list<AnswerSet>::iterator act = ++actions.begin();
+  for (; act != actions.end(); ++act) {
+    computed.insert(act->getFluents().begin(), act->getFluents().end());
+  }
+
+  return computed;
+}
+
 
 AnswerSet Clingo::computePlan(const std::vector<actasp::AspRule>& goal) const throw() {
 
-  vector<AnswerSet> answerSets;
+  list<AnswerSet> answerSets;
 
   string query = generatePlanQuery(goal);
 
@@ -242,9 +248,9 @@ AnswerSet Clingo::computePlan(const std::vector<actasp::AspRule>& goal) const th
 
 
   if (answerSets.empty())
-    return AnswerSet(false);
+    return AnswerSet();
 
-  return  answerSets[0];
+  return  *(answerSets.begin());
 }
 
 struct PolicyMerger {
@@ -318,30 +324,29 @@ struct PolicyMerger {
 //checks wheter the shorter plan occurs in the longer one. For instance: ABCDEF and ABCDXYEF removing XY
 
 struct IsSubSequence {
-  
+
   IsSubSequence(const list< AspFluent> &myPlan) : longerPlan(myPlan) {};
-  
+
   bool operator()(const list<AspFluent> &shorterPlan) const {
-    
+
     pair< list< AspFluent>::const_iterator, list< AspFluent>::const_iterator>
     start = mismatch(shorterPlan.begin(),shorterPlan.end(),longerPlan.begin(), ActionEquality());
-    
+
     size_t remaining = distance(start.first, shorterPlan.end());
     list< AspFluent>::const_iterator secondStart = longerPlan.end();
     advance(secondStart, -remaining);
-    
-    return equal(start.first, shorterPlan.end(), secondStart, ActionEquality());
-    
-  }
-  
-  const list< AspFluent> &longerPlan;
-  
-};
 
+    return equal(start.first, shorterPlan.end(), secondStart, ActionEquality());
+
+  }
+
+  const list< AspFluent> &longerPlan;
+
+};
 
 struct IsNotLocallyOptimalSubPlanCheck {
 
-  IsNotLocallyOptimalSubPlanCheck(const list< list< AspFluent> > &allPlans, const ActionSet &allActions) :
+  IsNotLocallyOptimalSubPlanCheck(const set< list< AspFluent>,LexComparator > &allPlans, const ActionSet &allActions) :
     allPlans(allPlans), allActions(allActions) {}
 
   bool operator()(const AnswerSet& plan) const {
@@ -350,12 +355,12 @@ struct IsNotLocallyOptimalSubPlanCheck {
     remove_copy_if(plan.getFluents().begin(), plan.getFluents().end(),
                    back_inserter(actionsOnly),not1(IsAnAction(allActions)));
 
-    list< list< AspFluent> >::const_iterator sub = find_if(allPlans.begin(),allPlans.end(),IsSubSequence(actionsOnly));
+    set< list< AspFluent>, LexComparator >::const_iterator sub = find_if(allPlans.begin(),allPlans.end(),IsSubSequence(actionsOnly));
 
     return sub != allPlans.end();
   }
 
-  const list< list< AspFluent> > &allPlans;
+  const set< list< AspFluent>, LexComparator > &allPlans;
   const ActionSet &allActions;
 };
 
@@ -363,8 +368,8 @@ struct CleanPlan {
 
   CleanPlan(const ActionSet &allActions) : allActions(allActions) {}
 
-  list<AspFluent> operator()(const AnswerSet &planWithStates) const {
-    list<AspFluent> actionsOnly;
+  list<AspFluentRef> operator()(const AnswerSet &planWithStates) const {
+    list<AspFluentRef> actionsOnly;
 
     remove_copy_if(planWithStates.getFluents().begin(), planWithStates.getFluents().end(),
                    back_inserter(actionsOnly),not1(IsAnAction(allActions)));
@@ -388,6 +393,18 @@ struct PlanLongerThan {
   unsigned int length;
 };
 
+struct AnswerSetRef {
+  AnswerSetRef(const AnswerSet& aset) : aset(&aset) {}
+  
+  operator const AnswerSet&() const {
+    return *aset;
+  }
+  
+  const AnswerSet *aset;
+};
+
+
+
 MultiPolicy Clingo::computePolicy(const std::vector<actasp::AspRule>& goal, double suboptimality) const throw (std::logic_error) {
 
   if (suboptimality < 1) {
@@ -398,69 +415,92 @@ MultiPolicy Clingo::computePolicy(const std::vector<actasp::AspRule>& goal, doub
 
   string query = generatePlanQuery(goal,false);
 
-  vector<AnswerSet> answerSets = krQuery(query,0,max_n,"planQuery.asp",0);
+  clock_t kr1_begin = clock();
+  list<AnswerSet> firstAnswerSets = krQuery(query,1,max_n,"planQuery.asp",0);
+  clock_t kr1_end = clock();
+  cout << "The first kr call took " << (double(kr1_end - kr1_begin) / CLOCKS_PER_SEC) << " seconds" << endl;
 
   MultiPolicy policy(allActions);
 
-  if (answerSets.empty())
+  if (firstAnswerSets.empty())
     return policy;
 
-  unsigned int shortestLength = answerSets[0].maxTimeStep();
+  unsigned int shortestLength = firstAnswerSets.begin()->maxTimeStep();
 
-  for_each(answerSets.begin(),answerSets.end(),PolicyMerger(policy));
-
-  list< list <AspFluent> > allPlans;
-
-  //remove the states from the plans
-  transform(answerSets.begin(),answerSets.end(),back_inserter(allPlans), CleanPlan(allActions));
+  for_each(firstAnswerSets.begin(),firstAnswerSets.end(),PolicyMerger(policy));
 
   int maxLength = floor(suboptimality * shortestLength);
 
   if (maxLength == shortestLength)
     return policy;
 
+  //all accepted plans sorted lexicographically
+  set< list <AspFluentRef>, LexComparator > goodPlans;
+
+  //remove the states from the plans
+  transform(firstAnswerSets.begin(),firstAnswerSets.end(),inserter(goodPlans,goodPlans.begin()), CleanPlan(allActions));
+
   query = generatePlanQuery(goal,false);
-  answerSets = krQuery(query,maxLength,maxLength,"planQuery.asp",0);
+  
+  clock_t kr2_begin = clock();
+  list<AnswerSet> answerSets = krQuery(query,maxLength,maxLength,"planQuery.asp",0);
+  clock_t kr2_end = clock();
+  cout << "The second kr call took " << (double(kr2_end - kr2_begin) / CLOCKS_PER_SEC) << " seconds" << endl;
 
-  vector<AnswerSet>::iterator currentFirst = answerSets.begin();
+  //skip the minimial plans
+  list<AnswerSet>::iterator currentFirst = find_if(answerSets.begin(),answerSets.end(),PlanLongerThan(answerSets.begin()->maxTimeStep()));
 
+  set< list <AspFluentRef>, LexComparator > badPlans;
+  //this object remembers the set of bad plans, cannot be created inside the loop
+  IsNotLocallyOptimal isNotLocallyOptimal(&goodPlans,&badPlans, allActions, shortestLength,false);
+
+  clock_t filter_begin = clock();
   while (currentFirst != answerSets.end()) {
 
     //process the plans in groups of increasing length
 
-    vector<AnswerSet>::iterator currentLast = find_if(currentFirst,answerSets.end(),PlanLongerThan(currentFirst->maxTimeStep()));
+    list<AnswerSet>::iterator currentLast = find_if(currentFirst,answerSets.end(),PlanLongerThan(currentFirst->maxTimeStep()));
 
-    vector<AnswerSet>::iterator newEnd = remove_if(currentFirst,currentLast,IsNotLocallyOptimalSubPlanCheck(allPlans,allActions));
+    list<AnswerSetRef> goodPointers;
+    remove_copy_if(currentFirst,currentLast,back_inserter(goodPointers),isNotLocallyOptimal);
 
-    transform(currentFirst,newEnd,back_inserter(allPlans), CleanPlan(allActions));
-
-//     vector<AnswerSet>::iterator secondFilter = remove_if(answerSets.begin(),answerSets.end(),IsNotLocallyOptimal(this,goal,allActions));
-//     answerSets.erase(secondFilter,answerSets.end());
-
-    for_each(answerSets.begin(),newEnd,PolicyMerger(policy));
-
+    for_each(goodPointers.begin(),goodPointers.end(),PolicyMerger(policy));
+    
+    transform(goodPointers.begin(),goodPointers.end(),inserter(goodPlans, goodPlans.begin()), CleanPlan(allActions));
+    
     currentFirst = currentLast;
 
   }
+  clock_t filter_end = clock();
+
+  set< list <AspFluentRef>, LexComparator >::const_iterator printIt = goodPlans.begin();
+  for (; printIt != goodPlans.end(); ++printIt) {
+    copy(printIt->begin(),printIt->end(),ostream_iterator<string>(cout, " "));
+    cout << endl;
+  }
+  
+  cout << "filtering took " << (double(filter_end - filter_begin) / CLOCKS_PER_SEC) << " seconds" << endl;
+
 
   return policy;
 
 }
 
 struct AnswerSetToList {
-  list <AspFluent> operator()(const AnswerSet& aset) const {
+  list <AspFluentRef> operator()(const AnswerSet& aset) const {
 
-    return list <AspFluent>(aset.getFluents().begin(), aset.getFluents().end());
+    return list <AspFluentRef>(aset.getFluents().begin(), aset.getFluents().end());
 
   }
 };
 
 struct ListToAnswerSet {
   AnswerSet operator()(const list<AspFluent>& plan) {
-    return AnswerSet(true, set<AspFluent> (plan.begin(), plan.end()));
+    return AnswerSet(plan.begin(), plan.end());
   }
 
 };
+
 
 std::vector< AnswerSet > Clingo::computeAllPlans(const std::vector<actasp::AspRule>& goal,
     double suboptimality) const throw () {
@@ -472,54 +512,66 @@ std::vector< AnswerSet > Clingo::computeAllPlans(const std::vector<actasp::AspRu
   }
 
   string query = generatePlanQuery(goal,true);
-  vector<AnswerSet> answerSets = krQuery(query,0,max_n,"planQuery.asp",0);
+  list<AnswerSet> firstAnswerSets = krQuery(query,0,max_n,"planQuery.asp",0);
 
-  if (answerSets.empty())
+  if (firstAnswerSets.empty())
     return vector<AnswerSet>();
 
   //when actions are filtered and there are not state fluents,
   //the last time step is of the last action, and actions start at
   //zero, so we need +1
-  unsigned int shortestLength = answerSets[0].maxTimeStep()+1;
-
-  list< list<AspFluent> > allPlansList;
-  transform(answerSets.begin(), answerSets.end(),back_inserter(allPlansList),AnswerSetToList());
-
-  vector< AnswerSet> finalVector(answerSets);
+  unsigned int shortestLength = firstAnswerSets.begin()->maxTimeStep()+1;
 
   int maxLength = floor(suboptimality * shortestLength);
 
   if (maxLength == shortestLength)
-    return finalVector;
+    return vector<AnswerSet>(firstAnswerSets.begin(), firstAnswerSets.end());
+
+  set< list <AspFluentRef>, LexComparator > goodPlans;
+  transform(firstAnswerSets.begin(), firstAnswerSets.end(),inserter(goodPlans,goodPlans.begin()),AnswerSetToList());
 
   query = generatePlanQuery(goal,true);
-  answerSets = krQuery(query,maxLength,maxLength,"planQuery.asp",0);
+  list<AnswerSet> moreAnswerSets = krQuery(query,maxLength,maxLength,"planQuery.asp",0);
 
-  vector<AnswerSet>::iterator currentFirst = answerSets.begin();
-  //the first group are the shortest plans and have already been included, skip them.
-  currentFirst = find_if(currentFirst,answerSets.end(),PlanLongerThan(currentFirst->maxTimeStep()+1));
 
-  while (currentFirst != answerSets.end()) {
+  list<AnswerSet>::iterator currentFirst = find_if(moreAnswerSets.begin(),moreAnswerSets.end(),PlanLongerThan(moreAnswerSets.begin()->maxTimeStep()));
+
+  set< list<AspFluentRef>, LexComparator > badPlans;
+  //this object remembers the set of bad plans, cannot be created inside the loop
+
+  IsNotLocallyOptimal isNotLocallyOptimal(&goodPlans, &badPlans,allActions,shortestLength,true);
+
+  list<AnswerSetRef> goodPointers(firstAnswerSets.begin(),firstAnswerSets.end());
+  while (currentFirst != moreAnswerSets.end()) {
 
     //process the plans in groups of increasing length
 
-    vector<AnswerSet>::iterator currentLast = find_if(currentFirst,answerSets.end(),PlanLongerThan(currentFirst->maxTimeStep()+1));
-
-    vector<AnswerSet>::iterator newEnd = remove_if(currentFirst,currentLast,IsNotLocallyOptimalSubPlanCheck(allPlansList,allActions));
-
-    //     vector<AnswerSet>::iterator secondFilter = remove_if(answerSets.begin(),answerSets.end(),IsNotLocallyOptimal(this,goal,allActions));
-    //     answerSets.erase(secondFilter,answerSets.end());
-
-
-    transform(currentFirst, newEnd,back_inserter(allPlansList),AnswerSetToList());
-
-    finalVector.insert(finalVector.end(),currentFirst, newEnd);
+    list<AnswerSet>::iterator currentLast = find_if(currentFirst,moreAnswerSets.end(),PlanLongerThan(currentFirst->maxTimeStep()));
+    
+    size_t size_pre_copy = goodPointers.size();
+    
+    remove_copy_if(currentFirst,currentLast,back_inserter(goodPointers),isNotLocallyOptimal);    
+    
+    list<AnswerSetRef>::iterator from = goodPointers.begin();
+    advance(from,size_pre_copy);
+    transform(from, goodPointers.end(),inserter(goodPlans,goodPlans.begin()),AnswerSetToList());
 
     currentFirst = currentLast;
-
   }
 
+  vector<AnswerSet> finalVector(goodPointers.begin(),goodPointers.end());
+  
+  cout << "  ---  good plans ---" << endl;
+  vector< AnswerSet>::const_iterator printIt = finalVector.begin();
+  for (; printIt != finalVector.end(); ++printIt) {
+    copy(printIt->getFluents().begin(),printIt->getFluents().end(),ostream_iterator<string>(cout, " "));
+    cout << endl;
+  }
+  cout << " ---- " << endl;
+
   return finalVector;
+
+
 }
 
 
@@ -530,8 +582,8 @@ bool Clingo::isPlanValid(const AnswerSet& plan, const std::vector<actasp::AspRul
 
   stringstream monitorQuery(planQuery, ios_base::app | ios_base::out);
 
-  const set<AspFluent> &allActions = plan.getFluents();
-  set<AspFluent>::const_iterator actionIt = allActions.begin();
+  const AnswerSet::FluentSet &allActions = plan.getFluents();
+  AnswerSet::FluentSet::const_iterator actionIt = allActions.begin();
 
   for (int i=0; actionIt != allActions.end(); ++actionIt, ++i)
     monitorQuery << actionIt->toString(i) << "." << endl;
@@ -541,9 +593,9 @@ bool Clingo::isPlanValid(const AnswerSet& plan, const std::vector<actasp::AspRul
 
 AnswerSet Clingo::currentStateQuery(const std::vector<actasp::AspRule>& query) const throw() {
 
-  vector<AnswerSet> sets = krQuery(aspString(query,0),0,0,"stateQuery.asp");
+  list<AnswerSet> sets = krQuery(aspString(query,0),0,0,"stateQuery.asp");
 
-  return (sets.empty())? AnswerSet(false) : sets[0];
+  return (sets.empty())? AnswerSet() : *(sets.begin());
 }
 
 static AspRule fluent2Rule(const AspFluent& fluent) {
@@ -565,14 +617,14 @@ bool Clingo::updateFluents(const std::vector<actasp::AspFluent> &observations) t
   queryStream << "noop(0)." << endl;
   queryStream << "#hide noop/1." << endl;
 
-  vector<AnswerSet> currentState = krQuery(queryStream.str(),1,1,"observationQuery.asp");
+  list<AnswerSet> currentState = krQuery(queryStream.str(),1,1,"observationQuery.asp");
 
   if (currentState.empty())
     return false; //the observations are incompatible with the current state and are discarded
 
   vector<AspRule> newStateRules;
   //iclingo generates all answer sets up to the last iteration, so we need the last one here
-  set<AspFluent> newStateFluents = currentState[currentState.size()-1].getFluentsAtTime(1);
+  set<AspFluent> newStateFluents = currentState.rbegin()->getFluentsAtTime(1);
   newStateRules.reserve(newStateFluents.size());
   transform(newStateFluents.begin(),newStateFluents.end(),back_inserter(newStateRules),fluent2Rule);
 
@@ -583,6 +635,77 @@ bool Clingo::updateFluents(const std::vector<actasp::AspFluent> &observations) t
   currentFile.close();
 
   return true;
+}
+
+
+//this is almost brutally copied from krquery
+std::list< std::list<AspAtom> > Clingo::query(const std::string &queryString, unsigned int initialTimeStep,
+                                   unsigned int finalTimeStep) const throw() {
+   
+  //this depends on our way of representing stuff.
+  //iclingo starts from 1, while we needed the initial state and first action to be at time step 0
+  initialTimeStep++;
+  finalTimeStep++;
+
+  string queryPath = queryDir + "generic_query.asp";
+
+  ofstream queryFile(queryPath.c_str());
+  queryFile << queryString << endl;
+  queryFile.close();
+
+  stringstream commandLine;
+
+  const string outputFilePath = queryDir + "query_output.txt";
+
+  if (max_time > 0) {
+    commandLine << "timeout " << max_time << " ";
+  }
+
+  stringstream iterations;
+  iterations << "--imin=" << initialTimeStep << " --imax=" << finalTimeStep;
+
+
+  commandLine << "iclingo " << iterations.str() << " " << domainDir <<  "*.asp " << " " << queryPath <<  " > " << outputFilePath << " 0";
+
+
+  if (!system(commandLine.str().c_str())) {
+    //maybe do something here, or just kill the warning about the return value not being used.
+  }
+
+  ifstream file(outputFilePath.c_str());
+  
+  list<list <AspAtom> > allSets;
+  bool answerFound = false;
+  
+  string line;
+  while(file) {
+    
+    getline(file,line);
+    
+    if(answerFound && line == "UNSATISFIABLE")
+      return list<list <AspAtom> >();
+    
+    if(line.find("Answer") != string::npos) {
+      getline(file,line);
+        try {
+            stringstream predicateLine(line);
+
+            list<AspAtom> atoms;
+
+            //split the line based on spaces
+            copy(istream_iterator<string>(predicateLine),
+                  istream_iterator<string>(),
+                  back_inserter(atoms));
+
+          allSets.push_back(atoms);
+        } catch (std::invalid_argument& arg) {
+          //swollow it and skip this answer set.
+        }
+    }
+  }
+ 
+ return allSets;
+   
 }
 
 void Clingo::reset() throw() {

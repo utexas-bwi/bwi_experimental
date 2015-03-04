@@ -44,9 +44,14 @@ bwi_kr_execution::AspRule TranslateRule::operator()(const actasp::AspRule& actas
 }
 
 actasp::AnswerSet TranslateAnswerSet::operator()(const bwi_kr_execution::AnswerSet& bwiAnswerSet) {
-  set<actasp::AspFluent> fluents;
-  transform(bwiAnswerSet.fluents.begin(), bwiAnswerSet.fluents.end(), inserter(fluents,fluents.begin()), TranslateFluent());
-  return actasp::AnswerSet(bwiAnswerSet.satisfied, fluents);
+  
+  if(!bwiAnswerSet.satisfied)
+    return actasp::AnswerSet();
+  
+  list<actasp::AspFluent> fluents;
+  transform(bwiAnswerSet.fluents.begin(), bwiAnswerSet.fluents.end(), back_inserter(fluents), TranslateFluent());
+  
+  return actasp::AnswerSet(fluents.begin(), fluents.end());
 }
 
 bwi_kr_execution::AnswerSet TranslateAnswerSet::operator()(const actasp::AnswerSet& actaspAnswerSet) {

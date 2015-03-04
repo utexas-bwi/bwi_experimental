@@ -1,5 +1,6 @@
-elevroom(l4_elev_east;; l4_elev_west;; l3_elev_east;; l3_elev_west).
-elevroom(l2_elev_east;; l2_elev_west;; l1_elev_east;; l1_elev_west).
+
+elevroom(l4_elev_east; l4_elev_west; l3_elev_east; l3_elev_west).
+elevroom(l2_elev_east; l2_elev_west; l1_elev_east; l1_elev_west).
 
 room(R) :- elevroom(R). 
 
@@ -56,13 +57,6 @@ hasdoor(l3_elev_east, d3_elev_east).
 hasdoor(l3_elev_west, d3_elev_west).
 hasdoor(l3_200, d3_elev_east).
 hasdoor(l3_200, d3_elev_west).
-
-hasdoor(l3_200,d3_elev_east). 
-hasdoor(l3_elev_east,d3_elev_east).
-
-hasdoor(l3_200,d3_elev_west). 
-hasdoor(l3_elev_west,d3_elev_west). 
-
 
 %hide non fluents
 #hide elevdoor/2.

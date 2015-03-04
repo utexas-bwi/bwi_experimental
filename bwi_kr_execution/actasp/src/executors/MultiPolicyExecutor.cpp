@@ -102,7 +102,8 @@ void MultiPolicyExecutor::executeActionStep() {
 
     //choose the next action
     AnswerSet currentState = kr->currentStateQuery(vector<AspRule>());
-    ActionSet options = policy.actions(currentState.getFluents());
+    set<AspFluent> state(currentState.getFluents().begin(), currentState.getFluents().end());
+    ActionSet options = policy.actions(state);
 
     if (options.empty() || (active != NULL &&  active->hasFailed())) {
       //there's no action for this state, computing more plans
@@ -113,7 +114,7 @@ void MultiPolicyExecutor::executeActionStep() {
       MultiPolicy otherPolicy = planner->computePolicy(goalRules,suboptimality);
       policy.merge(otherPolicy);
 
-      options = policy.actions(currentState.getFluents());
+      options = policy.actions(state);
       if (options.empty()) { //no actions available from here!
         hasFailed = true;
         return;

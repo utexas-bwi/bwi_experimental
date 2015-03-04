@@ -18,7 +18,7 @@ AnswerSet AnyPlan::computePlan(const std::vector<actasp::AspRule>& goal) const t
 	vector< AnswerSet > allPlans = actualPlanner->computeAllPlans(goal,suboptimality);
 
 	if (allPlans.empty())
-		return AnswerSet(false);
+		return AnswerSet();
 
 	//pick one plan and return it, destroy the others
 

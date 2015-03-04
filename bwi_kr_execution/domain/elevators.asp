@@ -1,4 +1,4 @@
-#cumulative n.
+% #cumulative n.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -13,9 +13,10 @@ beside(D,I+1) :- changefloor(R,I), hasdoor(R,D),I=0..n-2.
 facing(D,I+1) :- changefloor(R,I), hasdoor(R,D),I=0..n-2.
 open(D,I+1) :- changefloor(R,I), hasdoor(R,D),I=0..n-2.
 
-:- changefloor(R1,I), at(R2,I), R1=R2, I=0..n-1.
+:- changefloor(R,I), at(R,I), I=0..n-1.
 :- changefloor(R1,I), at(R2,I), not sameroom(R1,R2), I=0..n-1.
 :- changefloor(R,I), room(R), not elevroom(R), I=0..n-1.
+:- changefloor(R1,I), at(R,I), hasdoor(R,D), not facing(D,I), elevroom(R), door(D), I=0..n-1. 
 :- changefloor(R1,I), floor(R1, F1), at(R2, I), floor(R2, F2), upward(I), F1<F2, I=0..n-1. 
 :- changefloor(R1,I), floor(R1, F1), at(R2, I), floor(R2, F2), -upward(I), F1>F2, I=0..n-1. 
 
