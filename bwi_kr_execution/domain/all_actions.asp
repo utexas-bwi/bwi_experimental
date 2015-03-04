@@ -1,4 +1,4 @@
-#cumulative n.
+% #cumulative n.
 
 %you have to pick exactly one action
 
@@ -8,11 +8,12 @@
   approach(D1,I) : door(D1), 
   gothrough(D2,I) : door(D2), 
   opendoor(D3,I) : door(D3), 
-  searchroom(P,R,I): person(P) : room(R),
-  askperson(P1,P2,I): person(P1) : person(P2),
-  remind(P,M,R,I) : person(P) : meeting(M,G,R) : room(R),
+  goto(O,I) : object(O),
+  callelevator(E,U,I) : elevator(E) : orientation(U), 
   changefloor(R,I) : room(R),
-  callelevator(E,O,I) : elevator(E) : orientation(O)
+  searchroom(P,R1,I): person(P) : room(R1),
+  askperson(P1,P2,I): person(P1) : person(P2),
+  remind(P3,M,R2,I) : person(P3) : meeting(M,G,R2) : room(R2)
 }1 :- not noop(I), I=0..n-2.
 
 
@@ -22,5 +23,5 @@
 %#volatile n.
 noop(n) :- noop(n).
 
-#hide noop/1.
+% #hide noop/1.
 
