@@ -9,18 +9,41 @@ namespace bwi_krexec {
 
 void CallElevator::run() {
   
-  ROS_INFO("callelevator invoked");
+  if(!asked) {
+    std::string direction_text = (going_up) ? "up" : "down";
+    doors.clear()
+    // TODO - get door names from current_state_query here. Not sure how.
+    askToCallElevator.reset(new CallGUI("askToCallElevator", CallGUI::CHOICE_QUESTION,  "Could you call elevator " + elevator + " to go " + direction_text + ", and then let me know which door opened?", 60.0f, doors);
+    askToCallElevator->run();
+    asked = true;
+    startTime = ros::Time::now();
+  }
+  
+  if(!done) {
+    if (askToCallElevator->hasFinished()) {
+      // Check response to see it's positive.
+      int response_idx = askToCallElevator->getResponseIndex();
+      if (response_idx >= 0 && response_idx < doors.size()) {
+        // TODO - Update current state with this door being open.
+        ROS_DEBUG_STREAM( "door open: " << open );
+        CallGUI thanks("thanks", CallGUI::DISPLAY,  "Thanks!");
+        thanks.run();
+      } else {
+        // A door didn't open in the timeout specified.
+        failed = true;
+      }
+      done = true;
+    }
+  }
   
 }
 
 bool CallElevator::hasFinished() const {
-  //TODO implement this!
-  return true;
+  return done;
 }
 
 bool CallElevator::hasFailed() const {
-  //TODO implement this if this action can fail
-  return false;
+  return failed;
 }
 
 actasp::Action *CallElevator::cloneAndInit(const actasp::AspFluent & fluent) const {

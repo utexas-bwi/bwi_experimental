@@ -22,7 +22,7 @@ void OpenSimulatedDoor::run() {
   NodeHandle n;
 
   if (!requestSent) {
-    ServiceClient doorClient = n.serviceClient<segbot_simulation_apps::DoorHandlerInterface> ("update_doors");
+    ServiceClient doorClient = n.serviceClient<segbot_simulation_apps::DoorHandlerInterface> ("/update_doors");
     doorClient.waitForExistence();
 
     segbot_simulation_apps::DoorHandlerInterface dhi;
