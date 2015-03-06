@@ -1,6 +1,7 @@
 
-#include "RemoteReasoner.h"
 #include "msgs_utils.h"
+#include "RemoteReasoner.h"
+#include "StaticFacts.h"
 
 #include "learning/QLearningActionSelector.h"
 #include "learning/TimeReward.h"
@@ -174,7 +175,7 @@ int main(int argc, char**argv) {
 
   ros::NodeHandle privateNode("~");
   string domainDirectory;
-  n.param<std::string>("/bwi_kr_execution/domain_directory", domainDirectory, ros::package::getPath("bwi_kr_execution")+"/domain/");
+  n.param<std::string>("bwi_kr_execution/domain_directory", domainDirectory, ros::package::getPath("bwi_kr_execution")+"/domain/");
 
   if (domainDirectory.at(domainDirectory.size()-1) != '/')
     domainDirectory += '/';
@@ -195,9 +196,8 @@ int main(int argc, char**argv) {
 
   boost::filesystem::create_directories(queryDirectory);
   
-  
-
   AspKR *reasoner = new RemoteReasoner(MAX_N,queryDirectory,domainDirectory,actionMapToSet(ActionFactory::actions()),5);
+  StaticFacts::retrieveStaticFacts(reasoner, domainDirectory);
 
   TimeReward<QLearningActionSelector::State> *reward = new TimeReward<QLearningActionSelector::State>();
   DefaultActionValue *timeValue = new DefaultTimes();

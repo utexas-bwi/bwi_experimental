@@ -1,6 +1,7 @@
 
 #include "msgs_utils.h"
 #include "RemoteReasoner.h"
+#include "StaticFacts.h"
 
 #include "actasp/action_utils.h"
 #include "actasp/executors/ReplanningActionExecutor.h"
@@ -120,7 +121,7 @@ int main(int argc, char**argv) {
   
   ros::NodeHandle privateNode("~");
   string domainDirectory;
-  n.param<std::string>("/bwi_kr_execution/domain_directory", domainDirectory, ros::package::getPath("bwi_kr_execution")+"/domain/");
+  n.param<std::string>("bwi_kr_execution/domain_directory", domainDirectory, ros::package::getPath("bwi_kr_execution")+"/domain/");
   
   if(domainDirectory.at(domainDirectory.size()-1) != '/')
     domainDirectory += '/';
@@ -137,6 +138,7 @@ int main(int argc, char**argv) {
   boost::filesystem::create_directories(queryDirectory);
 
   AspKR *reasoner = new RemoteReasoner(MAX_N,queryDirectory,domainDirectory,actionMapToSet(ActionFactory::actions()));
+  StaticFacts::retrieveStaticFacts(reasoner, domainDirectory);
   
   //need a pointer to the specific type for the observer
   ReplanningActionExecutor *replanner = new ReplanningActionExecutor(reasoner,reasoner,ActionFactory::actions());

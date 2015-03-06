@@ -1,4 +1,4 @@
-% #cumulative n.
+#cumulative n.
 
 %you have to pick exactly one action
 

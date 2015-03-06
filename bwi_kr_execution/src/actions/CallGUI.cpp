@@ -1,5 +1,6 @@
 #include "CallGUI.h"
 
+#include <boost/foreach.hpp>
 #include <ros/ros.h>
 
 #include <stdexcept>
@@ -21,8 +22,10 @@ CallGUI::CallGUI ( const std::string &name, const TYPE type,  const std::string&
 
 void CallGUI::run() {
 
+
   ros::NodeHandle n;
   ros::ServiceClient client = n.serviceClient<segbot_gui::QuestionDialog> ( "question_dialog" );
+  /* std::cout << "running call gui" << std::endl; */
   client.waitForExistence();
 
   req.request.type = type;
@@ -31,6 +34,12 @@ void CallGUI::run() {
   req.request.timeout = timeOut;
 
   client.waitForExistence();
+
+  // std::cout << "making request - " << message  << std::endl << "  with options: ";
+  // BOOST_FOREACH(const std::string& option, options) {
+  //   std::cout << option << "  ";
+  // }
+  // std::cout << std::endl;
   client.call ( req );
 
   done = true;

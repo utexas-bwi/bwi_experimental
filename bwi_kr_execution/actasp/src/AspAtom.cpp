@@ -28,7 +28,7 @@ std::vector<std::string> AspAtom::getParameters() const throw() {
   size_t comma = atom.find_first_of(',',start);
   size_t end_param = std::min(comma,end);
   
-  while(end_param <= end) {
+  while(start < end) {
     params.push_back(atom.substr(start,end_param-start));
     start = end_param+1;
     end_param = std::min(atom.find_first_of(',',start),end);

@@ -19,7 +19,7 @@ int main(int argc, char**argv) {
   
   ROS_INFO_STREAM("going to " << location);
   
-  Client client("/action_executor/execute_plan", true);
+  Client client("action_executor/execute_plan", true);
   client.waitForServer();
   
   bwi_kr_execution::ExecutePlanGoal goal;

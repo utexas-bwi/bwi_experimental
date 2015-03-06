@@ -1,32 +1,71 @@
 #include "CallElevator.h"
 
+#include <boost/foreach.hpp>
+
 #include "ActionFactory.h"
+#include "../StaticFacts.h"
 
+#include "bwi_kr_execution/UpdateFluents.h"
 #include "ros/console.h"
-
+#include "ros/ros.h"
 
 namespace bwi_krexec {
+
+CallElevator::CallElevator() :
+            done(false),
+            asked(false),
+            failed(false) {}
 
 void CallElevator::run() {
   
   if(!asked) {
     std::string direction_text = (going_up) ? "up" : "down";
-    doors.clear()
-    // TODO - get door names from current_state_query here. Not sure how.
-    askToCallElevator.reset(new CallGUI("askToCallElevator", CallGUI::CHOICE_QUESTION,  "Could you call elevator " + elevator + " to go " + direction_text + ", and then let me know which door opened?", 60.0f, doors);
-    askToCallElevator->run();
+
+    // Get the doors for this elevator.
+    doors.clear();
+    std::list<actasp::AspAtom> static_facts = StaticFacts::staticFacts(); 
+    BOOST_FOREACH(const actasp::AspAtom fact, static_facts) {
+      std::cout << fact.toString() << std::endl;
+      if (fact.getName() == "elevhasdoor") {
+        std::vector<std::string> params = fact.getParameters();
+        if (params[0] == elevator) {
+          /* std::cout << "  " << params[1] << std::endl; */
+          doors.push_back(params[1]);
+        }
+      }
+    }
+
+    if (doors.size() == 0) {
+      ROS_ERROR_STREAM("Unable to retrieve doors for elevator " << elevator << ". Cannot complete action!");
+      done = true;
+      failed = true;
+    } else {
+      askToCallElevator.reset(new CallGUI("askToCallElevator", 
+                                          CallGUI::CHOICE_QUESTION,  
+                                          "Could you call elevator " + elevator + " to go " + direction_text + 
+                                            ", and then let me know which door opened?", 
+                                          120.0f, 
+                                          doors));
+      askToCallElevator->run();
+    }
     asked = true;
-    startTime = ros::Time::now();
-  }
-  
-  if(!done) {
+  } else if(!done) {
     if (askToCallElevator->hasFinished()) {
       // Check response to see it's positive.
       int response_idx = askToCallElevator->getResponseIndex();
       if (response_idx >= 0 && response_idx < doors.size()) {
-        // TODO - Update current state with this door being open.
-        ROS_DEBUG_STREAM( "door open: " << open );
-        CallGUI thanks("thanks", CallGUI::DISPLAY,  "Thanks!");
+
+        ros::NodeHandle n;
+        ros::ServiceClient krClient = n.serviceClient<bwi_kr_execution::UpdateFluents> ( "update_fluents" );
+        krClient.waitForExistence();
+        bwi_kr_execution::UpdateFluents uf;
+        bwi_kr_execution::AspFluent open_door;
+        open_door.name = "open";
+        open_door.variables.push_back(doors[response_idx]);
+        uf.request.fluents.push_back(open_door);
+        krClient.call(uf);
+
+        CallGUI thanks("thanks", CallGUI::DISPLAY,  "Thanks! Would you mind helping me inside the elevator as well?");
         thanks.run();
       } else {
         // A door didn't open in the timeout specified.
@@ -35,6 +74,7 @@ void CallElevator::run() {
       done = true;
     }
   }
+ 
   
 }
 

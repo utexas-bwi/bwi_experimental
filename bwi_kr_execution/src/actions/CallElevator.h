@@ -1,12 +1,16 @@
 #ifndef bwi_krexec_CallElevator_h__guard
 #define bwi_krexec_CallElevator_h__guard
 
-#include "actasp/Action.h"
+#include <boost/shared_ptr.hpp>
 
+#include "actasp/Action.h"
+#include "CallGUI.h"
 
 namespace bwi_krexec {
   
 struct CallElevator : public actasp::Action {
+
+  CallElevator();
     
   int paramNumber() const {return 2;}
   
@@ -28,6 +32,13 @@ std::vector<std::string> getParameters() const;
 
 std::string elevator;
 bool going_up;
+
+bool asked;
+bool done;
+bool failed;
+std::vector<std::string> doors;
+
+boost::shared_ptr<CallGUI> askToCallElevator;
 
 };
   

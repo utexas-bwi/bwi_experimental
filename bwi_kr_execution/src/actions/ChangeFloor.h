@@ -1,13 +1,17 @@
 #ifndef bwi_krexec_ChangeFloor_h__guard
 #define bwi_krexec_ChangeFloor_h__guard
 
-#include "actasp/Action.h"
+#include <boost/shared_ptr.hpp>
 
+#include "actasp/Action.h"
+#include "CallGUI.h"
 
 namespace bwi_krexec {
   
 struct ChangeFloor : public actasp::Action {
-    
+
+  ChangeFloor();
+
   int paramNumber() const {return 1;}
   
   std::string getName() const{return "changefloor";}
@@ -27,6 +31,12 @@ private:
 std::vector<std::string> getParameters() const;
 
 std::string dest_room;
+
+bool asked;
+bool done;
+bool failed;
+
+boost::shared_ptr<CallGUI> askToChangeFloor;
 
 };
   
