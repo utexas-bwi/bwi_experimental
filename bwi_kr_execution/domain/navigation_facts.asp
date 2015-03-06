@@ -162,28 +162,28 @@ room(l2_302).
 room(l2_702). 
 
 door(d2_700). 
-door(d2_702_n). 
-door(d2_702_e). 
-door(d2_102_e). 
-door(d2_102_w). 
-door(d2_302_e).
-door(d2_302_s). 
+door(d2_702_north). 
+door(d2_702_east). 
+door(d2_102_east). 
+door(d2_102_west). 
+door(d2_302_east).
+door(d2_302_south). 
 door(d2_300). 
 
 hasdoor(l2_600, d2_700). 
 hasdoor(l2_700, d2_700). 
-hasdoor(l2_100, d2_702_n).
-hasdoor(l2_702, d2_702_n).
-hasdoor(l2_600, d2_702_e).
-hasdoor(l2_702, d2_702_e).
-hasdoor(l2_100, d2_102_e).
-hasdoor(l2_102, d2_102_e).
-hasdoor(l2_100, d2_102_w).
-hasdoor(l2_102, d2_102_w).
-hasdoor(l2_200, d2_302_e).
-hasdoor(l2_302, d2_302_e).
-hasdoor(l2_100, d2_302_s).
-hasdoor(l2_302, d2_302_s).
+hasdoor(l2_100, d2_702_north).
+hasdoor(l2_702, d2_702_north).
+hasdoor(l2_600, d2_702_east).
+hasdoor(l2_702, d2_702_east).
+hasdoor(l2_100, d2_102_east).
+hasdoor(l2_102, d2_102_east).
+hasdoor(l2_100, d2_102_west).
+hasdoor(l2_102, d2_102_west).
+hasdoor(l2_200, d2_302_east).
+hasdoor(l2_302, d2_302_east).
+hasdoor(l2_100, d2_302_south).
+hasdoor(l2_302, d2_302_south).
 hasdoor(l2_200, d2_300).
 hasdoor(l2_300, d2_300).
 
