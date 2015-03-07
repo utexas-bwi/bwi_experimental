@@ -59,10 +59,18 @@ void CallElevator::run() {
         ros::ServiceClient krClient = n.serviceClient<bwi_kr_execution::UpdateFluents> ( "update_fluents" );
         krClient.waitForExistence();
         bwi_kr_execution::UpdateFluents uf;
+
         bwi_kr_execution::AspFluent open_door;
         open_door.name = "open";
         open_door.variables.push_back(doors[response_idx]);
+
+        // TODO: DON'T RETURN THIS!
+        bwi_kr_execution::AspFluent face_door;
+        face_door.name = "facing";
+        face_door.variables.push_back(doors[response_idx]);
+
         uf.request.fluents.push_back(open_door);
+        uf.request.fluents.push_back(face_door);
         krClient.call(uf);
 
         CallGUI thanks("thanks", CallGUI::DISPLAY,  "Thanks! Would you mind helping me inside the elevator as well?");
