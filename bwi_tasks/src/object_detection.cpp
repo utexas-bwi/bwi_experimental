@@ -65,6 +65,7 @@ int main( int argc, char** argv )
 
   namedWindow("WindowName", CV_WINDOW_AUTOSIZE);
 
+  int cnt = 0;
   while (true) {
 
     frame = cvQueryFrame(capture);
@@ -139,11 +140,15 @@ int main( int argc, char** argv )
     dis += norm( (scene_corners[1] + Point2f( img_object.cols, 0)) - (scene_corners[2] + Point2f( img_object.cols, 0)) );
     dis += norm( (scene_corners[2] + Point2f( img_object.cols, 0)) - (scene_corners[3] + Point2f( img_object.cols, 0)) );
     dis += norm( (scene_corners[3] + Point2f( img_object.cols, 0)) - (scene_corners[0] + Point2f( img_object.cols, 0)) );
-    // printf("%f\n", dis); 
    
     //-- Show detected matches
 
-    if (dis > 500) {
+    if (dis > 500)
+      cnt++;
+    else
+      cnt = 0;
+
+    if (cnt >= 5) {
       imwrite("/home/bwi/Desktop/logo_" + str + ".jpg", frame);
       break;
     }
