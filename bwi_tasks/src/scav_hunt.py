@@ -20,13 +20,14 @@ def scav_hunt():
     tasks.append('* find a person wearing blue shirt')
     tasks.append('* interact with a person through natural language (testing)')
     tasks.append('* find a person standing in front of a whiteboard')
-    tasks.append('* take a picture of something with a "Starbucks Coffee" logo')
+    tasks.append('* take a picture of something with a "Starbucks" logo with Webcam')
 
     task_names = ['blueshirt', 'interaction', 'whiteboard', 'logo']
 
     blueshirt_pic = ''
     interaction_txt = ''
     whiteboard_pic = ''
+    logo_pic = ''
     path_to_files = '/home/bwi/Desktop/'
 
     while not rospy.is_shutdown():
@@ -78,19 +79,13 @@ def scav_hunt():
         try: 
             handle = rospy.ServiceProxy('question_dialog', QuestionDialog)
 
-            # in case some tasks have been finished
-            if finished != finished_last: 
-
-                if len(finished) > 20: 
-                    res = handle(1, finished + '\n' + todo + '\n' + ending, buttons, 5)
-                else:
-                    res = handle(1, finished + '\n' + todo, buttons, 5)
+            if len(finished) > 20: 
+                res = handle(1, finished + '\n' + todo + '\n' + ending, buttons, 5)
+            else:
+                res = handle(1, finished + '\n' + todo, buttons, 5)
     
         except rospy.ServiceException, e:
             ROS_ERRR("Service call failed: %s"%e)
-
-        # used for checking if necessary to update segbot_gui
-        finished_last = finished
 
         # which picture/text to view? 
         if res.index < 0: 
