@@ -23,31 +23,57 @@ sensor_msgs::ImageConstPtr image;
 struct my_pose {
     float x; 
     float y;
-} p1, p2; 
+} m, a1, b1, c1, d1, a2, b2, c2, d2; 
 
 /*
     a           b
-       p1   p2
+       m
     c           d
+    -------------
+1, board near conference room
+2, board near 400/500 doors
 */
+    // M of coordinates(x,y) is inside the rectangle iff, 
+    // (0 < AM dot AB < AB dot AB) AND (0 < AM dot AC < AC dot AC)
+
+bool inRectangle(my_pose* m, my_pose* a, my_pose* b, my_pose* c) 
+{
+    
+    float am_ab, ab_ab, am_ad, ad_ad;
+    am_ab = (m->x - a->x) * (b->x - a->x) + (m->y - a->y) * (b->y - a->y);
+    ab_ab = (b->x - a->x) * (b->x - a->x) + (b->y - a->y) * (b->y - a->y);
+    am_ac = (m->x - a->x) * (c->x - a->x) + (m->y - a->y) * (c->y - a->y);
+    ac_ac = (c->x - a->x) * (c->x - a->x) + (c->y - a->y) * (c->y - a->y);
+
+    if (0 < am_ab && am_ab < ab_ab && 0 < am_ac && am_ac < ac_ac)
+        return true;
+    else
+        return false;
+}
 
 void callback(const geometry_msgs::PoseStamped::ConstPtr& msg)
 {
-    p1.x = 61.099;
-    p1.y = 7.479;
-    p2.x = 60.981;
-    p2.y = 6.310;
-    float range= 1.0;
-
+    a1.x = 62.67;
+    a1.y = 9.89;
+    b1.x = 62.27;
+    b1.y = 4.27;
+    c1.x = 60.85;
+    c1.y = 9.36;
+    
+    a2.x = 39.73;
+    a2.y = 17.12;
+    b2.x = 39.80;
+    b2.y = 11.17;
+    c2.x = 38.24;
+    c2.y = 16.94;
+    
     geometry_msgs::PoseStampedConstPtr poseStamped = msg; 
 
-    float x = poseStamped->pose.position.x;
-    float y = poseStamped->pose.position.y; 
+    m.x = poseStamped->pose.position.x;
+    m.y = poseStamped->pose.position.y; 
 
-    float dis_p1 = pow(pow(p1.x-x, 2.0) + pow(p1.y - y, 2.0), 0.5); 
-    float dis_p2 = pow(pow(p2.x-x, 2.0) + pow(p2.y - y, 2.0), 0.5); 
 
-    if (dis_p1 < range || dis_p2 < range) 
+    if (inRectangle(&m, &a1, &b1, &c1) || inRectangle(&m, &a2, &b2, &c2)) 
     {
         std::time_t rawtime;
         std::tm* timeinfo;
