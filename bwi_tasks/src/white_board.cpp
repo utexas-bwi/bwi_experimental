@@ -39,7 +39,7 @@ struct my_pose {
 bool inRectangle(my_pose* m, my_pose* a, my_pose* b, my_pose* c) 
 {
     
-    float am_ab, ab_ab, am_ad, ad_ad;
+    float am_ab, ab_ab, am_ac, ac_ac;
     am_ab = (m->x - a->x) * (b->x - a->x) + (m->y - a->y) * (b->y - a->y);
     ab_ab = (b->x - a->x) * (b->x - a->x) + (b->y - a->y) * (b->y - a->y);
     am_ac = (m->x - a->x) * (c->x - a->x) + (m->y - a->y) * (c->y - a->y);
