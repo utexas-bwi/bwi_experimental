@@ -111,10 +111,6 @@ showImage();
 }
 
 
-
-
-
-
 int main( int argc, char** argv )
 {
   if (argc != 1)
@@ -187,9 +183,11 @@ int main( int argc, char** argv )
         char c=waitKey();
         if(c=='s'&&ROI.data)
         {
-          sprintf(imgName,"%d.jpg",i++);
-          imwrite(imgName,ROI);
+          //sprintf(imgName,"%d.jpg",i++);
+          //imwrite(imgName,ROI);
+          imwrite("/home/bwi/Desktop/template_" + str + ".jpg", ROI); 
           cout<<"  Saved "<<imgName<<endl;
+          break;
         }
         if(c=='6') cropRect.x++;
         if(c=='4') cropRect.x--;
@@ -214,7 +212,7 @@ int main( int argc, char** argv )
   }
 
 
-      //imwrite("/home/bwi/Desktop/template_" + str + ".jpg", frame); 
+
 
   return 0;
 }
