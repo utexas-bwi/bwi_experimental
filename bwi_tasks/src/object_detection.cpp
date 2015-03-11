@@ -3,6 +3,10 @@
 #include <ctime>                                                                
 #include <cstdio>                                                               
 
+#include <image_transport/image_transport.h>
+#include <cv_bridge/cv_bridge.h>
+#include <sensor_msgs/image_encodings.h>
+
 #include "opencv2/core/core.hpp"
 #include "opencv2/features2d/features2d.hpp"
 #include "opencv2/highgui/highgui.hpp"
@@ -28,7 +32,7 @@ void callback(const sensor_msgs::ImageConstPtr& msg)
   {
     cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8); 
   }
-  catch (cv_brdge::Exception& e)
+  catch (cv_bridge::Exception& e)
   {
     ROS_ERROR("cv_bridge exception: %s", e.what());
     return;
