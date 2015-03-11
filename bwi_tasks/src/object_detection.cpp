@@ -45,9 +45,6 @@ void callback(const sensor_msgs::ImageConstPtr& msg)
 int main( int argc, char** argv )
 {
 
-  ros::init(argc, argv, "object_detection");
-  ros::NodeHandle nh;
-  ros::Subscriber sub = nh.subscribe("/nav_kinect/rgb/image_color", 2, callback);
 
   std::time_t rawtime;                                                      
   std::tm* timeinfo;                                                        
@@ -98,19 +95,25 @@ int main( int argc, char** argv )
 
   namedWindow("WindowName", CV_WINDOW_AUTOSIZE);
 
+  ros::init(argc, argv, "object_detection");
+  ros::NodeHandle nh;
+  ros::Subscriber sub = nh.subscribe("/nav_kinect/rgb/image_color", 1, callback);
+
   int cnt = 0;
+  ros::Rate r(10);
   while (ros::ok()) {
+
+    r.sleep();
+    ros::spinOnce();
 
     // frame = cvQueryFrame(capture);
 
-
-    // cv_ptr->image.copyTo(frame);
-    ros::spinOnce();
-
     if (frame.empty()) {
       printf("No captured frame -- Break!");
-      break;
+      continue;
+      // break;
     }
+
 
     detector.detect(frame, keypoints_frame);
     extractor.compute(frame, keypoints_frame, descriptors_frame);
@@ -197,5 +200,5 @@ int main( int argc, char** argv )
   }
 
   return 0;
-  }
+}
 
