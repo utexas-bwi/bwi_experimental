@@ -20,6 +20,10 @@ typedef pcl::PointCloud<pcl::PointXYZRGB> PointCloud;
 
 sensor_msgs::ImageConstPtr image; 
 
+std::string directory, file; 
+
+enum Status {RUNNING, DONE};
+
 struct my_pose {
     float x; 
     float y;
@@ -91,8 +95,9 @@ void callback(const geometry_msgs::PoseStamped::ConstPtr& msg)
         try 
         {
             cv_ptr = cv_bridge::toCvShare(image, sensor_msgs::image_encodings::BGR8);
-            cv::imwrite("/home/bwi/Desktop/whiteboard_" + str + ".jpg",
-                        cv_ptr->image);
+
+            file = directory + "/whiteboard_" + str + ".jpg"; 
+            cv::imwrite(file, cv_ptr->image);
         }
         catch (cv_bridge::Exception& e) 
         {
@@ -111,7 +116,10 @@ void callback_image_saver(const sensor_msgs::ImageConstPtr& msg)
 // main function of the node
 int main(int argc, char ** argv)
 {
-    ros::init(argc, argv, "white_board");
+
+    Status s = RUNNING; 
+
+    ros::init(argc, argv, "segbot_whiteboard");
     ros::NodeHandle nh;
     ros::Subscriber sub1 = nh.subscribe(
                     "/segbot_pcl_person_detector/human_poses", 100, callback); 
@@ -120,8 +128,31 @@ int main(int argc, char ** argv)
     image_transport::Subscriber sub2 = it.subscribe(
                     "/nav_kinect/rgb/image_color", 1, callback_image_saver);
 
-    ros::spin(); 
 
-    return 0; 
+    ros::param::param<std::string>("~directory", directory, "/home/bwi/shiqi/");
+
+
+    ros::Publisher pub = nh.advertise<std_msgs::String>("segbot_whiteboard_status", 100);
+    ros::Rate r(10); 
+
+    while (ros::ok()) {
+        
+        std_msgs::String msg; 
+
+        if (s == RUNNING)
+            msg.data = "running"; 
+        else if (s == DONE)
+            msg.data = "" + ":" + file; 
+
+        pub.publish(msg); 
+
+        ros::spinOnce(); 
+        r.sleep();
+
+    }
+    return true; 
 }
+
+
+
 

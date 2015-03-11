@@ -4,31 +4,68 @@ import rospy
 import sys
 import subprocess # for openning text and image files
 import os # for listing files in a directory
+from std_msgs.msg import String
 
 from segbot_gui.srv import *
 
+
+blue_shirt = ''
+object_detection = ''
+whiteboard = ''
+
+shirt_color = ''
+object_name = ''
+
+blue_shirt_file = ''
+object_detection_file = ''
+whiteboard_file = ''
+
+
+def callback_blue_shirt(data):
+
+    shirt_color = data[:data.find(':')]
+
+    if data == 'running':
+        blue_shirt = 'ongoing'
+    else:
+        blue_shirt = 'finished'
+        blue_shirt_file = data[data.find(':') + 1:]
+
+def callback_object_detection(data):
+
+    object_name = data[:data.find(':')]
+
+    if data.find('running') >= 0:
+        object_detection = 'ongoing'
+    else:
+        object_detection = 'finished'
+        object_detection_file = data[data.find(':') + 1:]
+
+def callback_whiteboard(data):
+
+    if data == 'running':
+        whiteboard = 'ongoing'
+    else:
+        whiteboard = 'finished'
+        whiteboard_file = data[data.find(':') + 1:]
+
 def scav_hunt():
+
+    rospy.init_node('scav_hunt', anonymous=True)
+
+    rospy.Subscriber('segbot_blue_shirt_status', String, callback_blue_shirt)
+
+    rospy.Subscriber('segbot_object_detection_status', String, callback_object_detection)
+
+    rospy.Subscriber('segbot_whiteboard_status', String, callback_whiteboard)
 
     rospy.wait_for_service('question_dialog')
 
-    # tasks:
-    # 0, blueshirt
-    # 1, interaction
-    # 2, whiteboard
+    rospy.spin()
 
-    tasks = []
-    tasks.append('* find a person wearing blue shirt')
-    tasks.append('* interact with a person through natural language (testing)')
-    tasks.append('* find a person standing in front of a whiteboard')
-    tasks.append('* take a picture of something with a "Starbucks" logo with Webcam')
+    task_names = ['blueshirt', 'whiteboard', 'logo']
 
-    task_names = ['blueshirt', 'interaction', 'whiteboard', 'logo']
-
-    blueshirt_pic = ''
-    interaction_txt = ''
-    whiteboard_pic = ''
-    logo_pic = ''
-    path_to_files = '/home/bwi/Desktop/'
+    rate = rospy.Rate(10)
 
     while not rospy.is_shutdown():
     
@@ -39,41 +76,26 @@ def scav_hunt():
         ending = '\nClick the buttons to see how I performed in the tasks\n'
         buttons = []
 
-        for f in files:
-            if f.find('blueshirt') >= 0:
-                blueshirt_pic = f
-                finished = finished + '\n\t' + tasks[0]
-                buttons.append('blueshirt')
-                break
-        else:
-            todo = todo + '\n\t' + tasks[0]
+        if blue_shirt == 'ongoing':
+            todo.append('\n\t* find a person wearing "' + shirt_color + '" shirt')
+        elif blue_shirt == 'finished':
+            finished.append('\n\t* find a person wearing "' + shirt_color + '" shirt')
+            buttons.append('color t-shirt')
 
-        for f in files:
-            if f.find('interaction') >= 0:
-                interaction_txt = f
-                finished = finished + '\n\t' + tasks[1]
-                buttons.append('interaction')
-                break
-        else:
-            todo = todo + '\n\t' + tasks[1]
 
-        for f in files:
-            if f.find('whiteboard') >= 0:
-                whiteboard_pic = f
-                finished = finished + '\n\t' + tasks[2]
-                buttons.append('whiteboard')
-                break
-        else:
-            todo = todo + '\n\t' + tasks[2]
+        if whiteboard == 'ongoing':
+            todo.append('\n\t* find a person standing in front of a whiteboard')
+        elif whiteboard == 'finished':
+            finished.append('\n\t* find a person standing in front of a whiteboard')
+            buttons.append('whiteboard')
 
-        for f in files:
-            if f.find('logo') >= 0:
-                logo_pic = f
-                finished = finished + '\n\t' + tasks[3]
-                buttons.append('logo')
-                break
-        else:
-            todo = todo + '\n\t' + tasks[3]
+
+        if object_detection == 'ongoing':
+            todo.append('\n\t* take a picture of object: ' + object_name)
+        elif whiteboard == 'finished':
+            finished.append('\n\t* take a picture of object: ' + object_name)
+            buttons.append('object detection')
+
 
         # print to screen
         try: 
@@ -90,16 +112,21 @@ def scav_hunt():
         # which picture/text to view? 
         if res.index < 0: 
             continue
-        elif buttons[res.index] == 'blueshirt':
-            img = subprocess.Popen(["eog", path_to_files + blueshirt_pic])
-        elif buttons[res.index] == 'interaction':
-            img = subprocess.Popen(["gedit", path_to_files + interaction_txt])
-        elif buttons[res.index] == 'whiteboard':
-            img = subprocess.Popen(["eog", path_to_files + whiteboard_pic])
-        elif buttons[res.index] == 'logo':
-            img = subprocess.Popen(["eog", path_to_files + logo_pic])
+
+        elif buttons[res.index].find('shirt') >= 0:
+            img = subprocess.Popen(["eog", blue_shirt_file])
+
+        elif buttons[res.index].find('object') >= 0:
+            img = subprocess.Popen(["eog", object_detection_file])
+
+        elif buttons[res.index].find('whiteboard') >= 0:
+            img = subprocess.Popen(["eog", whiteboard_file)
+
+        rate.sleep()
 
 if __name__ == "__main__":
 
     scav_hunt()
+
+
 
