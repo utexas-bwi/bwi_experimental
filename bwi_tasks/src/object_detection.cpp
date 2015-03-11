@@ -12,12 +12,36 @@
 #include "opencv2/objdetect/objdetect.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
 
+#include "ros/ros.h"
+
 using namespace cv;
 using namespace std;
 
+
+cv_bridge::CvImagePtr cv_ptr;
+
+
+void callback(const sensor_msgs::ImageConstPtr& msg) 
+{
+
+  try
+  {
+    cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8); 
+  }
+  catch (cv_brdge::Exception& e)
+  {
+    ROS_ERROR("cv_bridge exception: %s", e.what());
+    return;
+  }
+        
+}
+
 int main( int argc, char** argv )
 {
-  if (argc != 1) return -1;
+
+  ros::init(argc, argv, "object_recognition");
+  ros::NodeHandle nh;
+  ros::Subscriber sub = nh.subscribe("nav_kinect/rbg/image_raw", 10, callback);
 
   std::time_t rawtime;                                                      
   std::tm* timeinfo;                                                        
@@ -152,6 +176,8 @@ int main( int argc, char** argv )
       imwrite("/home/bwi/Desktop/logo_" + str + ".jpg", frame);
       break;
     }
+
+    ros::spinOnce();
 
     imshow( "WindowName", img_matches );
     waitKey(1);
