@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <iostream>
-#include <ctime>                                                                
-#include <cstdio>                                                               
+#include <ctime>
+#include <cstdio> 
 
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
@@ -22,7 +22,8 @@ using namespace cv;
 using namespace std;
 
 
-cv_bridge::CvImagePtr cv_ptr;
+cv_bridge::CvImageConstPtr cv_ptr;
+Mat frame;
 
 
 void callback(const sensor_msgs::ImageConstPtr& msg) 
@@ -30,7 +31,8 @@ void callback(const sensor_msgs::ImageConstPtr& msg)
 
   try
   {
-    cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8); 
+    cv_ptr = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGR8); 
+    frame = cv_ptr->image;
   }
   catch (cv_bridge::Exception& e)
   {
@@ -43,9 +45,9 @@ void callback(const sensor_msgs::ImageConstPtr& msg)
 int main( int argc, char** argv )
 {
 
-  ros::init(argc, argv, "object_recognition");
+  ros::init(argc, argv, "object_detection");
   ros::NodeHandle nh;
-  ros::Subscriber sub = nh.subscribe("nav_kinect/rbg/image_raw", 10, callback);
+  ros::Subscriber sub = nh.subscribe("/nav_kinect/rgb/image_color", 2, callback);
 
   std::time_t rawtime;                                                      
   std::tm* timeinfo;                                                        
@@ -58,15 +60,18 @@ int main( int argc, char** argv )
 
   Mat img_object = imread("/home/bwi/Desktop/template_" + str + ".jpg", CV_LOAD_IMAGE_GRAYSCALE );
 
-  Mat frame;
-  CvCapture* capture; 
 
-  capture = cvCaptureFromCAM(0); 
 
-  if( !img_object.data ) {
-    std::cout<< "Error reading images " << std::endl; 
-    return -1;
-  }
+  cv_ptr.reset (new cv_bridge::CvImage);
+
+  // CvCapture* capture; 
+  //
+  // capture = cvCaptureFromCAM(0); 
+  //
+  // if( !img_object.data ) {
+  //   std::cout<< "Error reading images " << std::endl; 
+  //   return -1;
+  // }
 
   //-- Step 1: Detect the keypoints using SURF Detector
   int minHessian = 400;
@@ -86,17 +91,21 @@ int main( int argc, char** argv )
   std::vector< DMatch > matches;
 
 
-  if (!capture) {
-    printf("No camera detected! ");
-    exit(1);
-  }
+  // if (!capture) {
+  //   printf("No camera detected! ");
+  //   exit(1);
+  // }
 
   namedWindow("WindowName", CV_WINDOW_AUTOSIZE);
 
   int cnt = 0;
-  while (true) {
+  while (ros::ok()) {
 
-    frame = cvQueryFrame(capture);
+    // frame = cvQueryFrame(capture);
+
+
+    // cv_ptr->image.copyTo(frame);
+    ros::spinOnce();
 
     if (frame.empty()) {
       printf("No captured frame -- Break!");
@@ -176,12 +185,12 @@ int main( int argc, char** argv )
     else
       cnt = 0;
 
-    if (cnt >= 5) {
+    if (cnt >= 5) 
+    {
       imwrite("/home/bwi/Desktop/logo_" + str + ".jpg", frame);
       break;
     }
 
-    ros::spinOnce();
 
     imshow( "WindowName", img_matches );
     waitKey(1);
