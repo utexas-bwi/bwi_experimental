@@ -91,7 +91,7 @@ int main( int argc, char** argv )
     ros::Subscriber sub = nh.subscribe("/nav_kinect/rgb/image_color", 1, callback);
 
     ros::Publisher pub = 
-        nh.advertise<std_msgs::String>("segbot_object_detection_status", 100);
+        nh.advertise<std_msgs::String>("segbot_object_detection_status", 1);
 
     int cnt = 0;
     ros::Rate r(10);
@@ -105,7 +105,8 @@ int main( int argc, char** argv )
         std_msgs::String msg; 
 
         if (frame.empty()) {
-          printf("No captured frame -- Break!");
+          printf(".");
+          ros::spinOnce();
           continue;
         }
 
@@ -193,15 +194,16 @@ int main( int argc, char** argv )
         else
           cnt = 0;
 
+        std::string file_object = directory + "object_" + str + ".jpg"; 
         if (cnt >= 5) {
-            imwrite(file, frame);
+            imwrite(file_object, frame);
             status = DONE; 
         }
 
         if (status == RUNNING)
             msg.data = name + ":running"; 
         else if (status == DONE)
-            msg.data = name + ":" + file; 
+            msg.data = name + ":" + file_object; 
 
         pub.publish(msg); 
 

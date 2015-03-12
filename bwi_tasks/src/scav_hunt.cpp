@@ -15,6 +15,7 @@ std::string file_shirt, file_object, file_board;
 void callback_shirt(const std_msgs::String::ConstPtr& msg)
 {
  
+    shirt_color = msg->data.substr(0, msg->data.find(":"));
     if (msg->data.find("running") != std::string::npos) 
         status_shirt = "ongoing";
     else {
@@ -28,6 +29,7 @@ void callback_shirt(const std_msgs::String::ConstPtr& msg)
 void callback_object(const std_msgs::String::ConstPtr& msg)
 {
  
+    object_name = msg->data.substr(0, msg->data.find(":"));
     if (msg->data.find("running") != std::string::npos)       
         status_object = "ongoing";
     else {
@@ -72,41 +74,40 @@ int main(int argc, char **argv){
     ros::Rate rate(10); 
 
     std::string message_finished, message_todo, message_ending; 
-    std::vector<std::string> buttons; 
-
-    message_finished = "Finished tasks:";
-    message_todo = "\nTodo tasks:";
-    message_ending = "\nClick buttons to see how I performed in the tasks\n";
 
     while (ros::ok())
     {
         
+        message_finished = "Finished tasks:";
+        message_todo = "\nTodo tasks:";
+        message_ending = "\nClick buttons to see how I performed in the tasks\n";
+        std::vector<std::string> buttons; 
+
         rate.sleep();       
         ros::spinOnce();
 
         if (status_shirt.find("ongoing") != std::string::npos) 
             message_todo += "\n\t* find a person wearing '" +
-                            shirt_color + " shirt"; 
-        else 
+                            shirt_color + "' shirt"; 
+        else if (status_shirt.find("finished") != std::string::npos) 
         {
             message_finished += "\n\t* find a person wearing '" + 
-                                shirt_color + " shirt"; 
+                                shirt_color + "' shirt"; 
             buttons.push_back("color shirt");
         }
  
-            
         if (status_object.find("ongoing") != std::string::npos) 
-            message_todo += "\n\t* take a picture of object '" + object_name; 
-        else 
+            message_todo += "\n\t* take a picture of object '" + object_name + "'"; 
+        else if (status_object.find("finished") != std::string::npos) 
         {
-            message_finished += "\n\t* take a picture of object '" + object_name;
+            message_finished += "\n\t* take a picture of object '" + object_name + "'";
             buttons.push_back("object detection");
         }
 
 
         if (status_board.find("ongoing") != std::string::npos) 
             message_todo += "\n\t* find a person standing near a whiteboard"; 
-        else 
+        else if (status_board.find("finished") != std::string::npos) 
         {
             message_finished += "\n\t* find a person standing near a whiteboard"; 
             buttons.push_back("whiteboard");
@@ -118,12 +119,15 @@ int main(int argc, char **argv){
             srv.request.type = 0;
             srv.request.message = message_finished + "\n" + message_todo + 
                                   "\n" + message_ending; 
+            srv.request.timeout = 5; 
         }
         else 
         {
             srv.request.type = 1;
-            srv.request.message = message_finished + "\n" + message_todo; 
+            srv.request.message = message_finished + "\n" + message_todo + 
+                                  "\n" + message_ending; 
             srv.request.options = buttons; 
+            srv.request.timeout = 5; 
         }
 
         if (!client.call(srv)) 
