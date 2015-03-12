@@ -132,17 +132,19 @@ int main(int argc, char **argv){
             return 1;
         }
 
+        std::string eog = "eog ";
+
         if (srv.response.index < 0) 
             continue;
 
         else if (buttons[srv.response.index].find("shirt") != std::string::npos)
-            system("eog " + file_shirt);
+            system((eog + file_shirt).c_str());
 
         else if (buttons[srv.response.index].find("object") != std::string::npos)
-            system("eog " + file_object);
+            system((eog + file_object).c_str());
 
         else if (buttons[srv.response.index].find("board") != std::string::npos)
-            system("eog " + file_board);
+            system((eog + file_board).c_str());
 
     }
 }
