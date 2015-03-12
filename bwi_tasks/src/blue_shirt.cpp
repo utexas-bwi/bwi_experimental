@@ -1,5 +1,6 @@
 
 #include <ros/ros.h>
+#include <std_msgs/String.h>
 #include <pcl_ros/point_cloud.h>
 #include <pcl/point_types.h>
 #include <boost/foreach.hpp>
@@ -19,9 +20,11 @@ typedef pcl::PointCloud<pcl::PointXYZRGB> PointCloud;
 sensor_msgs::ImageConstPtr image; 
 
 // shirt_color is a string saving the color of shirt
-str::string shirt_color, directory, file;
+std::string shirt_color, directory, file;
 
 enum Status {RUNNING, DONE}; 
+
+Status s; 
 
 struct rgb {
     float r;

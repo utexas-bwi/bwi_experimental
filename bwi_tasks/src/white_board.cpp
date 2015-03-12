@@ -1,6 +1,7 @@
 
 #include "ros/ros.h"
 #include "geometry_msgs/PoseStamped.h"
+#include "std_msgs/String.h"
 
 #include <pcl_ros/point_cloud.h>
 #include <pcl/point_types.h>
@@ -142,7 +143,7 @@ int main(int argc, char ** argv)
         if (s == RUNNING)
             msg.data = "running"; 
         else if (s == DONE)
-            msg.data = "" + ":" + file; 
+            msg.data = ":" + file; 
 
         pub.publish(msg); 
 

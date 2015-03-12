@@ -17,6 +17,7 @@
 #include "opencv2/imgproc/imgproc.hpp"
 
 #include "ros/ros.h"
+#include "std_msgs/String.h"
 
 using namespace cv;
 using namespace std;
@@ -25,7 +26,7 @@ using namespace std;
 cv_bridge::CvImageConstPtr cv_ptr;
 Mat frame;
 
-str::string directory, file, name; 
+std::string directory, file, name; 
 enum Status {RUNNING, DONE};
 
 
@@ -60,7 +61,7 @@ int main( int argc, char** argv )
 
     // load template image, in *grayscale*
     directory = "/home/bwi/shiqi/"; 
-    file  = directory + "template_" + str + ".jpg"
+    file  = directory + "template_" + str + ".jpg";
     Mat img_object = imread(file, CV_LOAD_IMAGE_GRAYSCALE );
 
     cv_ptr.reset (new cv_bridge::CvImage);
@@ -194,7 +195,7 @@ int main( int argc, char** argv )
 
         if (cnt >= 5) {
             imwrite(file, frame);
-            status = file; 
+            status = DONE; 
         }
 
         if (status == RUNNING)
