@@ -5,6 +5,7 @@
 
 #include <string>
 #include <stdlib.h>
+#include <vector>
 
 std::string status_shirt, status_object, status_board;
 std::string shirt_color, object_name;
@@ -70,8 +71,8 @@ int main(int argc, char **argv){
         
     ros::Rate rate(10); 
 
-    std::string finished, todo, ending; 
-    std::list<std::string> buttons; 
+    std::string message_finished, message_todo, message_ending; 
+    std::vector<std::string> buttons; 
 
     message_finished = "Finished tasks:";
     message_todo = "\nTodo tasks:";
@@ -115,8 +116,8 @@ int main(int argc, char **argv){
         if (message_finished.length() + message_todo.length() < 30) {
             
             srv.request.type = 0;
-            srv.request.message = message_finished + "\n" + message_todo + "\n"
-                                  message_ending; 
+            srv.request.message = message_finished + "\n" + message_todo + 
+                                  "\n" + message_ending; 
         }
         else 
         {
