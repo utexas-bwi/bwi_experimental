@@ -1,5 +1,0 @@
-
-at(l3_414b,0).
-
-open(D,0) :- not -open(D,0), door(D).
--facing(D,0) :- not facing(D,0), door(D).

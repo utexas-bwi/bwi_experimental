@@ -1,6 +1,0 @@
-- name: d_elevator
-  approach:
-    - from: atrium,cor1,cor2,cor3,coffeeshop,openarea
-      point: [-25.6, -18, -1.51821]
-    - from: elevator
-      point: [-25.5, -19.9, 1.62338]

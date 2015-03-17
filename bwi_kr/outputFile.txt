@@ -1,9 +1,0 @@
-Answer: 1
-approach(d3_508,0) gothrough(d3_508,2) opendoor(d3_508,1) facing(d3_508,1) facing(d3_508,2) 
-SATISFIABLE
-
-Models      : 1+    
-Time        : 0.050
-  Prepare   : 0.040
-  Prepro.   : 0.010
-  Solving   : 0.000

@@ -1,9 +1,0 @@
-<launch>
-
-  <!-- launch the gui -->
-  <node name="segbot_gui" pkg="segbot_gui" type="question_dialog_plugin" />
-
-  <!-- launch the planner -->
-  <include file="$(find bwi_coffee)/launch/planner.launch" />
-
-</launch>
