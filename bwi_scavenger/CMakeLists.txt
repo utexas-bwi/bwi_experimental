@@ -117,49 +117,6 @@ include_directories(
 # )
 
 ## Declare a cpp executable
-add_executable(go_to_location_node src/go_to_location.cpp)
-add_dependencies(go_to_location_node ${catkin_EXPORTED_TARGETS})
-target_link_libraries(go_to_location_node ${catkin_LIBRARIES})
-
-add_executable(back_and_forth_node src/back_and_forth.cpp)
-add_dependencies(back_and_forth_node ${catkin_EXPORTED_TARGETS})
-target_link_libraries(back_and_forth_node ${catkin_LIBRARIES})
-
-add_executable(between_doors src/between_doors.cpp)
-add_dependencies(between_doors ${catkin_EXPORTED_TARGETS})
-target_link_libraries(between_doors ${catkin_LIBRARIES})
-
-add_executable(go_to_location_lab src/go_to_location_lab.cpp)
-add_dependencies(go_to_location_lab ${catkin_EXPORTED_TARGETS})
-target_link_libraries(go_to_location_lab ${catkin_LIBRARIES})
-
-add_executable(back_and_forth_outside_lab src/back_and_forth_outside_lab.cpp)
-add_dependencies(back_and_forth_outside_lab ${catkin_EXPORTED_TARGETS})
-target_link_libraries(back_and_forth_outside_lab ${catkin_LIBRARIES})
-
-add_executable(back_and_forth_through src/back_and_forth_through.cpp)
-add_dependencies(back_and_forth_through ${catkin_EXPORTED_TARGETS})
-target_link_libraries(back_and_forth_through ${catkin_LIBRARIES})
-
-add_executable(visit_door_list src/visit_door_list.cpp)
-add_dependencies(visit_door_list ${catkin_EXPORTED_TARGETS})
-target_link_libraries(visit_door_list ${catkin_LIBRARIES})
-
-add_executable(visit_door_list_outside_lab src/visit_door_list_outside_lab.cpp)
-add_dependencies(visit_door_list_outside_lab ${catkin_EXPORTED_TARGETS})
-target_link_libraries(visit_door_list_outside_lab ${catkin_LIBRARIES})
-
-add_executable(visit_door_list_outside_lab_l src/visit_door_list_outside_lab_l.cpp)
-add_dependencies(visit_door_list_outside_lab_l ${catkin_EXPORTED_TARGETS})
-target_link_libraries(visit_door_list_outside_lab_l ${catkin_LIBRARIES})
-
-add_executable(meeting_experiment src/meeting_experiment.cpp)
-add_dependencies(meeting_experiment ${catkin_EXPORTED_TARGETS})
-target_link_libraries(meeting_experiment ${catkin_LIBRARIES})
-
-add_executable(back_and_forth_object src/back_and_forth_object.cpp)
-add_dependencies(back_and_forth_object ${catkin_EXPORTED_TARGETS})
-target_link_libraries(back_and_forth_object ${catkin_LIBRARIES})
 
 add_executable(blue_shirt src/blue_shirt.cpp)
 target_link_libraries(blue_shirt ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})

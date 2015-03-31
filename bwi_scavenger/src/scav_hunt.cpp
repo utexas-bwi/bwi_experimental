@@ -1,7 +1,7 @@
 
 #include "ros/ros.h"
 #include "std_msgs/String.h"
-#include "segbot_gui/QuestionDialog.h"
+#include "bwi_msgs/QuestionDialog.h"
 
 #include <string>
 #include <stdlib.h>
@@ -59,8 +59,8 @@ int main(int argc, char **argv){
     ros::NodeHandle nh;
 
     ros::ServiceClient client = 
-            nh.serviceClient<segbot_gui::QuestionDialog>("question_dialog");
-    segbot_gui::QuestionDialog srv; 
+            nh.serviceClient<bwi_msgs::QuestionDialog>("question_dialog");
+    bwi_msgs::QuestionDialog srv; 
 
     ros::Subscriber sub1 = nh.subscribe("segbot_blue_shirt_status", 1000,
                                         callback_shirt);
