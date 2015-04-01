@@ -26,8 +26,9 @@ using namespace std;
 cv_bridge::CvImageConstPtr cv_ptr;
 Mat frame;
 
-std::string directory, file, name; 
+std::string file, name, directory; 
 enum Status {RUNNING, DONE};
+std::string default_dir = "/home/bwi/shiqi/";
 
 
 void callback(const sensor_msgs::ImageConstPtr& msg) 
@@ -59,9 +60,13 @@ int main( int argc, char** argv )
     std::puts(buffer);
     std::string str(buffer);
 
+    ROS_INFO("\nPath to template can be specified via private parameter: directory\n");
+    ROS_INFO("Template image name is: template-yyyy-mm-dd.jpg\n\n")
+
     // load template image, in *grayscale*
-    directory = "/home/bwi/shiqi/"; 
-    file  = directory + "template_" + str + ".jpg";
+
+    ros::param::param<std::string>("~directory", directory, default_dir);
+    file  = directory + "template-" + str + ".jpg";
     Mat img_object = imread(file, CV_LOAD_IMAGE_GRAYSCALE );
 
     cv_ptr.reset (new cv_bridge::CvImage);

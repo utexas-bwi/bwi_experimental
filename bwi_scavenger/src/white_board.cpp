@@ -22,6 +22,7 @@ typedef pcl::PointCloud<pcl::PointXYZRGB> PointCloud;
 sensor_msgs::ImageConstPtr image; 
 
 std::string directory, file; 
+std::string default_dir = "/home/bwi/shiqi/";
 
 enum Status {RUNNING, DONE};
 
@@ -97,7 +98,7 @@ void callback(const geometry_msgs::PoseStamped::ConstPtr& msg)
         {
             cv_ptr = cv_bridge::toCvShare(image, sensor_msgs::image_encodings::BGR8);
 
-            file = directory + "/whiteboard_" + str + ".jpg"; 
+            file = directory + "/whiteboard-" + str + ".jpg"; 
             cv::imwrite(file, cv_ptr->image);
         }
         catch (cv_bridge::Exception& e) 
@@ -130,7 +131,10 @@ int main(int argc, char ** argv)
                     "/nav_kinect/rgb/image_color", 1, callback_image_saver);
 
 
-    ros::param::param<std::string>("~directory", directory, "/home/bwi/shiqi/");
+    ROS_INFO("\nPath to saved files can be specified via private parameter: directory\n"); 
+    ROS_INFO("File name: whiteboard-yyyy-mm-dd\n");
+
+    ros::param::param<std::string>("~directory", directory, default_dir);
 
 
     ros::Publisher pub = nh.advertise<std_msgs::String>("segbot_whiteboard_status", 100);

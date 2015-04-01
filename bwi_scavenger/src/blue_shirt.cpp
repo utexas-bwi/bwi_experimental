@@ -22,6 +22,8 @@ sensor_msgs::ImageConstPtr image;
 // shirt_color is a string saving the color of shirt
 std::string shirt_color, directory, file;
 
+std::string default_dir = "/home/bwi/shiqi/";
+
 enum Status {RUNNING, DONE}; 
 
 Status s; 
@@ -134,11 +136,16 @@ int main(int argc, char** argv)
 
     Status s = RUNNING;    
 
+    ROS_INFO("\nColor can be specified via private parameter: shirt_color\n"); 
+    ROS_INFO("Options are: red, blue, green, yellow\n\n");
+
+    ROS_INFO("Path to saved images can be specified via private parameter: directory\n\n");
+
     // if private shirt_color not specified, assign "blue" to shirt_color
     ros::param::param<std::string>("~shirt_color", shirt_color, "blue");
 
     // directory to save files
-    ros::param::param<std::string>("~directory", directory, "/home/bwi/shiqi/");
+    ros::param::param<std::string>("~directory", directory, default_dir);
 
     ros::Subscriber sub1 = nh.subscribe<PointCloud>("/segbot_pcl_person_detector/human_clouds", 1, callback_human_detection);
 
