@@ -27,7 +27,7 @@ const char* winName="Crop Image";
 bool clicked=false;
 int i=0;
 char imgName[15];
-std::string prefix = "/home/bwi/shiqi/template_";
+std::string prefix = "/home/bwi/shiqi/template-";
 
 
 void checkBoundary(){

@@ -203,6 +203,7 @@ int main( int argc, char** argv )
         if (cnt >= 5) {
             imwrite(file_object, frame);
             status = DONE; 
+            return true;
         }
 
         if (status == RUNNING)
