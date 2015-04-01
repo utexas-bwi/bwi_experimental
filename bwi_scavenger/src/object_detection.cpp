@@ -61,7 +61,7 @@ int main( int argc, char** argv )
     std::string str(buffer);
 
     ROS_INFO("\nPath to template can be specified via private parameter: directory\n");
-    ROS_INFO("Template image name is: template-yyyy-mm-dd.jpg\n\n")
+    ROS_INFO("Template image name is: template-yyyy-mm-dd.jpg\n\n");
 
     // load template image, in *grayscale*
 
