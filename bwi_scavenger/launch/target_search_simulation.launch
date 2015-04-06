@@ -3,8 +3,12 @@
     <arg name="sim_positions" default="$(find bwi_scavenger)/support/simulation.yaml" />
     <arg name="real_positions" default="$(find bwi_scavenger)/support/real.yaml" />
 
+    <arg name="sim_tolerance" default=0.2 />
+    <arg name="real_tolerance" default=0.5 />
+
     <node name="target_search" pkg="bwi_scavenger" type="target_search">
         <param name="positions" value="$(arg sim_positions)" />
+        <param name="tolerance" value="$(arg sim_tolerance)" />
     </node>
 
 </launch>
