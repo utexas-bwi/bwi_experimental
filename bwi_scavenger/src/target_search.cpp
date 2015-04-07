@@ -7,6 +7,7 @@
 // msgs
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
+#include <geometry_msgs/Twist.h> 
 
 // path
 #include <nav_msgs/Path.h>
@@ -16,12 +17,19 @@
 #include <tf/LinearMath/Transform.h>
 #include <tf/transform_datatypes.h>
 
+#include <move_base_msgs/MoveBaseAction.h>
+#include <actionlib/client/simple_action_client.h>
+
+#include <math.h>
+
 geometry_msgs::PoseWithCovarianceStamped curr_pos; 
+
+const float PI = atan(1) * 4; 
 
 // callback function that saves robot's current position
 void callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg) {
     
-    ROS_INFO("I heard something about my current position"); 
+    // ROS_INFO("I heard something about my current position"); 
     curr_pos = *msg;
     
 }
@@ -30,7 +38,7 @@ void callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg) {
 // compute the length of a path, nav_msgs::Path
 // we used pixel as the distance unit, as we do not care the absolute values
 // returns a float value
-float compute_path_length(nav_msgs::Path * path) {
+unsigned compute_path_length(nav_msgs::Path * path) {
  
     float len = 0.0; 
 
@@ -39,24 +47,9 @@ float compute_path_length(nav_msgs::Path * path) {
         return 0.0; 
     }
 
-    if (sizeof(path->poses) / sizeof(path->poses[0]) <= 1) {
-        ROS_WARN("No need to compute path length as you have arrived"); 
-        return 0.0; 
-    }
+    std::vector <geometry_msgs::PoseStamped> vec(path->poses);
 
-    for (int i = 1; i < sizeof(path->poses) / sizeof(path->poses[0]); i++) {
-
-        float x_diff, y_diff; 
-
-        x_diff = path->poses[i].pose.position.x - path->poses[i-1].pose.position.x; 
-        y_diff = path->poses[i].pose.position.y - path->poses[i-1].pose.position.y; 
-
-        len += pow( (x_diff * x_diff) + (y_diff * y_diff), 0.5); 
-        
-    }
-
-    return len; 
-    
+    return (unsigned) vec.size(); 
 }
 
 // this function updates the belief distribution based on bayesian equation
@@ -88,39 +81,36 @@ void update_belief(std::vector<float> *belief, bool detected, int next_goal_inde
         
 }
 
+
 // this function calls the robot platform and visual sensors to sense a specific
 // scene. It return a boolean value identifies if the target is detected. 
-bool observe(geometry_msgs::PoseWithCovarianceStamped *curr_pos, 
-    ros::Publisher *pub) {
+bool observe(ros::NodeHandle *nh) {
 
-    const float PI = atan(1) * 4; 
-
-    double roll, pitch, yaw;
-
-    geometry_msgs::PoseStamped msg_goal; 
-   
-    msg_goal.header.frame_id = "level_mux/map";
-    msg_goal.pose.position.x = curr_pos->pose.pose.position.x; 
-    msg_goal.pose.position.y = curr_pos->pose.pose.position.y; 
-
-    // convert from QuaternionMsg to TFQuaternion
-    tf::Quaternion q; 
-    tf::quaternionMsgToTF(curr_pos->pose.pose.orientation, q); 
-
-    // compute yaw
-    tf::Matrix3x3 mat(q);
-    mat.getRPY(roll, pitch, yaw);
-
-    // assemble a goal to let robot rotate
-    msg_goal.pose.orientation = tf::createQuaternionMsgFromYaw(yaw + PI/2.0);
+    // to stop the robot first
+    ros::Publisher pub = nh->advertise <geometry_msgs::Twist> ("/cmd_vel", 100); 
+    geometry_msgs::Twist vel; 
+    vel.linear.x = 0;
+    vel.angular.z = 0;
+    pub.publish(vel); 
 
     ROS_INFO("Look to the left...");
-    pub->publish(msg_goal); 
+    vel.angular.z = 0.2;
 
-    msg_goal.pose.orientation = tf::createQuaternionMsgFromYaw(yaw - PI);
+    for (int i=0; i < 10; i++) {
+        pub.publish(vel); 
+        ros::Duration(1).sleep();
+    }
+
 
     ROS_INFO("Look to the right...");
-    pub->publish(msg_goal); 
+    vel.angular.z = -0.2;
+    for (int i=0; i < 20; i++) {
+        pub.publish(vel); 
+        ros::Duration(1).sleep();
+    }
+
+    vel.angular.z = 0;
+    pub.publish(vel); 
 
     // here we assume the robot can never detects the target, so it's always
     // returning false; 
@@ -152,7 +142,7 @@ int main(int argc, char **argv) {
     std::vector <float> belief(positions.size(), 1.0/positions.size()); 
 
     // a vector that saves the distances to all possible positions
-    std::vector <float> distances(positions.size(), 0.0); 
+    std::vector <unsigned> distances(positions.size(), 0.0); 
 
     // fitness function: maximization to decide where to see
     std::vector <float> fitness(positions.size(), 0.0); 
@@ -197,10 +187,11 @@ int main(int argc, char **argv) {
 
             // to determine the goal point
             srv.request.goal.header.frame_id = "level_mux/map"; 
-            positions[i][0] >> srv.request.start.pose.position.x; 
-            positions[i][1] >> srv.request.start.pose.position.y; 
+            positions[i][0] >> srv.request.goal.pose.position.x; 
+            positions[i][1] >> srv.request.goal.pose.position.y; 
 
             // call service to compute a path to a possible positon
+            client_compute_path.waitForExistence();
             if (!client_compute_path.call(srv))
                 ROS_ERROR("Calling service for path computing failed"); 
 
@@ -208,15 +199,22 @@ int main(int argc, char **argv) {
 
             // compute and save the distance of that path
             distances[i] = compute_path_length( & path); 
+            ROS_INFO("distance %d: %d", i, (int) distances[i]);
 
         }
 
         // fitness function, weighted belief probabilities
         int next_goal_index; 
         float tmp_max = -1.0; 
-        for (unsigned i = 0; i < positions.size(); i++) {
+        float resolution;
+        ros::param::param <float> ("/move_base/local_costmap/resolution", 
+            resolution, 0.05); 
 
-            fitness[i] = belief[i] / distances[i]; 
+        for (unsigned i = 0; i < positions.size(); i++) {
+            
+            
+            fitness[i] = belief[i] / ( (float) distances[i] * resolution + analyzing_cost); 
+            ROS_INFO("fitness %d: %f", i, fitness[i]); 
             
             // finds the largest fitness value and save its index to
             // next_goal_index
@@ -231,10 +229,11 @@ int main(int argc, char **argv) {
         positions[next_goal_index][0] >> msg_goal.pose.position.x; 
         positions[next_goal_index][1] >> msg_goal.pose.position.y; 
 
-        float tmp_z;
+        float tmp_z, tmp_w;
         positions[next_goal_index][2] >> tmp_z; 
+        positions[next_goal_index][3] >> tmp_w; 
         msg_goal.pose.orientation.z = tmp_z; 
-        msg_goal.pose.orientation.w = pow(1 - (tmp_z * tmp_z), 0.5); 
+        msg_goal.pose.orientation.w = tmp_w; 
         
         // we have assumbled a goal, we now publish it to the proper topic
         pub_move_robot.publish(msg_goal); 
@@ -243,11 +242,19 @@ int main(int argc, char **argv) {
 
         while (ros::ok()) {
 
+            // ROS_INFO("goal x: %f, y: %f", msg_goal.pose.position.x, 
+            //     msg_goal.pose.position.y);
+            // ROS_INFO("current x: %f, y: %f", curr_pos.pose.pose.position.x, 
+            //     curr_pos.pose.pose.position.y); 
+
             ros::spinOnce(); 
             float tmp_x = msg_goal.pose.position.x - curr_pos.pose.pose.position.x;
             float tmp_y = msg_goal.pose.position.y - curr_pos.pose.pose.position.y;
 
-            if (pow( tmp_x*tmp_x + tmp_y*tmp_y, 0.5) < tolerance) {
+            float dis_to_goal = pow(tmp_x*tmp_x + tmp_y*tmp_y, 0.5); 
+            // ROS_INFO("Distance to goal: %f", dis_to_goal); 
+
+            if (dis_to_goal < tolerance) {
                 break;
             }
 
@@ -256,7 +263,7 @@ int main(int argc, char **argv) {
 
         ROS_INFO("Arrived"); 
 
-        detected = observe( &curr_pos, &pub_move_robot); 
+        detected = observe(&nh); 
 
         // update belief based on observation (true or false)
         update_belief( & belief, detected, next_goal_index); 

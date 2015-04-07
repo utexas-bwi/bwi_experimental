@@ -3,7 +3,7 @@
     <arg name="sim_positions" default="$(find bwi_scavenger)/support/simulation.yaml" />
     <arg name="real_positions" default="$(find bwi_scavenger)/support/real.yaml" />
 
-    <arg name="sim_tolerance" default="0.2" />
+    <arg name="sim_tolerance" default="0.5" />
     <arg name="real_tolerance" default="0.5" />
 
     <!-- assuming 1m/s speed, this cost represents how many seconds needed -->
