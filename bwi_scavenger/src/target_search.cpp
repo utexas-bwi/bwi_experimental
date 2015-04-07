@@ -2,13 +2,23 @@
 #include <ros/ros.h>
 #include <vector>
 #include <fstream>
+#include <string>
 
-geometry_msgs::PoseStamped curr_pos; 
+// msgs
+#include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
+
+// path
+#include <nav_msgs/Path.h>
+#include <nav_msgs/GetPlan.h>
+
+geometry_msgs::PoseWithCovarianceStamped curr_pos; 
 
 // callback function that saves robot's current position
-void callback(const geometry_msgs::PoseStamped::ConstPtr& msg) {
- 
-    curr_pos = msg->data;    
+void callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg) {
+    
+    ROS_INFO("I heard something about my current position"); 
+    curr_pos = *msg;
     
 }
 
@@ -34,8 +44,8 @@ float compute_path_length(nav_msgs::Path * path) {
 
         float x_diff, y_diff; 
 
-        x_diff = path->poses[i].position.x - path->poses[i-1].position.x; 
-        y_diff = path->poses[i].position.y - path->poses[i-1].position.y; 
+        x_diff = path->poses[i].pose.position.x - path->poses[i-1].pose.position.x; 
+        y_diff = path->poses[i].pose.position.y - path->poses[i-1].pose.position.y; 
 
         len += pow( (x_diff * x_diff) + (y_diff * y_diff), 0.5); 
         
@@ -46,14 +56,14 @@ float compute_path_length(nav_msgs::Path * path) {
 }
 
 // this function updates the belief distribution based on bayesian equation
-void update_belief(vector<float> *belief, bool detected, int next_goal_index) {
+void update_belief(std::vector<float> *belief, bool detected, int next_goal_index) {
     
     float true_positive_rate, true_negative_rate; 
 
     ros::param::param <float> ("~true_positive_rate", true_positive_rate, 0.8); 
     ros::param::param <float> ("~true_negative_rate", true_negative_rate, 0.8); 
     
-    vector <float> tmp_belief (*belief); 
+    std::vector <float> tmp_belief (*belief); 
 
     if (detected)
         tmp_belief[next_goal_index] = tmp_belief[next_goal_index] * true_positive_rate / 
@@ -69,7 +79,7 @@ void update_belief(vector<float> *belief, bool detected, int next_goal_index) {
     for (int i = 0; i < tmp_belief.size(); i++)
         normalizer += tmp_belief[i]; 
 
-    for (int i = 0; i < tmp_belief.size(); i++) {
+    for (int i = 0; i < tmp_belief.size(); i++)
         (*belief)[i]  = tmp_belief[i] / normalizer; 
         
 }
@@ -127,7 +137,7 @@ int main(int argc, char **argv) {
 
     // get the parameter of tolerance to goal
     float tolerance; 
-    if (!ros::param::get("tolerance", tolerance)) 
+    if (!ros::param::get("~tolerance", tolerance)) 
         ROS_ERROR("tolerance value not set"); 
 
     bool found = false, detected = false;
@@ -139,17 +149,18 @@ int main(int argc, char **argv) {
 
         // to get the current position using the callback function
         ros::spinOnce(); 
+        ROS_INFO("Compute which scene to analyze next"); 
 
         for (unsigned i = 0; i < positions.size(); i++) {
 
             // to determine the starting point
-            srv.request.start.frame_id = "level_mux/map"; 
-            srv.request.start.pose = curr_pos.pose; 
+            srv.request.start.header.frame_id = "level_mux/map"; 
+            srv.request.start.pose = curr_pos.pose.pose; 
 
             // to determine the goal point
-            srv.request.goal.frame_id = "level_mux/map"; 
-            srv.request.start.pose.position.x = positions[i][0]; 
-            srv.request.start.pose.position.y = positions[i][1]; 
+            srv.request.goal.header.frame_id = "level_mux/map"; 
+            positions[i][0] >> srv.request.start.pose.position.x; 
+            positions[i][1] >> srv.request.start.pose.position.y; 
 
             // call service to compute a path to a possible positon
             if (!client_compute_path.call(srv))
@@ -167,7 +178,7 @@ int main(int argc, char **argv) {
         float tmp_max = -1.0; 
         for (unsigned i = 0; i < positions.size(); i++) {
 
-            fitness[i] = belief[i] / distance[i]; 
+            fitness[i] = belief[i] / distances[i]; 
             
             // finds the largest fitness value and save its index to
             // next_goal_index
@@ -178,21 +189,44 @@ int main(int argc, char **argv) {
         }
 
         // assumble a goal for analyzing the next scene of interest
-        msg_goal.frame_id = "level_mux/map";
-        msg_goal.pose.position->x = positions[next_goal_index][0]; 
-        msg_goal.pose.position->y = positions[next_goal_index][1]; 
+        msg_goal.header.frame_id = "level_mux/map";
+        positions[next_goal_index][0] >> msg_goal.pose.position.x; 
+        positions[next_goal_index][1] >> msg_goal.pose.position.y; 
 
-        float tmp_z = positions[next_goal_index][2]; 
-        msg_goal.pose.orientation->z = tmp_z; 
-        msg_goal.pose.orientation->w = pow(1 - (tmp_z * tmp_z), 0.5); 
+        float tmp_z;
+        positions[next_goal_index][2] >> tmp_z; 
+        msg_goal.pose.orientation.z = tmp_z; 
+        msg_goal.pose.orientation.w = pow(1 - (tmp_z * tmp_z), 0.5); 
         
         // we have assumbled a goal, we now publish it to the proper topic
         pub_move_robot.publish(msg_goal); 
 
+        ROS_INFO("Moving to the next scene for visual analyzation"); 
+        while (ros::ok()) {
+
+            ros::spinOnce(); 
+            float tmp_x = msg_goal.pose.position.x - curr_pos.pose.pose.position.x;
+            float tmp_y = msg_goal.pose.position.y - curr_pos.pose.pose.position.y;
+
+            if (pow( tmp_x*tmp_x + tmp_y*tmp_y, 0.5) < tolerance) {
+                break;
+            }
+
+            loop_rate.sleep();
+        }
+
+        ROS_INFO("Arrived"); 
+
         detected = observe(); 
 
         // update belief based on observation (true or false)
-        belief = update_belief(belief, detected, next_goal_index); 
+        update_belief( & belief, detected, next_goal_index); 
+        
+        std::stringstream ss;
+        for (int i=0; i < belief.size(); i++) 
+            ss << belief[i] << ", "; 
+
+        ROS_INFO(ss.str().c_str()); 
 
     }
  
