@@ -9,6 +9,8 @@
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/Twist.h> 
 
+#include <std_msgs/String.h>
+
 // path
 #include <nav_msgs/Path.h>
 #include <nav_msgs/GetPlan.h>
@@ -26,8 +28,10 @@ geometry_msgs::PoseWithCovarianceStamped curr_pos;
 
 const float PI = atan(1) * 4; 
 
+bool detectedFlag = false;
+
 // callback function that saves robot's current position
-void callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg) {
+void callbackCurrPos(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg) {
     
     // ROS_INFO("I heard something about my current position"); 
     curr_pos = *msg;
@@ -38,7 +42,7 @@ void callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg) {
 // compute the length of a path, nav_msgs::Path
 // we used pixel as the distance unit, as we do not care the absolute values
 // returns a float value
-unsigned compute_path_length(nav_msgs::Path * path) {
+unsigned computePathLength(nav_msgs::Path * path) {
  
     float len = 0.0; 
 
@@ -53,7 +57,7 @@ unsigned compute_path_length(nav_msgs::Path * path) {
 }
 
 // this function updates the belief distribution based on bayesian equation
-void update_belief(std::vector<float> *belief, bool detected, int next_goal_index) {
+void updateBelief(std::vector<float> *belief, bool detected, int next_goal_index) {
     
     float true_positive_rate, true_negative_rate; 
 
@@ -82,31 +86,55 @@ void update_belief(std::vector<float> *belief, bool detected, int next_goal_inde
 }
 
 
+void callbackObjectDetection (const std_msgs::String::ConstPtr& msg) {
+    
+    // if it is still working on that
+    if (msg->data.find("running") >= 0)
+        detectedFlag = false;
+    else
+        detectedFlag = true;
+    
+}
+
 // this function calls the robot platform and visual sensors to sense a specific
 // scene. It return a boolean value identifies if the target is detected. 
 bool observe(ros::NodeHandle *nh) {
 
-    // to stop the robot first
+    // publish to /cmd_vel to stop the robot first
     ros::Publisher pub = nh->advertise <geometry_msgs::Twist> ("/cmd_vel", 100); 
     geometry_msgs::Twist vel; 
     vel.linear.x = 0;
     vel.angular.z = 0;
     pub.publish(vel); 
 
+    // subscribe to /segbot_object_detection_status for status of object
+    // detection
+    ros::Subscriber sub = nh->subscribe("/segbot_object_detection_status", 100,
+        callbackObjectDetection);
+
+    // look to the left
     ROS_INFO("Look to the left...");
     vel.angular.z = 0.2;
 
     for (int i=0; i < 10; i++) {
+        ros::spinOnce();
         pub.publish(vel); 
         ros::Duration(1).sleep();
+
+        if (detectedFlag)
+            return true;
     }
 
-
+    // look to the right
     ROS_INFO("Look to the right...");
     vel.angular.z = -0.2;
     for (int i=0; i < 20; i++) {
+        ros::spinOnce();
         pub.publish(vel); 
         ros::Duration(1).sleep();
+
+        if (detectedFlag)
+            return true;
     }
 
     vel.angular.z = 0;
@@ -158,7 +186,7 @@ int main(int argc, char **argv) {
     geometry_msgs::PoseStamped msg_goal; 
 
     // subscribe to the topic that reports the current position
-    ros::Subscriber sub = nh.subscribe("amcl_pose", 100, callback); 
+    ros::Subscriber sub = nh.subscribe("amcl_pose", 100, callbackCurrPos); 
 
     // get the parameter of tolerance to goal
     float tolerance; 
@@ -198,7 +226,7 @@ int main(int argc, char **argv) {
             nav_msgs::Path path = srv.response.plan; 
 
             // compute and save the distance of that path
-            distances[i] = compute_path_length( & path); 
+            distances[i] = computePathLength( & path); 
             ROS_INFO("distance %d: %d", i, (int) distances[i]);
 
         }
@@ -240,12 +268,8 @@ int main(int argc, char **argv) {
 
         ROS_INFO("Moving to the next scene for visual analyzation"); 
 
+        // moving to the current goal
         while (ros::ok()) {
-
-            // ROS_INFO("goal x: %f, y: %f", msg_goal.pose.position.x, 
-            //     msg_goal.pose.position.y);
-            // ROS_INFO("current x: %f, y: %f", curr_pos.pose.pose.position.x, 
-            //     curr_pos.pose.pose.position.y); 
 
             ros::spinOnce(); 
             float tmp_x = msg_goal.pose.position.x - curr_pos.pose.pose.position.x;
@@ -266,7 +290,7 @@ int main(int argc, char **argv) {
         detected = observe(&nh); 
 
         // update belief based on observation (true or false)
-        update_belief( & belief, detected, next_goal_index); 
+        updateBelief( & belief, detected, next_goal_index); 
         
         std::stringstream ss;
         for (int i=0; i < belief.size(); i++) 
