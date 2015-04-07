@@ -12,6 +12,10 @@
 #include <nav_msgs/Path.h>
 #include <nav_msgs/GetPlan.h>
 
+#include <tf/LinearMath/Matrix3x3.h>
+#include <tf/LinearMath/Transform.h>
+#include <tf/transform_datatypes.h>
+
 geometry_msgs::PoseWithCovarianceStamped curr_pos; 
 
 // callback function that saves robot's current position
@@ -86,10 +90,41 @@ void update_belief(std::vector<float> *belief, bool detected, int next_goal_inde
 
 // this function calls the robot platform and visual sensors to sense a specific
 // scene. It return a boolean value identifies if the target is detected. 
-bool observe() {
+bool observe(geometry_msgs::PoseWithCovarianceStamped *curr_pos, 
+    ros::Publisher *pub) {
 
+    const float PI = atan(1) * 4; 
+
+    double roll, pitch, yaw;
+
+    geometry_msgs::PoseStamped msg_goal; 
+   
+    msg_goal.header.frame_id = "level_mux/map";
+    msg_goal.pose.position.x = curr_pos->pose.pose.position.x; 
+    msg_goal.pose.position.y = curr_pos->pose.pose.position.y; 
+
+    // convert from QuaternionMsg to TFQuaternion
+    tf::Quaternion q; 
+    tf::quaternionMsgToTF(curr_pos->pose.pose.orientation, q); 
+
+    // compute yaw
+    tf::Matrix3x3 mat(q);
+    mat.getRPY(roll, pitch, yaw);
+
+    // assemble a goal to let robot rotate
+    msg_goal.pose.orientation = tf::createQuaternionMsgFromYaw(yaw + PI/2.0);
+
+    ROS_INFO("Look to the left...");
+    pub->publish(msg_goal); 
+
+    msg_goal.pose.orientation = tf::createQuaternionMsgFromYaw(yaw - PI);
+
+    ROS_INFO("Look to the right...");
+    pub->publish(msg_goal); 
+
+    // here we assume the robot can never detects the target, so it's always
+    // returning false; 
     return false; 
-    
 }
 
 // this is the entrance of the program
@@ -139,6 +174,9 @@ int main(int argc, char **argv) {
     float tolerance; 
     if (!ros::param::get("~tolerance", tolerance)) 
         ROS_ERROR("tolerance value not set"); 
+
+    float analyzing_cost;
+    ros::param::param <float> ("~analyzing_scene_cost", analyzing_cost, 5.0); 
 
     bool found = false, detected = false;
 
@@ -202,6 +240,7 @@ int main(int argc, char **argv) {
         pub_move_robot.publish(msg_goal); 
 
         ROS_INFO("Moving to the next scene for visual analyzation"); 
+
         while (ros::ok()) {
 
             ros::spinOnce(); 
@@ -217,7 +256,7 @@ int main(int argc, char **argv) {
 
         ROS_INFO("Arrived"); 
 
-        detected = observe(); 
+        detected = observe( &curr_pos, &pub_move_robot); 
 
         // update belief based on observation (true or false)
         update_belief( & belief, detected, next_goal_index); 
@@ -226,13 +265,12 @@ int main(int argc, char **argv) {
         for (int i=0; i < belief.size(); i++) 
             ss << belief[i] << ", "; 
 
-        ROS_INFO(ss.str().c_str()); 
+        std::string str(ss.str());
+        ROS_INFO("%s", str.c_str()); 
 
     }
  
     return 0;        
 }
-
-
 
 
