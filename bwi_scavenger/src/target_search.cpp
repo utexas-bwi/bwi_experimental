@@ -116,10 +116,10 @@ bool observe(ros::NodeHandle *nh) {
     ROS_INFO("Look to the left...");
     vel.angular.z = 0.2;
 
-    for (int i=0; i < 5; i++) {
+    for (int i=0; i < 50; i++) {
         ros::spinOnce();
         pub.publish(vel); 
-        ros::Duration(1.0).sleep();
+        ros::Duration(0.1).sleep();
 
         if (detectedFlag)
             return true;
@@ -128,10 +128,11 @@ bool observe(ros::NodeHandle *nh) {
     // look to the right
     ROS_INFO("Look to the right...");
     vel.angular.z = -0.2;
-    for (int i=0; i < 9; i++) {
+
+    for (int i=0; i < 100; i++) {
         ros::spinOnce();
         pub.publish(vel); 
-        ros::Duration(1.0).sleep();
+        ros::Duration(0.1).sleep();
 
         if (detectedFlag)
             return true;
@@ -241,7 +242,7 @@ int main(int argc, char **argv) {
         int belief_max = 0.0; 
         ss << "\nbelief: "; 
         for (int i=0; i < belief.size(); i++) {
-            belief_max = max(belief_max, belief[i]); 
+            belief_max = (belief_max > belief[i]) ? belief_max : belief[i]; 
             ss << belief[i] << ", "; 
         }
 
