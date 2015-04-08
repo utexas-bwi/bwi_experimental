@@ -116,7 +116,7 @@ bool observe(ros::NodeHandle *nh) {
     ROS_INFO("Look to the left...");
     vel.angular.z = 0.2;
 
-    for (int i=0; i < 10; i++) {
+    for (int i=0; i < 5; i++) {
         ros::spinOnce();
         pub.publish(vel); 
         ros::Duration(1.0).sleep();
@@ -128,7 +128,7 @@ bool observe(ros::NodeHandle *nh) {
     // look to the right
     ROS_INFO("Look to the right...");
     vel.angular.z = -0.2;
-    for (int i=0; i < 20; i++) {
+    for (int i=0; i < 9; i++) {
         ros::spinOnce();
         pub.publish(vel); 
         ros::Duration(1.0).sleep();
@@ -201,6 +201,8 @@ int main(int argc, char **argv) {
 
     ros::Rate loop_rate(10); 
 
+    std::stringstream ss;
+
     // break if ros program gets killed or target is found
     while (!found && ros::ok()) {
 
@@ -228,9 +230,30 @@ int main(int argc, char **argv) {
 
             // compute and save the distance of that path
             distances[i] = computePathLength( & path); 
-            ROS_INFO("distance %d: %d", i, (int) distances[i]);
 
         }
+
+        ss.str(""); 
+        ss << "\ndistances: "; 
+        for (int i=0; i < distances.size(); i++) 
+            ss << distances[i] << ", "; 
+
+        int belief_max = 0.0; 
+        ss << "\nbelief: "; 
+        for (int i=0; i < belief.size(); i++) {
+            belief_max = max(belief_max, belief[i]); 
+            ss << belief[i] << ", "; 
+        }
+
+        // decide if to stop search or not
+        if (belief_max > 0.8) {
+            found = true;
+            break;
+        }
+        
+
+        ROS_INFO("%s", ss.str().c_str()); 
+
 
         // fitness function, weighted belief probabilities
         int next_goal_index; 
@@ -243,7 +266,7 @@ int main(int argc, char **argv) {
             
             
             fitness[i] = belief[i] / ( (float) distances[i] * resolution + analyzing_cost); 
-            ROS_INFO("fitness %d: %f", i, fitness[i]); 
+            // ROS_INFO("fitness %d: %f", i, fitness[i]); 
             
             // finds the largest fitness value and save its index to
             // next_goal_index
@@ -293,13 +316,11 @@ int main(int argc, char **argv) {
         // update belief based on observation (true or false)
         updateBelief( & belief, detected, next_goal_index); 
         
-        std::stringstream ss;
-        for (int i=0; i < belief.size(); i++) 
-            ss << belief[i] << ", "; 
 
-        std::string str(ss.str());
-        ROS_INFO("%s", str.c_str()); 
+    }
 
+    if (found) {
+        ROS_INFO("DONE: I believe the target object is here! "); 
     }
  
     return 0;        
