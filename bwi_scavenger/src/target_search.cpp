@@ -119,7 +119,7 @@ bool observe(ros::NodeHandle *nh) {
     for (int i=0; i < 10; i++) {
         ros::spinOnce();
         pub.publish(vel); 
-        ros::Duration(1).sleep();
+        ros::Duration(1.0).sleep();
 
         if (detectedFlag)
             return true;
@@ -131,7 +131,7 @@ bool observe(ros::NodeHandle *nh) {
     for (int i=0; i < 20; i++) {
         ros::spinOnce();
         pub.publish(vel); 
-        ros::Duration(1).sleep();
+        ros::Duration(1.0).sleep();
 
         if (detectedFlag)
             return true;
@@ -187,6 +187,7 @@ int main(int argc, char **argv) {
 
     // subscribe to the topic that reports the current position
     ros::Subscriber sub = nh.subscribe("amcl_pose", 100, callbackCurrPos); 
+    ros::Duration(2.0).sleep(); 
 
     // get the parameter of tolerance to goal
     float tolerance; 

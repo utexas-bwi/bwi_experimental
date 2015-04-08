@@ -95,8 +95,11 @@ int main( int argc, char** argv )
     ros::NodeHandle nh;
     ros::Subscriber sub = nh.subscribe("/nav_kinect/rgb/image_color", 1, callback);
 
+    // enable this "latch" function, so that the scav_hunt node can directly get
+    // the last published message, even if it was published before the
+    // subscriber gets connected
     ros::Publisher pub = 
-        nh.advertise<std_msgs::String>("segbot_object_detection_status", 1);
+        nh.advertise<std_msgs::String>("segbot_object_detection_status", 1, true);
 
     int cnt = 0;
     ros::Rate r(10);
