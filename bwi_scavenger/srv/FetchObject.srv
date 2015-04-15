@@ -1,0 +1,9 @@
+int32 DONE = 1
+int32 OTHERWISE = 0
+
+string from
+string name
+string to 
+
+---
+int32 status

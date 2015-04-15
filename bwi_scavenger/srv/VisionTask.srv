@@ -1,0 +1,10 @@
+int32 WHITEBOARD = 1
+int32 TEMPLATE = 2
+int32 COLORSHIRT = 3
+
+int32 type
+string path_to_template
+string color
+
+---
+string path_to_image
