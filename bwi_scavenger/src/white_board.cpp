@@ -17,6 +17,8 @@
 #include <cstdio>
 #include <ctime>
 
+#include "bwi_scavenger/Whiteboard.h"
+
 typedef pcl::PointCloud<pcl::PointXYZRGB> PointCloud;
 
 sensor_msgs::ImageConstPtr image; 
@@ -131,12 +133,12 @@ bool whiteboard_search(bwi_scavenger::Whiteboard::Request &req,
     bwi_scavenger::Whiteboard::Response &res) {
 
     ros::Rate r(10);
-    while (status != DONE && ros::ok()) {
+    while (s != DONE && ros::ok()) {
         
         ros::spinOnce(); 
         
     }
-    res.path_to_file = file; 
+    res.path_to_image = file; 
     return true;
     
 }
@@ -161,8 +163,8 @@ int main(int argc, char ** argv)
     ros::param::param<std::string>("~directory", directory, default_dir);
 
 
-    ros::ServiceServer service = nh.advertiseService <bwi_scavenger::Whiteboard>
-        ("whiteboard_service", whiteboard_search);
+    ros::ServiceServer service = nh.advertiseService ("whiteboard_service", 
+        whiteboard_search);
 
     ros::Rate r(10); 
 

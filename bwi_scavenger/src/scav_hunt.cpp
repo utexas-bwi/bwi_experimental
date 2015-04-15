@@ -3,6 +3,7 @@
 #include "std_msgs/String.h"
 #include "bwi_msgs/QuestionDialog.h"
 #include "bwi_scavenger/VisionTask.h"
+#include "bwi_scavenger/Dialog.h"
 
 #include <string>
 #include <stdlib.h>
@@ -23,7 +24,16 @@ void task_shirt(ros::ServiceClient * client)
 
     bwi_scavenger::VisionTask srv;
     srv.request.type = 3;
-    srv.request.color = shirt_color; 
+
+    if (shirt_color.compare("red") == 0)
+        srv.request.color = bwi_scavenger::VisionTaskRequest::RED; 
+    else if (shirt_color.compare("blue") == 0)
+        srv.request.color = bwi_scavenger::VisionTaskRequest::BLUE; 
+    else if (shirt_color.compare("green") == 0)
+        srv.request.color = bwi_scavenger::VisionTaskRequest::GREEN; 
+    else if (shirt_color.compare("yellow") == 0)
+        srv.request.color = bwi_scavenger::VisionTaskRequest::YELLOW; 
+
     client->call(srv); 
     file_shirt = srv.response.path_to_image; 
 }
@@ -66,8 +76,8 @@ void task_dialog(ros::ServiceClient * client) {
     ROS_INFO("dialog task"); 
 
     bwi_scavenger::Dialog srv;
-    client->call(srv)
-    file_dialog = srv.response.path_to_log
+    client->call(srv);
+    file_dialog = srv.response.path_to_log;
 
 }
 
@@ -77,18 +87,23 @@ void print_to_gui( std::vector <std::string> *tasks,
     std::string message; 
     std::vector<std::string> buttons; 
 
-    for (int i=0; i < tasks.size(); i++) 
-        buttons.push_back(std::to_string(i)); 
+    for (int i=0; i < tasks->size(); i++) {
+        char c = '0' + i; 
+        std::string tmp( &c );
+        buttons.push_back(tmp); 
+    }
 
     for (int i=0; i < tasks->size(); i++) {
         
-        switch (*task_status[i]) {
-            case TODO: message += "  "; todo_tasks->push_back(i);
-            case DOING: message += "\u2794 "; doing_tasks->push_back(i);
-            case DONE: message += "\u2713 "; done_tasks->push_back(i); 
+        switch ((*task_status)[i]) {
+            case TODO: message += "  "; 
+            case DOING: message += "\u2794 "; 
+            case DONE: message += "\u2713 "; 
         }
 
-        message += std::to_string(i) + ", " + *tasks[i] + "\n";
+        char c = '0' + i;
+        std::string tmp( &c );
+        message += c + ", " + (*tasks)[i] + "\n";
     
     }
 
@@ -99,30 +114,24 @@ void print_to_gui( std::vector <std::string> *tasks,
     srv.request.options = buttons; 
     
     if (!client_list->call(srv)) 
-    {
         ROS_ERROR("Failed to call service question_dialog"); 
-        return 1;
-    }
     
     std::string eog = "eog ";
     std::string gedit = "gedit "; 
     
-    if (srv.response.index < 0) // buton not clicked
-        continue;
-    
-    else if (srv.response.index == 0 && task_status[0] == DONE)
+    if (srv.response.index == 0 && (*task_status)[0] == DONE)
         system((eog + file_shirt).c_str());
     
-    else if (srv.response.index == 1 && task_status[1] == DONE)
+    else if (srv.response.index == 1 && (*task_status)[1] == DONE)
         system((eog + file_object).c_str());
     
-    else if (srv.response.index == 2 && task_status[2] == DONE)
+    else if (srv.response.index == 2 && (*task_status)[2] == DONE)
         system((eog + file_board).c_str());
 
-    else if (srv.response.index == 3 && task_status[3] == DONE)
+    else if (srv.response.index == 3 && (*task_status)[3] == DONE)
         system((gedit + file_fetch).c_str()); 
 
-    else if (srv.response.index == 4 && task_status[4] == DONE)
+    else if (srv.response.index == 4 && (*task_status)[4] == DONE)
         system((gedit + file_dialog).c_str()); 
 }
 
@@ -131,9 +140,9 @@ int main(int argc, char **argv){
 
 
     ros::init(argc, argv, "scav_hunt");
-    ros::NodeHandle *nh = new NodeHandle();
+    ros::NodeHandle nh;
 
-    ros::ServiceClient client_list = nh->serviceClient <bwi_msgs::QuestionDialog> 
+    ros::ServiceClient client_list = nh.serviceClient <bwi_msgs::QuestionDialog> 
         ("question_dialog");
 
     ros::Rate rate(10); 
@@ -181,12 +190,12 @@ int main(int argc, char **argv){
         std::random_shuffle (todo_tasks.begin(), todo_tasks.end()); 
         task_status[todo_tasks[0]] = DOING; 
 
-        print_to_gui( & tasks, & task_status, & client_list) {
+        print_to_gui( & tasks, & task_status, & client_list); 
 
-        ros::ServiceClient client nh->serviceClient <bwi_scavenger::VisionTask>
+        ros::ServiceClient client = nh.serviceClient <bwi_scavenger::VisionTask>
             ("scavenger_vision_service"); 
-        ros::ServiceClient client_dialog nh->serviceClient <bwi_scavenger::Dialog>   
-            ("dialog_service");
+        ros::ServiceClient client_dialog = nh.serviceClient 
+            <bwi_scavenger::Dialog> ("dialog_service");
 
         switch (todo_tasks[0]) {
             // shirt object board fetch dialog
@@ -199,7 +208,7 @@ int main(int argc, char **argv){
             case 3: 
                 task_fetch( & client); break;
             case 4:
-                task_dialog(client_dialog); break;
+                task_dialog( & client_dialog); break;
         }
 
         task_status[todo_tasks[0]] = DONE; 

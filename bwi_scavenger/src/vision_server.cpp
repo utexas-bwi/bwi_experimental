@@ -46,7 +46,7 @@ bool callback_vision(bwi_scavenger::VisionTask::Request &req,
             // color shirt
 
             srv_shirt.request.color = req.color; 
-            client.call(srv_shirt); 
+            client_shirt.call(srv_shirt); 
             res.path_to_image = srv_shirt.response.path_to_image; 
             break;
 
@@ -65,7 +65,7 @@ int main(int argc, char ** argv) {
     ros::init(argc, argv, "scavenger_vision_server"); 
     nh = new ros::NodeHandle(); 
 
-    ros::ServiceServer service = nh.advertiseService("scavenger_vision_service", 
+    ros::ServiceServer service = nh->advertiseService("scavenger_vision_service", 
         callback_vision);
     ros::spin();
     

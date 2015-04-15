@@ -36,6 +36,7 @@ struct rgb {
     float b;        
 } red, blue, green, yellow;
 
+
 void callback_image_saver(const sensor_msgs::ImageConstPtr& msg)
 {
     image = msg; 
@@ -131,7 +132,7 @@ void callback_human_detection(const PointCloud::ConstPtr& msg)
             file = directory + "/shirt_" + str + ".jpg"; 
             cv::imwrite(file, cv_ptr->image);
             s = DONE; 
-            res.path_to_file = file; 
+
             return; 
         } 
         catch (cv_bridge::Exception& e) {
@@ -141,7 +142,8 @@ void callback_human_detection(const PointCloud::ConstPtr& msg)
     } 
 }
 
-bool find_color_shirt(ColorShirt::Request &req, ColorShirt::Response &res) {
+bool find_color_shirt(bwi_scavenger::ColorShirt::Request &req, 
+    bwi_scavenger::ColorShirt::Response &res) {
  
     switch (req.color) {
         
@@ -165,13 +167,6 @@ bool find_color_shirt(ColorShirt::Request &req, ColorShirt::Response &res) {
     // directory to save files
     ros::param::param<std::string>("~directory", directory, default_dir);
 
-    ros::Subscriber sub1 = nh.subscribe <PointCloud>
-        ("/segbot_pcl_person_detector/human_clouds", 1, 
-        callback_human_detection);
-
-    image_transport::ImageTransport it(nh);
-    image_transport::Subscriber sub2 = it.subscribe
-        ("/nav_kinect/rgb/image_color", 1, callback_image_saver);
 
     while (s != DONE) {
         ros::spinOnce();
@@ -187,8 +182,16 @@ int main(int argc, char** argv)
     ros::init(argc, argv, "blue_shirt_server");
     ros::NodeHandle nh;
 
-    ros::ServiceServer service = nh.advertiseService<color_shirt> 
-        ("blue_shirt_service", find_color_shirt);
+    ros::ServiceServer service = nh.advertiseService("blue_shirt_service", 
+        find_color_shirt);
+
+    ros::Subscriber sub1 = nh.subscribe
+        ("/segbot_pcl_person_detector/human_clouds", 1, 
+        callback_human_detection);
+
+    image_transport::ImageTransport it(nh);
+    image_transport::Subscriber sub2 = it.subscribe 
+        ("/nav_kinect/rgb/image_color", 1, callback_image_saver);
 
     // ros::Duration(1.0).sleep();
     ros::Rate r(10);

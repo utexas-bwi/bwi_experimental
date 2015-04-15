@@ -67,13 +67,7 @@ find_package(catkin REQUIRED COMPONENTS
 
 ## Generate services in the 'srv' folder
 add_service_files(
-  FILES
-  ColorShirt.srv 
-  FetchObject.srv 
-  Dialog.srv 
-  ObjectDetection.srv 
-  VisionTask.srv 
-  Whiteboard.srv
+  FILES ColorShirt.srv FetchObject.srv Dialog.srv ObjectDetection.srv VisionTask.srv Whiteboard.srv
 )
 
 ## Generate actions in the 'action' folder

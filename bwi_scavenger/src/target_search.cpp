@@ -148,8 +148,7 @@ bool observe(ros::NodeHandle *nh) {
     return false; 
 }
 
-bool target_search(bwi_scavenger::TargetSearch::Request &req, 
-    bwi_scavenger::TargetSearch::Response &res) {
+bool target_search() {
     
     std::string file_positions; 
 
@@ -232,9 +231,6 @@ bool target_search(bwi_scavenger::TargetSearch::Request &req,
 
         }
 
-        // decide if to stop search or not
-        if (belief_max > 0.8)  return true;
-
         // fitness function, weighted belief probabilities
         int next_goal_index; 
         float tmp_max = -1.0; 
@@ -244,6 +240,10 @@ bool target_search(bwi_scavenger::TargetSearch::Request &req,
 
         for (unsigned i = 0; i < positions.size(); i++) {
             
+            // exit of this program
+            if (belief[i] > 0.8)  
+                return true;
+
             fitness[i] = belief[i] / ( (float) distances[i] * resolution + analyzing_cost); 
             // ROS_INFO("fitness %d: %f", i, fitness[i]); 
             
@@ -305,11 +305,8 @@ int main(int argc, char **argv) {
 
     ros::init(argc, argv, "target_search_server");
 
-    ros::ServiceServer service = nh.advertiseService("target_search",
-        target_search); 
+    target_search(); 
 
-    ros::spin();
- 
     return 0;        
 }
 

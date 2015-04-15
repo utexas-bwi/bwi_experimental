@@ -6,4 +6,4 @@ int32 YELLOW = 4
 int32 color
 ---
 
-string path_to_file
+string path_to_image
