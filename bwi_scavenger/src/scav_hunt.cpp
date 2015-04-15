@@ -21,8 +21,6 @@ enum Status { TODO, DOING, DONE };
 void task_shirt(ros::ServiceClient * client)
 {
 
-    ros::param::param <std::string> ("~shirt_color", shirt_color, "blue"); 
-    ROS_INFO("shirt_color: %s", shirt_color.c_str()); 
 
     bwi_scavenger::VisionTask srv;
     srv.request.type = 3;
@@ -149,6 +147,12 @@ int main(int argc, char **argv){
 
     ros::Rate rate(10); 
     ros::Duration(1.0).sleep();
+
+    ros::param::param <std::string> ("~shirt_color", shirt_color, "blue"); 
+    ROS_INFO("shirt_color: %s", shirt_color.c_str()); 
+
+    ros::param::param <std::string> ("~object_name", object_name, "unspecified"); 
+    ROS_INFO("object_name: %s", object_name.c_str()); 
 
     // a list of strings describing the tasks
     std::vector <std::string> tasks; 

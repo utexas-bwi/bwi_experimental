@@ -267,24 +267,32 @@ bool target_search(ros::NodeHandle *nh) {
         msg_goal.pose.orientation.w = tmp_w; 
         
         // we have assumbled a goal, we now publish it to the proper topic
-        pub_move_robot.publish(msg_goal); 
+        bool goal_achieved = false;
 
-        ROS_INFO("Moving to the next scene for visual analyzation"); 
-
-        // moving to the current goal
-        while (ros::ok()) {
+        while (!goal_achieved) {
 
             ros::spinOnce(); 
-            float tmp_x = msg_goal.pose.position.x - curr_pos.pose.pose.position.x;
-            float tmp_y = msg_goal.pose.position.y - curr_pos.pose.pose.position.y;
+            pub_move_robot.publish(msg_goal); 
 
-            float dis_to_goal = pow(tmp_x*tmp_x + tmp_y*tmp_y, 0.5); 
-            // ROS_INFO("Distance to goal: %f", dis_to_goal); 
+            ROS_INFO("Moving to the next scene for visual analyzation"); 
 
-            if (dis_to_goal < tolerance)  break;
+            // moving to the current goal
+            while (ros::ok()) {
+
+                ros::spinOnce(); 
+                float tmp_x = msg_goal.pose.position.x - curr_pos.pose.pose.position.x;
+                float tmp_y = msg_goal.pose.position.y - curr_pos.pose.pose.position.y;
+
+                float dis_to_goal = pow(tmp_x*tmp_x + tmp_y*tmp_y, 0.5); 
+                // ROS_INFO("Distance to goal: %f", dis_to_goal); 
+
+                if (dis_to_goal < tolerance) {
+                    goal_achieved = true;
+                    break;
+                }
+            }
 
         }
-
         ROS_INFO("Arrived"); 
 
         detected = observe(nh); 
