@@ -17,11 +17,8 @@ std::string file_shirt, file_object, file_board, file_fetch, file_dialog;
 
 enum Status { TODO, DOING, DONE };
 
-
 void task_shirt(ros::ServiceClient * client)
 {
-
-
     bwi_scavenger::VisionTask srv;
     srv.request.type = 3;
 
@@ -40,7 +37,6 @@ void task_shirt(ros::ServiceClient * client)
 
 void task_object(ros::ServiceClient * client)
 {
-
     ros::param::param <std::string> ("~path_to_template", path_to_template, 
         "/home/bwi/shiqi/template.jpg"); 
     ROS_INFO("path_to_template: %s", path_to_template.c_str()); 
@@ -54,7 +50,6 @@ void task_object(ros::ServiceClient * client)
 
 void task_board(ros::ServiceClient * client)
 {
-
     ROS_INFO("whiteboard task"); 
 
     bwi_scavenger::VisionTask srv;
@@ -73,7 +68,6 @@ void task_fetch(ros::ServiceClient * client) {
 }
 
 void task_dialog(ros::ServiceClient * client) {
-
 
     ROS_ERROR("not implemented yet");
     return; 

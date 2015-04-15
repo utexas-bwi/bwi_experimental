@@ -30,6 +30,7 @@ const float PI = atan(1) * 4;
 
 bool detectedFlag = false;
 
+ros::NodeHandle * nh; 
 
 
 // callback function that saves robot's current position
@@ -109,35 +110,28 @@ bool observe(ros::NodeHandle *nh) {
     vel.angular.z = 0;
     pub.publish(vel); 
 
-    // subscribe to /segbot_object_detection_status for status of object
-    // detection
-    // ros::Subscriber sub = nh->subscribe("/segbot_object_detection_status", 100,
-    //     callbackObjectDetection);
-
     // look to the left
     ROS_INFO("Look to the left...");
     vel.angular.z = 0.2;
-
-    for (int i=0; i < 50; i++) {
-        ros::spinOnce();
-        pub.publish(vel); 
-        ros::Duration(0.1).sleep();
-
-        if (detectedFlag)
-            return true;
-    }
-
-    // look to the right
-    ROS_INFO("Look to the right...");
-    vel.angular.z = -0.2;
 
     for (int i=0; i < 100; i++) {
         ros::spinOnce();
         pub.publish(vel); 
         ros::Duration(0.1).sleep();
 
-        if (detectedFlag)
-            return true;
+        if (detectedFlag) return true;
+    }
+
+    // look to the right
+    ROS_INFO("Look to the right...");
+    vel.angular.z = -0.2;
+
+    for (int i=0; i < 70; i++) {
+        ros::spinOnce();
+        pub.publish(vel); 
+        ros::Duration(0.1).sleep();
+
+        if (detectedFlag) return true;
     }
 
     vel.angular.z = 0;
@@ -241,11 +235,9 @@ bool target_search(ros::NodeHandle *nh) {
         for (unsigned i = 0; i < positions.size(); i++) {
             
             // exit of this program
-            if (belief[i] > 0.8)  
-                return true;
+            if (belief[i] > 0.8)  return true;
 
             fitness[i] = belief[i] / ( (float) distances[i] * resolution + analyzing_cost); 
-            // ROS_INFO("fitness %d: %f", i, fitness[i]); 
             
             // finds the largest fitness value and save its index to
             // next_goal_index
@@ -269,28 +261,18 @@ bool target_search(ros::NodeHandle *nh) {
         // we have assumbled a goal, we now publish it to the proper topic
         bool goal_achieved = false;
 
-        while (!goal_achieved) {
+        ROS_INFO("Moving to the next scene for visual analyzation"); 
+        while (ros::ok() && !goal_achieved) {
 
             ros::spinOnce(); 
             pub_move_robot.publish(msg_goal); 
 
-            ROS_INFO("Moving to the next scene for visual analyzation"); 
+            float tmp_x = msg_goal.pose.position.x - curr_pos.pose.pose.position.x;
+            float tmp_y = msg_goal.pose.position.y - curr_pos.pose.pose.position.y;
 
-            // moving to the current goal
-            while (ros::ok()) {
+            float dis_to_goal = pow(tmp_x*tmp_x + tmp_y*tmp_y, 0.5); 
 
-                ros::spinOnce(); 
-                float tmp_x = msg_goal.pose.position.x - curr_pos.pose.pose.position.x;
-                float tmp_y = msg_goal.pose.position.y - curr_pos.pose.pose.position.y;
-
-                float dis_to_goal = pow(tmp_x*tmp_x + tmp_y*tmp_y, 0.5); 
-                // ROS_INFO("Distance to goal: %f", dis_to_goal); 
-
-                if (dis_to_goal < tolerance) {
-                    goal_achieved = true;
-                    break;
-                }
-            }
+            if (dis_to_goal < tolerance)  goal_achieved = true;
 
         }
         ROS_INFO("Arrived"); 
@@ -312,9 +294,9 @@ bool target_search(ros::NodeHandle *nh) {
 int main(int argc, char **argv) {
 
     ros::init(argc, argv, "target_search_server");
-    ros::NodeHandle nh; 
+    nh = new ros::NodeHandle(); 
 
-    target_search(&nh); 
+    target_search(nh); 
 
     return 0;        
 }

@@ -33,7 +33,6 @@ enum Status {RUNNING, DONE};
 std::string default_dir = "/home/bwi/shiqi/";
 
 
-
 void callback(const sensor_msgs::ImageConstPtr& msg) 
 {
     cv_ptr = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGR8); 
