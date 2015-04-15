@@ -30,7 +30,7 @@ const float PI = atan(1) * 4;
 
 bool detectedFlag = false;
 
-ros::NodeHandle nh; 
+
 
 // callback function that saves robot's current position
 void callbackCurrPos(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg) {
@@ -148,7 +148,7 @@ bool observe(ros::NodeHandle *nh) {
     return false; 
 }
 
-bool target_search() {
+bool target_search(ros::NodeHandle *nh) {
     
     std::string file_positions; 
 
@@ -175,16 +175,16 @@ bool target_search() {
 
     // service for computing a path from current position to a goal
     ros::ServiceClient client_compute_path = 
-        nh.serviceClient <nav_msgs::GetPlan> ("move_base/NavfnROS/make_plan"); 
+        nh->serviceClient <nav_msgs::GetPlan> ("move_base/NavfnROS/make_plan"); 
     nav_msgs::GetPlan srv; 
 
     // service for driving robot platform
-    ros::Publisher pub_move_robot = nh.advertise <geometry_msgs::PoseStamped> 
+    ros::Publisher pub_move_robot = nh->advertise <geometry_msgs::PoseStamped> 
         ("/move_base_interruptable_simple/goal", 100); 
     geometry_msgs::PoseStamped msg_goal; 
 
     // subscribe to the topic that reports the current position
-    ros::Subscriber sub = nh.subscribe("amcl_pose", 100, callbackCurrPos); 
+    ros::Subscriber sub = nh->subscribe("amcl_pose", 100, callbackCurrPos); 
     ros::Duration(2.0).sleep(); 
 
     // get the parameter of tolerance to goal
@@ -287,7 +287,7 @@ bool target_search() {
 
         ROS_INFO("Arrived"); 
 
-        detected = observe(&nh); 
+        detected = observe(nh); 
 
         // update belief based on observation (true or false)
         updateBelief( & belief, detected, next_goal_index); 
@@ -304,8 +304,9 @@ bool target_search() {
 int main(int argc, char **argv) {
 
     ros::init(argc, argv, "target_search_server");
+    ros::NodeHandle nh; 
 
-    target_search(); 
+    target_search(&nh); 
 
     return 0;        
 }

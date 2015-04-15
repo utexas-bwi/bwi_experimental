@@ -5,6 +5,8 @@
 #include "bwi_scavenger/VisionTask.h"
 #include "bwi_scavenger/Dialog.h"
 
+#include <boost/lexical_cast.hpp>
+
 #include <string>
 #include <stdlib.h>
 #include <vector>
@@ -67,12 +69,17 @@ void task_board(ros::ServiceClient * client)
 void task_fetch(ros::ServiceClient * client) {
 
     ROS_ERROR("not implemented yet");
+    return; 
+    // TODO TODO
     
 }
 
 void task_dialog(ros::ServiceClient * client) {
 
 
+    ROS_ERROR("not implemented yet");
+    return; 
+    // TODO TODO
     ROS_INFO("dialog task"); 
 
     bwi_scavenger::Dialog srv;
@@ -88,22 +95,17 @@ void print_to_gui( std::vector <std::string> *tasks,
     std::vector<std::string> buttons; 
 
     for (int i=0; i < tasks->size(); i++) {
-        char c = '0' + i; 
-        std::string tmp( &c );
-        buttons.push_back(tmp); 
-    }
-
-    for (int i=0; i < tasks->size(); i++) {
         
         switch ((*task_status)[i]) {
-            case TODO: message += "  "; 
-            case DOING: message += "\u2794 "; 
-            case DONE: message += "\u2713 "; 
+            case TODO: message +=  "      "; break;
+            case DOING: message += "->  "; break;
+            case DONE: message +=  "done "; break;
         }
 
-        char c = '0' + i;
-        std::string tmp( &c );
-        message += c + ", " + (*tasks)[i] + "\n";
+        std::string str_i = boost::lexical_cast<std::string>(i);
+        buttons.push_back(str_i); 
+
+        message += str_i + ", " + (*tasks)[i] + "\n";
     
     }
 
@@ -173,9 +175,9 @@ int main(int argc, char **argv){
         for (int i=0; i < tasks.size(); i++) {
             
             switch (task_status[i]) {
-                case TODO: todo_tasks.push_back(i);
-                case DOING: doing_tasks.push_back(i);
-                case DONE: done_tasks.push_back(i); 
+                case TODO: todo_tasks.push_back(i); break;
+                case DOING: doing_tasks.push_back(i); break;
+                case DONE: done_tasks.push_back(i); break;
             }
         }
 
@@ -187,7 +189,8 @@ int main(int argc, char **argv){
 
         // if there is no "doing", but there are "todo"s
         // shuffle the todo list, and select the first one
-        std::random_shuffle (todo_tasks.begin(), todo_tasks.end()); 
+
+        // std::random_shuffle (todo_tasks.begin(), todo_tasks.end()); 
         task_status[todo_tasks[0]] = DOING; 
 
         print_to_gui( & tasks, & task_status, & client_list); 

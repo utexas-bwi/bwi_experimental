@@ -32,7 +32,7 @@ std::string file, name, directory;
 enum Status {RUNNING, DONE};
 std::string default_dir = "/home/bwi/shiqi/";
 
-ros::NodeHandle nh;
+
 
 void callback(const sensor_msgs::ImageConstPtr& msg) 
 {
@@ -46,6 +46,8 @@ bool callback_detection(bwi_scavenger::ObjectDetection::Request &req,
 
     file  = req.path_to_template; 
     Mat img_object = imread(file, CV_LOAD_IMAGE_GRAYSCALE );
+    if(! img_object.data )
+        ROS_ERROR("No template image is provided for object detection"); 
 
     cv_ptr.reset (new cv_bridge::CvImage);
 
@@ -71,13 +73,11 @@ bool callback_detection(bwi_scavenger::ObjectDetection::Request &req,
 
 
 
-    ros::Subscriber sub = nh.subscribe("/nav_kinect/rgb/image_color", 1, callback);
+
 
     // enable this "latch" function, so that the scav_hunt node can directly get
     // the last published message, even if it was published before the
     // subscriber gets connected
-    ros::Publisher pub = 
-        nh.advertise<std_msgs::String>("segbot_object_detection_status", 1, true);
 
     int cnt = 0;
     ros::Rate r(10);
@@ -180,7 +180,7 @@ bool callback_detection(bwi_scavenger::ObjectDetection::Request &req,
         else
           cnt = 0;
 
-        std::string file_object = directory + "object_matched.jpg"; 
+        std::string file_object = default_dir + "object_matched.jpg"; 
         if (cnt >= 5) {
             imwrite(file_object, frame);
             status = DONE; 
@@ -204,8 +204,12 @@ int main(int argc, char **argv) {
     
     ros::init(argc, argv, "object_detection_server");
     
+    ros::NodeHandle nh;
+
     ros::ServiceServer service = nh.advertiseService("object_detection_service", 
         callback_detection); 
+    ros::Subscriber sub = nh.subscribe("/nav_kinect/rgb/image_color", 1, callback);
+    ros::Duration(2.0).sleep();
 
     ros::spin(); 
     

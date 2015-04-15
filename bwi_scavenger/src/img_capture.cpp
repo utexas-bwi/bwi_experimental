@@ -27,7 +27,7 @@ const char* winName="Crop Image";
 bool clicked=false;
 int i=0;
 char imgName[15];
-std::string prefix = "/home/bwi/shiqi/template-";
+std::string path_to_template = "/home/bwi/shiqi/template.jpg";
 
 
 void checkBoundary(){
@@ -151,13 +151,6 @@ int main( int argc, char** argv )
             std::tm* timeinfo;
             char buffer [80];
             
-            std::time(&rawtime);
-            timeinfo = std::localtime(&rawtime);
-            std::strftime(buffer, 80, "%Y-%m-%d", timeinfo);
-            std::puts(buffer);
-            std::string str(buffer);
-  
-  
             cout<<"Click and drag for Selection"<<endl<<endl;
             cout<<"------> Press 's' to save"<<endl<<endl;
   
@@ -192,8 +185,8 @@ int main( int argc, char** argv )
                 {
                   //sprintf(imgName,"%d.jpg",i++);
                   //imwrite(imgName,ROI);
-                  imwrite(prefix + str + ".jpg", ROI); 
-                  ROS_INFO(" template saved \n");
+                  imwrite(path_to_template, ROI); 
+                  ROS_INFO(" template saved: %s\n", path_to_template.c_str());
                   break;
                 }
                 if(c=='6') cropRect.x++;
