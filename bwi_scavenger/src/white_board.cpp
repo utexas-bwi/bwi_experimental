@@ -26,6 +26,8 @@ std::string default_dir = "/home/bwi/shiqi/";
 
 enum Status {RUNNING, DONE};
 
+Status s = RUNNING; 
+
 struct my_pose {
     float x; 
     float y;
@@ -110,18 +112,12 @@ void callback(const geometry_msgs::PoseStamped::ConstPtr& msg)
         ROS_INFO("People detected in frout of a white board, picture saved.");
 
         cv_bridge::CvImageConstPtr cv_ptr;
-        try 
-        {
-            cv_ptr = cv_bridge::toCvShare(image, sensor_msgs::image_encodings::BGR8);
+        cv_ptr = cv_bridge::toCvShare(image, sensor_msgs::image_encodings::BGR8);
 
-            file = directory + "/whiteboard-" + str + ".jpg"; 
-            cv::imwrite(file, cv_ptr->image);
-        }
-        catch (cv_bridge::Exception& e) 
-        {
-            ROS_ERROR("cv_bridge exception: %s", e.what());
-            return;
-        }
+        file = directory + "/whiteboard-" + str + ".jpg"; 
+        cv::imwrite(file, cv_ptr->image);
+        s = DONE;
+
     }
 }
 
@@ -131,13 +127,25 @@ void callback_image_saver(const sensor_msgs::ImageConstPtr& msg)
   image = msg; 
 }
 
+bool whiteboard_search(bwi_scavenger::Whiteboard::Request &req, 
+    bwi_scavenger::Whiteboard::Response &res) {
+
+    ros::Rate r(10);
+    while (status != DONE && ros::ok()) {
+        
+        ros::spinOnce(); 
+        
+    }
+    res.path_to_file = file; 
+    return true;
+    
+}
+
 // main function of the node
 int main(int argc, char ** argv)
 {
 
-    Status s = RUNNING; 
-
-    ros::init(argc, argv, "segbot_whiteboard");
+    ros::init(argc, argv, "whiteboard_server");
     ros::NodeHandle nh;
     ros::Subscriber sub1 = nh.subscribe(
                     "/segbot_pcl_person_detector/human_poses", 100, callback); 
@@ -153,20 +161,13 @@ int main(int argc, char ** argv)
     ros::param::param<std::string>("~directory", directory, default_dir);
 
 
-    ros::Publisher pub = nh.advertise<std_msgs::String>("segbot_whiteboard_status", 100);
+    ros::ServiceServer service = nh.advertiseService <bwi_scavenger::Whiteboard>
+        ("whiteboard_service", whiteboard_search);
+
     ros::Rate r(10); 
 
     while (ros::ok()) {
         
-        std_msgs::String msg; 
-
-        if (s == RUNNING)
-            msg.data = "running"; 
-        else if (s == DONE)
-            msg.data = ":" + file; 
-
-        pub.publish(msg); 
-
         ros::spinOnce(); 
         r.sleep();
 

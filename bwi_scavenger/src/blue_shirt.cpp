@@ -11,6 +11,8 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
+#include <bwi_scavenger/ColorShirt.h>
+
 #include <iostream>
 #include <cstdio>
 #include <ctime>
@@ -37,6 +39,8 @@ struct rgb {
 void callback_image_saver(const sensor_msgs::ImageConstPtr& msg)
 {
     image = msg; 
+    if (s == DONE)
+        return; 
 }
 
 void callback_human_detection(const PointCloud::ConstPtr& msg)
@@ -77,16 +81,22 @@ void callback_human_detection(const PointCloud::ConstPtr& msg)
 
         if (pt.y > -0.9 && pt.y < -0.1) {
 
-            ros::param::get("~shirt_color", shirt_color);
-
             if (shirt_color.compare("red") == 0)
-                dis = pow(pow(pt.r- red.r, 2.0) + pow(pt.g - red.g, 2.0) + pow(pt.b - red.b, 2.0), 0.5);
+                dis = pow(pow(pt.r- red.r, 2.0) + pow(pt.g - red.g, 2.0) + 
+                    pow(pt.b - red.b, 2.0), 0.5);
+
             else if (shirt_color.compare("blue") == 0)
-                dis = pow(pow(pt.r- blue.r, 2.0) + pow(pt.g - blue.g, 2.0) + pow(pt.b - blue.b, 2.0), 0.5);
+                dis = pow(pow(pt.r- blue.r, 2.0) + pow(pt.g - blue.g, 2.0) + 
+                    pow(pt.b - blue.b, 2.0), 0.5);
+
             else if (shirt_color.compare("green") == 0)
-                dis = pow(pow(pt.r- green.r, 2.0) + pow(pt.g - green.g, 2.0) + pow(pt.b - green.b, 2.0), 0.5);
+                dis = pow(pow(pt.r- green.r, 2.0) + pow(pt.g - green.g, 2.0) + 
+                    pow(pt.b - green.b, 2.0), 0.5);
+
             else if (shirt_color.compare("yellow") == 0)
-                dis = pow(pow(pt.r- yellow.r, 2.0) + pow(pt.g - yellow.g, 2.0) + pow(pt.b - yellow.b, 2.0), 0.5);
+                dis = pow(pow(pt.r- yellow.r, 2.0) + pow(pt.g - yellow.g, 2.0) + 
+                    pow(pt.b - yellow.b, 2.0), 0.5);
+
             else
                 ROS_ERROR("parameter of ~shirt_color: error\n");
 
@@ -100,7 +110,7 @@ void callback_human_detection(const PointCloud::ConstPtr& msg)
 
     if (ratio > COLOR_RATIO) { 
 
-        ROS_INFO("person with BLUE SHIRT!!! \n"); 
+        ROS_INFO("person with color shirt detected \n"); 
         
         cv_bridge::CvImageConstPtr cv_ptr;
 
@@ -121,6 +131,8 @@ void callback_human_detection(const PointCloud::ConstPtr& msg)
             file = directory + "/shirt_" + str + ".jpg"; 
             cv::imwrite(file, cv_ptr->image);
             s = DONE; 
+            res.path_to_file = file; 
+            return; 
         } 
         catch (cv_bridge::Exception& e) {
             ROS_ERROR("cv_bridge exception: %s", e.what());
@@ -129,49 +141,61 @@ void callback_human_detection(const PointCloud::ConstPtr& msg)
     } 
 }
 
-int main(int argc, char** argv)
-{
-    ros::init(argc, argv, "segbot_blue_shirt");
-    ros::NodeHandle nh;
-
-    Status s = RUNNING;    
-
-    ROS_INFO("\nColor can be specified via private parameter: shirt_color\n"); 
-    ROS_INFO("Options are: red, blue, green, yellow\n\n");
-
-    ROS_INFO("Path to saved images can be specified via private parameter: directory\n\n");
-
-    // if private shirt_color not specified, assign "blue" to shirt_color
-    ros::param::param<std::string>("~shirt_color", shirt_color, "blue");
+bool find_color_shirt(ColorShirt::Request &req, ColorShirt::Response &res) {
+ 
+    switch (req.color) {
+        
+        case 1:
+            shirt_color = "red";
+            break;
+        case 2:
+            shirt_color = "blue";
+            break;
+        case 3:
+            shirt_color = "green";
+            break;
+        case 4:
+            shirt_color = "yellow"; 
+            break;
+        default:
+            ROS_ERROR("service call to color_shirt error"); 
+            
+    }
 
     // directory to save files
     ros::param::param<std::string>("~directory", directory, default_dir);
 
-    ros::Subscriber sub1 = nh.subscribe<PointCloud>("/segbot_pcl_person_detector/human_clouds", 1, callback_human_detection);
+    ros::Subscriber sub1 = nh.subscribe <PointCloud>
+        ("/segbot_pcl_person_detector/human_clouds", 1, 
+        callback_human_detection);
 
     image_transport::ImageTransport it(nh);
-    image_transport::Subscriber sub2 = it.subscribe("/nav_kinect/rgb/image_color", 1, callback_image_saver);
+    image_transport::Subscriber sub2 = it.subscribe
+        ("/nav_kinect/rgb/image_color", 1, callback_image_saver);
 
-    ros::Publisher pub = nh.advertise<std_msgs::String>("segbot_blue_shirt_status", 100);
-    ros::Rate r(10);
-
-    while (ros::ok()) {
-
-        std_msgs::String msg;
-
-        if (s == RUNNING) 
-            msg.data = shirt_color + ":" + "running"; 
-        else if (s == DONE) 
-            msg.data = shirt_color + ":" + file; 
-
-        pub.publish(msg); 
-
+    while (s != DONE) {
         ros::spinOnce();
-        r.sleep();
-
     }
 
+    res.path_to_image = file; 
     return true;
+
+}
+
+int main(int argc, char** argv)
+{
+    ros::init(argc, argv, "blue_shirt_server");
+    ros::NodeHandle nh;
+
+    ros::ServiceServer service = nh.advertiseService<color_shirt> 
+        ("blue_shirt_service", find_color_shirt);
+
+    // ros::Duration(1.0).sleep();
+    ros::Rate r(10);
+    ros::spin();
+
+    return true;
+
 }
 
 

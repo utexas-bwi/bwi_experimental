@@ -30,6 +30,8 @@ const float PI = atan(1) * 4;
 
 bool detectedFlag = false;
 
+ros::NodeHandle nh; 
+
 // callback function that saves robot's current position
 void callbackCurrPos(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg) {
     
@@ -109,8 +111,8 @@ bool observe(ros::NodeHandle *nh) {
 
     // subscribe to /segbot_object_detection_status for status of object
     // detection
-    ros::Subscriber sub = nh->subscribe("/segbot_object_detection_status", 100,
-        callbackObjectDetection);
+    // ros::Subscriber sub = nh->subscribe("/segbot_object_detection_status", 100,
+    //     callbackObjectDetection);
 
     // look to the left
     ROS_INFO("Look to the left...");
@@ -146,13 +148,9 @@ bool observe(ros::NodeHandle *nh) {
     return false; 
 }
 
-// this is the entrance of the program
-int main(int argc, char **argv) {
-
-    ros::init(argc, argv, "target_search");
-
-    ros::NodeHandle nh; 
-
+bool target_search(bwi_scavenger::TargetSearch::Request &req, 
+    bwi_scavenger::TargetSearch::Response &res) {
+    
     std::string file_positions; 
 
     if (ros::param::get("~positions", file_positions))
@@ -234,27 +232,8 @@ int main(int argc, char **argv) {
 
         }
 
-        ss.str(""); 
-        ss << "\ndistances: "; 
-        for (int i=0; i < distances.size(); i++) 
-            ss << distances[i] << ", "; 
-
-        int belief_max = 0.0; 
-        ss << "\nbelief: "; 
-        for (int i=0; i < belief.size(); i++) {
-            belief_max = (belief_max > belief[i]) ? belief_max : belief[i]; 
-            ss << belief[i] << ", "; 
-        }
-
         // decide if to stop search or not
-        if (belief_max > 0.8) {
-            found = true;
-            break;
-        }
-        
-
-        ROS_INFO("%s", ss.str().c_str()); 
-
+        if (belief_max > 0.8)  return true;
 
         // fitness function, weighted belief probabilities
         int next_goal_index; 
@@ -264,7 +243,6 @@ int main(int argc, char **argv) {
             resolution, 0.05); 
 
         for (unsigned i = 0; i < positions.size(); i++) {
-            
             
             fitness[i] = belief[i] / ( (float) distances[i] * resolution + analyzing_cost); 
             // ROS_INFO("fitness %d: %f", i, fitness[i]); 
@@ -303,11 +281,8 @@ int main(int argc, char **argv) {
             float dis_to_goal = pow(tmp_x*tmp_x + tmp_y*tmp_y, 0.5); 
             // ROS_INFO("Distance to goal: %f", dis_to_goal); 
 
-            if (dis_to_goal < tolerance) {
-                break;
-            }
+            if (dis_to_goal < tolerance)  break;
 
-            loop_rate.sleep();
         }
 
         ROS_INFO("Arrived"); 
@@ -317,12 +292,23 @@ int main(int argc, char **argv) {
         // update belief based on observation (true or false)
         updateBelief( & belief, detected, next_goal_index); 
         
-
     }
 
     if (found) {
         ROS_INFO("DONE: I believe the target object is here! "); 
     }
+
+}
+
+// this is the entrance of the program
+int main(int argc, char **argv) {
+
+    ros::init(argc, argv, "target_search_server");
+
+    ros::ServiceServer service = nh.advertiseService("target_search",
+        target_search); 
+
+    ros::spin();
  
     return 0;        
 }
