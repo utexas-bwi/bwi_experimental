@@ -3,6 +3,7 @@
 #include <vector>
 #include <fstream>
 #include <string>
+#include <stdio.h>
 
 // msgs
 #include <geometry_msgs/PoseStamped.h>
@@ -262,17 +263,31 @@ bool target_search(ros::NodeHandle *nh) {
         bool goal_achieved = false;
 
         ROS_INFO("Moving to the next scene for visual analyzation"); 
-        while (ros::ok() && !goal_achieved) {
+        pub_move_robot.publish(msg_goal); 
+        int cnt = 0; 
+
+        while (ros::ok() && !goal_achieved && ++cnt) {
 
             ros::spinOnce(); 
-            pub_move_robot.publish(msg_goal); 
 
             float tmp_x = msg_goal.pose.position.x - curr_pos.pose.pose.position.x;
             float tmp_y = msg_goal.pose.position.y - curr_pos.pose.pose.position.y;
 
             float dis_to_goal = pow(tmp_x*tmp_x + tmp_y*tmp_y, 0.5); 
 
+            char *dis_pt = new char[128], *tol_pt = new char[128]; 
+            sprintf(dis_pt, "%f", dis_to_goal); 
+            sprintf(tol_pt, "%f", tolerance); 
+            ROS_INFO("target_search: dis_to_goal=%s", dis_pt); 
+            ROS_INFO("target_search: tolerance=%s", tol_pt); 
+
             if (dis_to_goal < tolerance)  goal_achieved = true;
+
+            // sometimes low-level motion planning gets aborted for unknown
+            // reasons, so here we periodically re-send the goal
+            if (cnt % 10 == 0) pub_move_robot.publish(msg_goal); 
+
+            ros::Duration(1.0).sleep();
 
         }
         ROS_INFO("Arrived"); 
