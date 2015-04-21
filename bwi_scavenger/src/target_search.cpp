@@ -23,16 +23,20 @@
 #include <move_base_msgs/MoveBaseAction.h>
 #include <actionlib/client/simple_action_client.h>
 
-#include <math.h>
+#include <bwi_scavenger/VisionTaskAction.h>
+#include <actionlib/client/terminal_state.h>
 
-geometry_msgs::PoseWithCovarianceStamped curr_pos; 
+#include <math.h>
 
 const float PI = atan(1) * 4; 
 
-bool detectedFlag = false;
+// global variables
+
+geometry_msgs::PoseWithCovarianceStamped curr_pos; 
 
 ros::NodeHandle * nh; 
 
+actionlib::SimpleActionClient <bwi_scavenger::VisionTaskAction> * ac; 
 
 // callback function that saves robot's current position
 void callbackCurrPos(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg) {
@@ -90,19 +94,9 @@ void updateBelief(std::vector<float> *belief, bool detected, int next_goal_index
 }
 
 
-void callbackObjectDetection (const std_msgs::String::ConstPtr& msg) {
-    
-    // if it is still working on that
-    if (msg->data.find("running") >= 0)
-        detectedFlag = false;
-    else
-        detectedFlag = true;
-    
-}
-
 // this function calls the robot platform and visual sensors to sense a specific
 // scene. It return a boolean value identifies if the target is detected. 
-bool observe(ros::NodeHandle *nh) {
+bool observe() {
 
     // publish to /cmd_vel to stop the robot first
     ros::Publisher pub = nh->advertise <geometry_msgs::Twist> ("/cmd_vel", 100); 
@@ -119,8 +113,6 @@ bool observe(ros::NodeHandle *nh) {
         ros::spinOnce();
         pub.publish(vel); 
         ros::Duration(0.1).sleep();
-
-        if (detectedFlag) return true;
     }
 
     // look to the right
@@ -131,8 +123,6 @@ bool observe(ros::NodeHandle *nh) {
         ros::spinOnce();
         pub.publish(vel); 
         ros::Duration(0.1).sleep();
-
-        if (detectedFlag) return true;
     }
 
     vel.angular.z = 0;
@@ -140,10 +130,10 @@ bool observe(ros::NodeHandle *nh) {
 
     // here we assume the robot can never detects the target, so it's always
     // returning false; 
-    return false; 
+    return ac->getState() == actionlib::SimpleClientGoalState::SUCCEEDED; 
 }
 
-bool target_search(ros::NodeHandle *nh) {
+bool target_search() {
     
     std::string file_positions; 
 
@@ -287,12 +277,12 @@ bool target_search(ros::NodeHandle *nh) {
             // reasons, so here we periodically re-send the goal
             if (cnt % 10 == 0) pub_move_robot.publish(msg_goal); 
 
-            ros::Duration(1.0).sleep();
+            ros::Duration(2.0).sleep();
 
         }
         ROS_INFO("Arrived"); 
 
-        detected = observe(nh); 
+        detected = observe(); 
 
         // update belief based on observation (true or false)
         updateBelief( & belief, detected, next_goal_index); 
@@ -311,7 +301,20 @@ int main(int argc, char **argv) {
     ros::init(argc, argv, "target_search_server");
     nh = new ros::NodeHandle(); 
 
-    target_search(nh); 
+    ac = new actionlib::SimpleActionClient<bwi_scavenger::VisionTaskAction>
+        ("visionTask", true); 
+    ROS_INFO("%s: waiting for action service to start.",
+        ros::this_node::getName().c_str()); 
+    ac->waitForServer(); // will wait for infinite time
+
+    ROS_INFO("%s: action server started, sending goal.",
+        ros::this_node::getName().c_str()); 
+    bwi_scavenger::VisionTaskGoal goal; 
+    goal.type = 3;
+    goal.color = 2; 
+    ac->sendGoal(goal); 
+
+    target_search(); 
 
     return 0;        
 }

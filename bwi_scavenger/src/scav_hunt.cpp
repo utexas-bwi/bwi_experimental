@@ -2,7 +2,7 @@
 #include "ros/ros.h"
 #include "std_msgs/String.h"
 #include "bwi_msgs/QuestionDialog.h"
-#include "bwi_scavenger/VisionTask.h"
+#include "bwi_scavenger/VisionTaskAction.h"
 #include "bwi_scavenger/Dialog.h"
 
 #include <boost/lexical_cast.hpp>
