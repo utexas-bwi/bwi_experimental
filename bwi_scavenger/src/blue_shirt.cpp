@@ -26,22 +26,25 @@ std::string shirt_color, directory, file;
 
 std::string default_dir = "/home/bwi/shiqi/";
 
-enum Status {RUNNING, DONE}; 
+bool color_shirt_detected; 
 
-Status s; 
-
-struct rgb {
+struct Rgb {
     float r;
     float g;
     float b;        
+    Rgb() : r(), g(), b() {}
+    Rgb( float rr, float gg, float bb) : r(rr), g(gg), b(bb) {}
 } red, blue, green, yellow;
 
 
 void callback_image_saver(const sensor_msgs::ImageConstPtr& msg)
 {
     image = msg; 
-    if (s == DONE)
-        return; 
+}
+
+float get_color_dis(const pcl::PointXYZRGB *c1, Rgb *c2) {
+    return pow(pow(c1->r- c2->r, 2.0) + pow(c1->g - c2->g, 2.0) + 
+        pow(c1->b - c2->b, 2.0), 0.5);
 }
 
 void callback_human_detection(const PointCloud::ConstPtr& msg)
@@ -51,53 +54,33 @@ void callback_human_detection(const PointCloud::ConstPtr& msg)
     float min_y = 10000.0; 
     float DISTANCE_TO_COLOR = 200;
 
-    int cnt = 0;
+    int pixel_cnt = 0;
     int color_cnt = 0; 
     float dis = 0.0;
 
-    red.r = 255.0;
-    red.g = 0.0;
-    red.b = 0.0;
-    blue.r = 0.0;
-    blue.g = 0;
-    blue.b = 255.0;
-    green.r = 0.0;
-    green.g = 255.0;
-    green.b = 0.0;
-    yellow.r = 255.0;
-    yellow.g = 255.0;
-    yellow.b = 0.0;
-
+    red = Rgb(255.0, 0.0, 0.0);
+    blue = Rgb(0.0, 0.0, 255.0);
+    green = Rgb(0.0, 255.0, 0.0);
+    yellow = Rgb(255.0, 255.0, 0.0);
 
     BOOST_FOREACH (const pcl::PointXYZRGB& pt, msg->points) {
-        cnt++;
+        pixel_cnt++;
 
         // here we assume the waist height is 90cm, and neck height is 160cm
         // the robot sensor's height is 60cm
-        if (pt.y > max_y)
-            max_y = pt.y;
-
-        if (pt.y < min_y)
-            min_y = pt.y;
+        max_y = (pt.y > max_y) ? pt.y : max_y;
+        min_y = (pt.y < min_y) ? pt.y : min_y; 
 
         if (pt.y > -0.9 && pt.y < -0.1) {
 
             if (shirt_color.compare("red") == 0)
-                dis = pow(pow(pt.r- red.r, 2.0) + pow(pt.g - red.g, 2.0) + 
-                    pow(pt.b - red.b, 2.0), 0.5);
-
+                dis = get_color_dis( &pt, &red); 
             else if (shirt_color.compare("blue") == 0)
-                dis = pow(pow(pt.r- blue.r, 2.0) + pow(pt.g - blue.g, 2.0) + 
-                    pow(pt.b - blue.b, 2.0), 0.5);
-
+                dis = get_color_dis( &pt, &blue); 
             else if (shirt_color.compare("green") == 0)
-                dis = pow(pow(pt.r- green.r, 2.0) + pow(pt.g - green.g, 2.0) + 
-                    pow(pt.b - green.b, 2.0), 0.5);
-
+                dis = get_color_dis( &pt, &green); 
             else if (shirt_color.compare("yellow") == 0)
-                dis = pow(pow(pt.r- yellow.r, 2.0) + pow(pt.g - yellow.g, 2.0) + 
-                    pow(pt.b - yellow.b, 2.0), 0.5);
-
+                dis = get_color_dis( &pt, &yellow); 
             else
                 ROS_ERROR("parameter of ~shirt_color: error\n");
 
@@ -106,72 +89,53 @@ void callback_human_detection(const PointCloud::ConstPtr& msg)
         }
     }
 
-    float ratio = (float)color_cnt/(float)cnt;
-    ROS_INFO("ratio: %f\n", ratio);
+    float ratio = (float) color_cnt / (float) pixel_cnt;
+    ROS_INFO("%s: ratio is %f\n", ros::this_node::getName().c_str(), ratio);
 
-    if (ratio > COLOR_RATIO) { 
+    // when color-shirt person detected
+    if (ratio > COLOR_RATIO && ros::ok()) { 
 
-        ROS_INFO("person with color shirt detected \n"); 
+        ROS_INFO("%s: person wearing %s shirt detected\n",
+            ros::this_node::getName().c_str(), shirt_color.c_str()); 
         
-        cv_bridge::CvImageConstPtr cv_ptr;
+        cv_bridge::CvImageConstPtr cv_ptr = 
+            cv_bridge::toCvShare(image, sensor_msgs::image_encodings::BGR8);
 
-        try {
-            std::time_t rawtime;
-            std::tm* timeinfo;
-            char buffer [80];
+        cv::imwrite(file, cv_ptr->image);
 
-            std::time(&rawtime);
-            timeinfo = std::localtime(&rawtime);
-            std::strftime(buffer, 80, "%Y-%m-%d-%H-%M-%S", timeinfo);
-            std::puts(buffer);
-            std::string str(buffer);
+        // this global variable decides when the color-shirt service returns
+        color_shirt_detected = true; 
+        ros::Duration(5.0).sleep(); 
 
-            cv_ptr = cv_bridge::toCvShare(image, sensor_msgs::image_encodings::BGR8);
-
-            ros::param::get("~directory", directory);
-            file = directory + "/shirt_" + str + ".jpg"; 
-            cv::imwrite(file, cv_ptr->image);
-            s = DONE; 
-
-            return; 
-        } 
-        catch (cv_bridge::Exception& e) {
-            ROS_ERROR("cv_bridge exception: %s", e.what());
-            return;
-        }
-    } 
+    } else {
+        color_shirt_detected = false;
+    }
 }
 
 bool find_color_shirt(bwi_scavenger::ColorShirt::Request &req, 
     bwi_scavenger::ColorShirt::Response &res) {
  
-    switch (req.color) {
+    switch ( (int) req.color) {
         
         case 1:
-            shirt_color = "red";
-            break;
+            shirt_color = "red"; break;
         case 2:
-            shirt_color = "blue";
-            break;
+            shirt_color = "blue"; break;
         case 3:
-            shirt_color = "green";
-            break;
+            shirt_color = "green"; break;
         case 4:
-            shirt_color = "yellow"; 
-            break;
+            shirt_color = "yellow"; break;
         default:
-            ROS_ERROR("service call to color_shirt error"); 
+            ROS_ERROR("%s: color not recognized",
+                ros::this_node::getName().c_str()); 
             
     }
 
-    // directory to save files
-    ros::param::param<std::string>("~directory", directory, default_dir);
+    // blocks here until service_status becomes DONE
+    while ( !color_shirt_detected && ros::ok() ) 
+        ros::Duration(0.1).sleep();
 
-
-    while (s != DONE) {
-        ros::spinOnce();
-    }
-
+    // service done, and return the path to the image
     res.path_to_image = file; 
     return true;
 
@@ -181,6 +145,10 @@ int main(int argc, char** argv)
 {
     ros::init(argc, argv, "blue_shirt_server");
     ros::NodeHandle nh;
+
+    // directory to save files, used for service results
+    ros::param::param<std::string>("~directory", directory, default_dir);
+    file = directory + "shirt.jpg"; 
 
     ros::ServiceServer service = nh.advertiseService("blue_shirt_service", 
         find_color_shirt);
@@ -193,14 +161,15 @@ int main(int argc, char** argv)
     image_transport::Subscriber sub2 = it.subscribe 
         ("/nav_kinect/rgb/image_color", 1, callback_image_saver);
 
-    // ros::Duration(1.0).sleep();
-    ros::Rate r(10);
-    ros::spin();
+    ros::Duration(1.0).sleep();
+
+    // 3 threads: receiving point cloud, receiving image, color-shirt service
+    ros::AsyncSpinner spinner(3); 
+    spinner.start(); 
+    ros::waitForShutdown(); 
 
     return true;
 
 }
-
-
 
 

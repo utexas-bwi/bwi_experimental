@@ -23,8 +23,8 @@ protected:
 public:
 
     VisionTaskAction(std::string name) : 
-        as_(nh_, name, boost::bind( &VisionTaskAction::executeCB, this, _1), false) 
-    {
+        as_(nh_, name, boost::bind( &VisionTaskAction::executeCB, this, _1), 
+        false) {
 
         action_name_ = name; 
 

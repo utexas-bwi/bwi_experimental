@@ -302,7 +302,7 @@ int main(int argc, char **argv) {
     nh = new ros::NodeHandle(); 
 
     ac = new actionlib::SimpleActionClient<bwi_scavenger::VisionTaskAction>
-        ("visionTask", true); 
+        ("scavenger_vision_server", true); 
     ROS_INFO("%s: waiting for action service to start.",
         ros::this_node::getName().c_str()); 
     ac->waitForServer(); // will wait for infinite time
