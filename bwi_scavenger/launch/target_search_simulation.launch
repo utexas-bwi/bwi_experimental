@@ -9,7 +9,7 @@
     <!-- assuming 1m/s speed, this cost represents how many seconds needed -->
     <arg name="analyzing_scene_cost" default="8.0" />
 
-    <node name="target_search" pkg="bwi_scavenger" type="target_search">
+    <node name="target_search" pkg="bwi_scavenger" type="target_search" output="screen">
         <param name="positions" value="$(arg sim_positions)" />
         <param name="tolerance" value="$(arg sim_tolerance)" />
     </node>

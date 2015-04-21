@@ -24,6 +24,7 @@
 #include <actionlib/client/simple_action_client.h>
 
 #include <bwi_scavenger/VisionTaskAction.h>
+#include <bwi_scavenger/TargetSearch.h>
 #include <actionlib/client/terminal_state.h>
 
 #include <math.h>
@@ -33,6 +34,7 @@ const float PI = atan(1) * 4;
 // global variables
 
 geometry_msgs::PoseWithCovarianceStamped curr_pos; 
+bwi_scavenger::VisionTaskGoal *goal; 
 
 ros::NodeHandle * nh; 
 
@@ -69,8 +71,8 @@ void updateBelief(std::vector<float> *belief, bool detected, int next_goal_index
     
     float true_positive_rate, true_negative_rate; 
 
-    ros::param::param <float> ("~true_positive_rate", true_positive_rate, 0.8); 
-    ros::param::param <float> ("~true_negative_rate", true_negative_rate, 0.8); 
+    ros::param::param <float> ("~true_positive_rate", true_positive_rate, 0.95); 
+    ros::param::param <float> ("~true_negative_rate", true_negative_rate, 0.95); 
     
     std::vector <float> tmp_belief (*belief); 
 
@@ -98,16 +100,21 @@ void updateBelief(std::vector<float> *belief, bool detected, int next_goal_index
 // scene. It return a boolean value identifies if the target is detected. 
 bool observe() {
 
+    ROS_INFO("%s: checking vision service availability", 
+        ros::this_node::getName().c_str()); 
+    ac->waitForServer(); // will wait for infinite time
+    ROS_INFO("passed"); 
+
     // publish to /cmd_vel to stop the robot first
     ros::Publisher pub = nh->advertise <geometry_msgs::Twist> ("/cmd_vel", 100); 
     geometry_msgs::Twist vel; 
     vel.linear.x = 0;
+    vel.linear.y = 0;
     vel.angular.z = 0;
     pub.publish(vel); 
 
-    // look to the left
-    ROS_INFO("Look to the left...");
-    vel.angular.z = 0.2;
+    ROS_INFO("Look to the left..."); // look to the left
+    vel.angular.z = 0.1;
 
     for (int i=0; i < 100; i++) {
         ros::spinOnce();
@@ -115,38 +122,47 @@ bool observe() {
         ros::Duration(0.1).sleep();
     }
 
-    // look to the right
-    ROS_INFO("Look to the right...");
-    vel.angular.z = -0.2;
+    ROS_INFO("Look to the right..."); // look to the right
+    vel.angular.z = -0.1;
 
-    for (int i=0; i < 70; i++) {
+    for (int i=0; i < 100; i++) {
         ros::spinOnce();
         pub.publish(vel); 
         ros::Duration(0.1).sleep();
     }
 
     vel.angular.z = 0;
-    pub.publish(vel); 
+    for (int i=0; i < 100; i++) {
+        ros::spinOnce();
+        pub.publish(vel); 
+        ros::Duration(0.1).sleep();
+    }
 
     // here we assume the robot can never detects the target, so it's always
     // returning false; 
-    return ac->getState() == actionlib::SimpleClientGoalState::SUCCEEDED; 
+    bool ret = ac->getState() == actionlib::SimpleClientGoalState::SUCCEEDED;
+    ROS_INFO("%s: observed? %d", ros::this_node::getName().c_str(), ret);
+    return ret; 
 }
 
-bool target_search() {
+bool  service_callback(bwi_scavenger::TargetSearch::Request &req, 
+    bwi_scavenger::TargetSearch::Response &res) {
+
+    goal->type = req.type;
+    goal->path_to_template = req.path_to_template; 
+    goal->color = req.color;
+
+    ac->waitForServer(); // will wait for infinite time
+    ac->sendGoal( *goal ); 
     
-    std::string file_positions; 
+    std::string yaml_file_positions; 
 
-    if (ros::param::get("~positions", file_positions))
-        ROS_INFO("\nFile: %s", file_positions.c_str()); 
-    else
-        ROS_ERROR("Cannot read file"); 
+    if (ros::param::get("~positions", yaml_file_positions))
+        ROS_INFO("\nFile: %s", yaml_file_positions.c_str()); 
 
-    std::ifstream fin(file_positions.c_str());
+    std::ifstream fin(yaml_file_positions.c_str());
     YAML::Parser parser(fin);
-
     YAML::Node positions;
-
     parser.GetNextDocument(positions); 
 
     // belief distribution over all possible target positions
@@ -180,14 +196,13 @@ bool target_search() {
     float analyzing_cost;
     ros::param::param <float> ("~analyzing_scene_cost", analyzing_cost, 5.0); 
 
-    bool found = false, detected = false;
+    bool detected = false;
 
     ros::Rate loop_rate(10); 
 
     std::stringstream ss;
 
-    // break if ros program gets killed or target is found
-    while (!found && ros::ok()) {
+    while (ros::ok()) {
 
         // to get the current position using the callback function
         ros::spinOnce(); 
@@ -226,7 +241,10 @@ bool target_search() {
         for (unsigned i = 0; i < positions.size(); i++) {
             
             // exit of this program
-            if (belief[i] > 0.8)  return true;
+            if (belief[i] > 0.8) {
+                res.path_to_image = ac->getResult()->path_to_image; 
+                return true; 
+            }
 
             fitness[i] = belief[i] / ( (float) distances[i] * resolution + analyzing_cost); 
             
@@ -289,10 +307,6 @@ bool target_search() {
         
     }
 
-    if (found) {
-        ROS_INFO("DONE: I believe the target object is here! "); 
-    }
-
 }
 
 // this is the entrance of the program
@@ -305,16 +319,16 @@ int main(int argc, char **argv) {
         ("scavenger_vision_server", true); 
     ROS_INFO("%s: waiting for action service to start.",
         ros::this_node::getName().c_str()); 
-    ac->waitForServer(); // will wait for infinite time
+
 
     ROS_INFO("%s: action server started, sending goal.",
         ros::this_node::getName().c_str()); 
-    bwi_scavenger::VisionTaskGoal goal; 
-    goal.type = 3;
-    goal.color = 2; 
-    ac->sendGoal(goal); 
 
-    target_search(); 
+    goal = new bwi_scavenger::VisionTaskGoal(); 
+
+    ros::ServiceServer service = nh->advertiseService("target_search_service",
+        service_callback); 
+    ros::spin(); 
 
     return 0;        
 }

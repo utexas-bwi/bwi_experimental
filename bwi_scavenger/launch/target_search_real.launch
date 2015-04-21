@@ -5,13 +5,28 @@
 
     <arg name="sim_tolerance" default="0.5" />
     <arg name="real_tolerance" default="0.5" />
+    <arg name="logging_directory" default="/home/bwi/shiqi/" />
 
     <!-- assuming 1m/s speed, this cost represents how many seconds needed -->
     <arg name="analyzing_scene_cost" default="8.0" />
 
-    <node name="target_search" pkg="bwi_scavenger" type="target_search">
+    <node name="target_search" pkg="bwi_scavenger" type="target_search" >
         <param name="positions" value="$(arg real_positions)" />
         <param name="tolerance" value="$(arg real_tolerance)" />
+    </node>
+
+    <node name="vision_server", pkg="bwi_scavenger" />
+
+    <node name="blue_shirt" pkg="bwi_scavenger" >
+        <param name="directory" value="$(arg logging_directory)" />
+    </node>
+
+    <node name="object_detection" pkg="bwi_scavenger" >
+        <param name="directory" value="$(arg logging_directory)" />
+    </node>
+
+    <node name="white_board" pkg="bwi_scavenger" >
+        <param name="directory" value="$(arg logging_directory)" />
     </node>
 
 </launch>

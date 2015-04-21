@@ -37,10 +37,7 @@ struct Rgb {
 } red, blue, green, yellow;
 
 
-void callback_image_saver(const sensor_msgs::ImageConstPtr& msg)
-{
-    image = msg; 
-}
+void callback_image_saver(const sensor_msgs::ImageConstPtr& msg) {image = msg;} 
 
 float get_color_dis(const pcl::PointXYZRGB *c1, Rgb *c2) {
     return pow(pow(c1->r- c2->r, 2.0) + pow(c1->g - c2->g, 2.0) + 

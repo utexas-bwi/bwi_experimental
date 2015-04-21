@@ -179,7 +179,8 @@ bool callback_detection(bwi_scavenger::ObjectDetection::Request &req,
         else
           cnt = 0;
 
-        std::string file_object = default_dir + "object_matched.jpg"; 
+        ros::param::param<std::string>("~directory", directory, default_dir);
+        std::string file_object = directory + "object_matched.jpg"; 
         if (cnt >= 5) {
             imwrite(file_object, frame);
             status = DONE; 
