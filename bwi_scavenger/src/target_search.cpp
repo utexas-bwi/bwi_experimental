@@ -148,11 +148,20 @@ bool observe() {
 bool  service_callback(bwi_scavenger::TargetSearch::Request &req, 
     bwi_scavenger::TargetSearch::Response &res) {
 
+    ROS_INFO("%s: target search task received", ros::this_node::getName().c_str()); 
+
     goal->type = req.type;
     goal->path_to_template = req.path_to_template; 
     goal->color = req.color;
 
+    ROS_INFO("%s: waiting for action service to start.",
+        ros::this_node::getName().c_str()); 
+
     ac->waitForServer(); // will wait for infinite time
+
+    ROS_INFO("%s: action server started, sending goal.",
+        ros::this_node::getName().c_str()); 
+
     ac->sendGoal( *goal ); 
     
     std::string yaml_file_positions; 
@@ -317,12 +326,6 @@ int main(int argc, char **argv) {
 
     ac = new actionlib::SimpleActionClient<bwi_scavenger::VisionTaskAction>
         ("scavenger_vision_server", true); 
-    ROS_INFO("%s: waiting for action service to start.",
-        ros::this_node::getName().c_str()); 
-
-
-    ROS_INFO("%s: action server started, sending goal.",
-        ros::this_node::getName().c_str()); 
 
     goal = new bwi_scavenger::VisionTaskGoal(); 
 

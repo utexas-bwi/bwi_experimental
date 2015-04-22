@@ -28,7 +28,7 @@ enum Task { WHITEBOARD=0, COLORSHIRT=1, OBJECTSEARCH=2, FETCHOBJECT=3, DIALOG=4 
 std::vector <std::string> task_descriptions;
 
 // status list representing TODO/DOING/DONE of each task
-std::vector <Status> task_statuses(task_descriptions.size(), TODO); 
+std::vector <Status> task_statuses; 
 
 
 
@@ -49,6 +49,10 @@ void task_shirt()
         srv.request.color = bwi_scavenger::TargetSearchRequest::YELLOW; 
 
     ROS_INFO("shirt_color: %s", shirt_color.c_str()); 
+    ROS_INFO("%s: task_shirt waitForExistence()", 
+        ros::this_node::getName().c_str()); 
+    client.waitForExistence(); 
+    ROS_INFO("%s: task_shirt service ready",ros::this_node::getName().c_str()); 
     client.call(srv); 
 
     file_shirt = srv.response.path_to_image; 
@@ -62,10 +66,16 @@ void task_object()
     srv.request.type = 2;
 
     srv.request.path_to_template = file_template; 
-    ROS_INFO("path_to_template: %s", file_template.c_str()); 
-    client.call(srv); 
 
-    file_object = srv.response.path_to_image; 
+    ROS_INFO("path_to_template: %s", file_template.c_str()); 
+
+    ROS_INFO("%s: task_object waitForExistence()", 
+        ros::this_node::getName().c_str()); 
+    client.waitForExistence(); 
+    ROS_INFO("%s: task_object service ready",ros::this_node::getName().c_str()); 
+    client.waitForExistence(); 
+    client.call(srv); 
+    file_board = srv.response.path_to_image; 
 }
 
 void task_board()
@@ -75,6 +85,10 @@ void task_board()
     bwi_scavenger::TargetSearch srv;
     srv.request.type = 1;
 
+    ROS_INFO("%s: task_board waitForExistence()", 
+        ros::this_node::getName().c_str()); 
+    client.waitForExistence(); 
+    ROS_INFO("%s: task_board service ready",ros::this_node::getName().c_str()); 
     client.call(srv); 
     file_board = srv.response.path_to_image; 
 }
@@ -98,9 +112,9 @@ void print_to_gui( ros::ServiceClient *gui_service_client ) {
     for (int i=0; i < number_of_tasks; i++) {
         
         switch ( task_statuses[i] ) {
-            case TODO: message +=  "      "; break;
-            case DOING: message += "->  "; break;
-            case DONE: message +=  "done "; break;
+            case TODO: message +=  "         "; break;
+            case DOING: message += "   ->  "; break;
+            case DONE: message +=  " done "; break;
         }
 
         str_i.clear(); 
@@ -159,6 +173,7 @@ int main(int argc, char **argv){
     task_descriptions.push_back("fetch an object for a person"); 
     task_descriptions.push_back("communicate with natural language"); 
 
+    task_statuses = std::vector <Status> (task_descriptions.size(), TODO); 
     ros::Rate rate(10); 
     ros::Duration(1.0).sleep();
 
@@ -173,6 +188,7 @@ int main(int argc, char **argv){
     std::vector<int> todo_tasks, doing_tasks, done_tasks;
     int number_of_tasks = task_descriptions.size(); 
 
+    ROS_INFO("%s: initialization finished", ros::this_node::getName().c_str()); 
     while (ros::ok()) {
 
         rate.sleep();       
@@ -181,8 +197,7 @@ int main(int argc, char **argv){
         todo_tasks.clear(); doing_tasks.clear(); done_tasks.clear(); 
 
         for (int i=0; i < number_of_tasks; i++) {
-            
-            switch (task_statuses[i]) {
+            switch ( static_cast<Status> (task_statuses[i]) ) {
                 case TODO: todo_tasks.push_back(i); break;
                 case DOING: doing_tasks.push_back(i); break;
                 case DONE: done_tasks.push_back(i); break;
@@ -197,16 +212,19 @@ int main(int argc, char **argv){
             
         if (doing_tasks.size() == 1) // if the robot is busy
         {
+            ROS_INFO("robot busy"); 
             print_to_gui( & gui_service_client ); 
             ros::Duration(1.0).sleep(); 
             continue; 
         }
 
+        ROS_INFO("%s: do the first on todo list", ros::this_node::getName().c_str()); 
         // otherwise, change the status first todo task into "DOING"
         task_statuses[todo_tasks[0]] = DOING; 
         print_to_gui( & gui_service_client); 
 
-        switch (todo_tasks[0]) {
+        ROS_INFO("%s: select a task", ros::this_node::getName().c_str()); 
+        switch (static_cast <Task> (todo_tasks[0]) ) {
 
             case WHITEBOARD:
                 task_board(); break;
@@ -219,6 +237,7 @@ int main(int argc, char **argv){
             case DIALOG:
                 task_dialog(); break;
         }
+        ROS_INFO("%s: task done", ros::this_node::getName().c_str()); 
 
         task_statuses[todo_tasks[0]] = DONE; 
 

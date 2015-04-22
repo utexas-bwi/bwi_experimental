@@ -157,11 +157,9 @@ int main(int argc, char ** argv)
                     "/nav_kinect/rgb/image_color", 1, callback_image_saver);
 
 
-    ROS_INFO("\nPath to saved files can be specified via private parameter: directory\n"); 
-    ROS_INFO("File name: whiteboard-yyyy-mm-dd\n");
+    ROS_INFO("%s entering", ros::this_node::getName().c_str()); 
 
     ros::param::param<std::string>("~directory", directory, default_dir);
-
 
     ros::ServiceServer service = nh.advertiseService ("whiteboard_service", 
         whiteboard_search);
