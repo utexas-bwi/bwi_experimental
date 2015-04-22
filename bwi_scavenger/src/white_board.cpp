@@ -101,22 +101,13 @@ void callback(const geometry_msgs::PoseStamped::ConstPtr& msg)
 
     if (inRectangle(&m, &a1, &b1, &c1) || inRectangle(&m, &a2, &b2, &c2)) 
     {
-        std::time_t rawtime;
-        std::tm* timeinfo;
-        char buffer [80];
-
-        std::time(&rawtime);
-        timeinfo = std::localtime(&rawtime);
-        std::strftime(buffer, 80, "%Y-%m-%d-%H-%M-%S", timeinfo);
-        std::puts(buffer);
-        std::string str(buffer);
 
         ROS_INFO("People detected in frout of a white board, picture saved.");
 
         cv_bridge::CvImageConstPtr cv_ptr;
         cv_ptr = cv_bridge::toCvShare(image, sensor_msgs::image_encodings::BGR8);
 
-        file = directory + "/whiteboard-" + str + ".jpg"; 
+        file = directory + "/whiteboard.jpg"; 
         cv::imwrite(file, cv_ptr->image);
         s = DONE;
 
@@ -157,11 +148,9 @@ int main(int argc, char ** argv)
                     "/nav_kinect/rgb/image_color", 1, callback_image_saver);
 
 
-    ROS_INFO("\nPath to saved files can be specified via private parameter: directory\n"); 
-    ROS_INFO("File name: whiteboard-yyyy-mm-dd\n");
+    ROS_INFO("%s entering", ros::this_node::getName().c_str()); 
 
     ros::param::param<std::string>("~directory", directory, default_dir);
-
 
     ros::ServiceServer service = nh.advertiseService ("whiteboard_service", 
         whiteboard_search);

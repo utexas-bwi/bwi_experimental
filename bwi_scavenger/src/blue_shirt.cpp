@@ -46,7 +46,7 @@ float get_color_dis(const pcl::PointXYZRGB *c1, Rgb *c2) {
 
 void callback_human_detection(const PointCloud::ConstPtr& msg)
 {
-    float COLOR_RATIO = 0.25;
+    float COLOR_RATIO = 0.35;
     float max_y = -10000.0;
     float min_y = 10000.0; 
     float DISTANCE_TO_COLOR = 200;
