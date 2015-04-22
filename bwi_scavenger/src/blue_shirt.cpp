@@ -19,6 +19,7 @@
 
 typedef pcl::PointCloud<pcl::PointXYZRGB> PointCloud;
 
+ros::NodeHandle * nh;
 sensor_msgs::ImageConstPtr image; 
 
 // shirt_color is a string saving the color of shirt
@@ -112,6 +113,10 @@ void callback_human_detection(const PointCloud::ConstPtr& msg)
 bool find_color_shirt(bwi_scavenger::ColorShirt::Request &req, 
     bwi_scavenger::ColorShirt::Response &res) {
  
+    ros::Subscriber sub1 = nh->subscribe
+        ("/segbot_pcl_person_detector/human_clouds", 1, 
+        callback_human_detection);
+
     switch ( (int) req.color) {
         
         case 1:
@@ -141,20 +146,17 @@ bool find_color_shirt(bwi_scavenger::ColorShirt::Request &req,
 int main(int argc, char** argv)
 {
     ros::init(argc, argv, "blue_shirt_server");
-    ros::NodeHandle nh;
+    nh = new ros::NodeHandle();
 
     // directory to save files, used for service results
     ros::param::param<std::string>("~directory", directory, default_dir);
     file = directory + "shirt.jpg"; 
 
-    ros::ServiceServer service = nh.advertiseService("blue_shirt_service", 
+    ros::ServiceServer service = nh->advertiseService("blue_shirt_service", 
         find_color_shirt);
 
-    ros::Subscriber sub1 = nh.subscribe
-        ("/segbot_pcl_person_detector/human_clouds", 1, 
-        callback_human_detection);
 
-    image_transport::ImageTransport it(nh);
+    image_transport::ImageTransport it(*nh);
     image_transport::Subscriber sub2 = it.subscribe 
         ("/nav_kinect/rgb/image_color", 1, callback_image_saver);
 

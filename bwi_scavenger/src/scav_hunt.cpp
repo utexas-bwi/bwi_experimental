@@ -112,9 +112,9 @@ void print_to_gui( ros::ServiceClient *gui_service_client ) {
     for (int i=0; i < number_of_tasks; i++) {
         
         switch ( task_statuses[i] ) {
-            case TODO: message +=  "         "; break;
-            case DOING: message += "   ->  "; break;
-            case DONE: message +=  " done "; break;
+            case TODO: message +=  "\t"; break;
+            case DOING: message += " ->\t"; break;
+            case DONE: message +=  "done\t"; break;
         }
 
         str_i.clear(); 
