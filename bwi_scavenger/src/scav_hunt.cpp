@@ -112,9 +112,9 @@ void print_to_gui( ros::ServiceClient *gui_service_client ) {
     for (int i=0; i < number_of_tasks; i++) {
         
         switch ( task_statuses[i] ) {
-            case TODO: message +=  "\t"; break;
-            case DOING: message += " ->\t"; break;
-            case DONE: message +=  "done\t"; break;
+            case TODO: message +=  "\t\t"; break;
+            case DOING: message += " ->\t\t"; break;
+            case DONE: message +=  " done\t"; break;
         }
 
         str_i.clear(); 
@@ -168,7 +168,7 @@ int main(int argc, char **argv){
         <bwi_msgs::QuestionDialog> ("question_dialog");
 
     task_descriptions.push_back("find a person standing near a whiteboard"); 
-    task_descriptions.push_back("capture a person wearing color shirt: "); 
+    task_descriptions.push_back("find a person wearing a color shirt and take a picture: "); 
     task_descriptions.push_back("find and take a picture of object: "); 
     task_descriptions.push_back("fetch an object for a person"); 
     task_descriptions.push_back("communicate with natural language"); 
