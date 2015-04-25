@@ -19,6 +19,8 @@
 #include "ros/ros.h"
 #include "std_msgs/String.h"
 
+#include "bwi_scavenger/ObjectDetection.h"
+
 using namespace cv;
 using namespace std;
 
@@ -33,41 +35,18 @@ std::string default_dir = "/home/bwi/shiqi/";
 
 void callback(const sensor_msgs::ImageConstPtr& msg) 
 {
-
-    try
-    {
-        cv_ptr = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGR8); 
-        frame = cv_ptr->image;
-    }
-    catch (cv_bridge::Exception& e)
-    {
-        ROS_ERROR("cv_bridge exception: %s", e.what());
-        return;
-    }
-        
+    cv_ptr = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGR8); 
+    frame = cv_ptr->image;
 }
 
-int main( int argc, char** argv )
-{
 
-    // for generating yyyymmdd format output
-    std::time_t rawtime;
-    std::tm* timeinfo; 
-    char buffer [80]; 
-    std::time(&rawtime);
-    timeinfo = std::localtime(&rawtime); 
-    std::strftime(buffer, 80, "%Y-%m-%d", timeinfo); 
-    std::puts(buffer);
-    std::string str(buffer);
+bool callback_detection(bwi_scavenger::ObjectDetection::Request &req, 
+    bwi_scavenger::ObjectDetection::Response &res) {
 
-    ROS_INFO("\nPath to template can be specified via private parameter: directory\n");
-    ROS_INFO("Template image name is: template-yyyy-mm-dd.jpg\n\n");
-
-    // load template image, in *grayscale*
-
-    ros::param::param<std::string>("~directory", directory, default_dir);
-    file  = directory + "template-" + str + ".jpg";
+    file  = req.path_to_template; 
     Mat img_object = imread(file, CV_LOAD_IMAGE_GRAYSCALE );
+    if(! img_object.data )
+        ROS_ERROR("No template image is provided for object detection"); 
 
     cv_ptr.reset (new cv_bridge::CvImage);
 
@@ -91,12 +70,13 @@ int main( int argc, char** argv )
 
     namedWindow("WindowName", CV_WINDOW_AUTOSIZE);
 
-    ros::init(argc, argv, "segbot_object_detection");
-    ros::NodeHandle nh;
-    ros::Subscriber sub = nh.subscribe("/nav_kinect/rgb/image_color", 1, callback);
 
-    ros::Publisher pub = 
-        nh.advertise<std_msgs::String>("segbot_object_detection_status", 1);
+
+
+
+    // enable this "latch" function, so that the scav_hunt node can directly get
+    // the last published message, even if it was published before the
+    // subscriber gets connected
 
     int cnt = 0;
     ros::Rate r(10);
@@ -199,19 +179,15 @@ int main( int argc, char** argv )
         else
           cnt = 0;
 
-        std::string file_object = directory + "object_" + str + ".jpg"; 
+        ros::param::param<std::string>("~directory", directory, default_dir);
+        std::string file_object = directory + "object_matched.jpg"; 
         if (cnt >= 5) {
             imwrite(file_object, frame);
             status = DONE; 
+            res.path_to_image = file_object; 
             return true;
         }
 
-        if (status == RUNNING)
-            msg.data = name + ":running"; 
-        else if (status == DONE)
-            msg.data = name + ":" + file_object; 
-
-        pub.publish(msg); 
 
         imshow( "WindowName", img_matches );
         waitKey(1);
@@ -224,3 +200,18 @@ int main( int argc, char** argv )
     return true;
 }
 
+int main(int argc, char **argv) {
+    
+    ros::init(argc, argv, "object_detection_server");
+    
+    ros::NodeHandle nh;
+
+    ros::ServiceServer service = nh.advertiseService("object_detection_service", 
+        callback_detection); 
+    ros::Subscriber sub = nh.subscribe("/nav_kinect/rgb/image_color", 1, callback);
+    ros::Duration(2.0).sleep();
+
+    ros::spin(); 
+    
+    return true; 
+}

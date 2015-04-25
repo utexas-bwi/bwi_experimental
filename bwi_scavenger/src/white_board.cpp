@@ -17,6 +17,8 @@
 #include <cstdio>
 #include <ctime>
 
+#include "bwi_scavenger/Whiteboard.h"
+
 typedef pcl::PointCloud<pcl::PointXYZRGB> PointCloud;
 
 sensor_msgs::ImageConstPtr image; 
@@ -25,6 +27,8 @@ std::string directory, file;
 std::string default_dir = "/home/bwi/shiqi/";
 
 enum Status {RUNNING, DONE};
+
+Status s = RUNNING; 
 
 struct my_pose {
     float x; 
@@ -59,19 +63,35 @@ bool inRectangle(my_pose* m, my_pose* a, my_pose* b, my_pose* c)
 
 void callback(const geometry_msgs::PoseStamped::ConstPtr& msg)
 {
-    a1.x = 62.67;
-    a1.y = 9.89;
-    b1.x = 62.27;
-    b1.y = 4.27;
-    c1.x = 60.85;
-    c1.y = 9.36;
+    // // for old map
+    // a1.x = 62.67;
+    // a1.y = 9.89;
+    // b1.x = 62.27;
+    // b1.y = 4.27;
+    // c1.x = 60.85;
+    // c1.y = 9.36;
+    // 
+    // a2.x = 39.73;
+    // a2.y = 17.12;
+    // b2.x = 39.80;
+    // b2.y = 11.17;
+    // c2.x = 38.24;
+    // c2.y = 16.94;
+
+    // for new map
+    a1.x = -30.88;
+    a1.y = 0.06;
+    b1.x = -29.48;
+    b1.y = 0.06;
+    c1.x = -30.89;
+    c1.y = -3.16;
     
-    a2.x = 39.73;
-    a2.y = 17.12;
-    b2.x = 39.80;
-    b2.y = 11.17;
-    c2.x = 38.24;
-    c2.y = 16.94;
+    a2.x = -8.25;
+    a2.y = -5.99;
+    b2.x = -6.83;
+    b2.y = -6.05;
+    c2.x = -8.21;
+    c2.y = -11.26;
     
     geometry_msgs::PoseStampedConstPtr poseStamped = msg; 
 
@@ -81,31 +101,16 @@ void callback(const geometry_msgs::PoseStamped::ConstPtr& msg)
 
     if (inRectangle(&m, &a1, &b1, &c1) || inRectangle(&m, &a2, &b2, &c2)) 
     {
-        std::time_t rawtime;
-        std::tm* timeinfo;
-        char buffer [80];
-
-        std::time(&rawtime);
-        timeinfo = std::localtime(&rawtime);
-        std::strftime(buffer, 80, "%Y-%m-%d-%H-%M-%S", timeinfo);
-        std::puts(buffer);
-        std::string str(buffer);
 
         ROS_INFO("People detected in frout of a white board, picture saved.");
 
         cv_bridge::CvImageConstPtr cv_ptr;
-        try 
-        {
-            cv_ptr = cv_bridge::toCvShare(image, sensor_msgs::image_encodings::BGR8);
+        cv_ptr = cv_bridge::toCvShare(image, sensor_msgs::image_encodings::BGR8);
 
-            file = directory + "/whiteboard-" + str + ".jpg"; 
-            cv::imwrite(file, cv_ptr->image);
-        }
-        catch (cv_bridge::Exception& e) 
-        {
-            ROS_ERROR("cv_bridge exception: %s", e.what());
-            return;
-        }
+        file = directory + "/whiteboard.jpg"; 
+        cv::imwrite(file, cv_ptr->image);
+        s = DONE;
+
     }
 }
 
@@ -115,13 +120,25 @@ void callback_image_saver(const sensor_msgs::ImageConstPtr& msg)
   image = msg; 
 }
 
+bool whiteboard_search(bwi_scavenger::Whiteboard::Request &req, 
+    bwi_scavenger::Whiteboard::Response &res) {
+
+    ros::Rate r(10);
+    while (s != DONE && ros::ok()) {
+        
+        ros::spinOnce(); 
+        
+    }
+    res.path_to_image = file; 
+    return true;
+    
+}
+
 // main function of the node
 int main(int argc, char ** argv)
 {
 
-    Status s = RUNNING; 
-
-    ros::init(argc, argv, "segbot_whiteboard");
+    ros::init(argc, argv, "whiteboard_server");
     ros::NodeHandle nh;
     ros::Subscriber sub1 = nh.subscribe(
                     "/segbot_pcl_person_detector/human_poses", 100, callback); 
@@ -131,26 +148,17 @@ int main(int argc, char ** argv)
                     "/nav_kinect/rgb/image_color", 1, callback_image_saver);
 
 
-    ROS_INFO("\nPath to saved files can be specified via private parameter: directory\n"); 
-    ROS_INFO("File name: whiteboard-yyyy-mm-dd\n");
+    ROS_INFO("%s entering", ros::this_node::getName().c_str()); 
 
     ros::param::param<std::string>("~directory", directory, default_dir);
 
+    ros::ServiceServer service = nh.advertiseService ("whiteboard_service", 
+        whiteboard_search);
 
-    ros::Publisher pub = nh.advertise<std_msgs::String>("segbot_whiteboard_status", 100);
     ros::Rate r(10); 
 
     while (ros::ok()) {
         
-        std_msgs::String msg; 
-
-        if (s == RUNNING)
-            msg.data = "running"; 
-        else if (s == DONE)
-            msg.data = ":" + file; 
-
-        pub.publish(msg); 
-
         ros::spinOnce(); 
         r.sleep();
 

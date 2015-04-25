@@ -1,0 +1,20 @@
+int32 WHITEBOARD = 1
+int32 TEMPLATE = 2
+int32 COLORSHIRT = 3
+
+int32 RED = 1
+int32 BLUE = 2
+int32 GREEN = 3
+int32 YELLOW = 4
+
+# goal definition
+int32 type
+string path_to_template
+int32 color
+---
+
+# result definition
+string path_to_image
+---
+
+# feedback --- currently no feedback
