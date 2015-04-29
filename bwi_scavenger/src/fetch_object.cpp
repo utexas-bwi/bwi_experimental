@@ -8,57 +8,63 @@
 
 #include "bwi_scavenger/FetchObject.h"
 #include "bwi_kr_execution/ExecutePlanAction.h"
-#include "bwi_msgs/QuestionDialog.h"
+#include "segbot_gui/QuestionDialog.h"
 
 
 ros::NodeHandle *nh; 
 
 std::string default_dir = "/home/bwi/shiqi/";
 
+ros::ServiceClient * gui_service_client; 
+
 bool callback(bwi_scavenger::FetchObject::Request &req, 
     bwi_scavenger::FetchObject::Response &res) {
 
     std::string room_from, room_to, object_name, file; 
+    std::vector <std::string> buttons;
+
     ROS_INFO("fetch_object_service request received"); 
     
-    ros::ServiceClient gui_service_client = nh->serviceClient
-        <bwi_msgs::QuestionDialog> ("question_dialog"); 
-    bwi_msgs::QuestionDialog srv;
+    ros::Duration(0.5).sleep(); 
+    segbot_gui::QuestionDialog srv;
     
     // specify the task 
-    srv.request.type = 1; 
-    srv.request.message = "I am working on a 'fetch object' task. Please click the button, if you can help with specifying the task"; 
-    srv.request.options = std::vector <std::string> (1, "button");
-    gui_service_client.call(srv); 
+    srv.request.type = segbot_gui::QuestionDialogRequest::CHOICE_QUESTION; 
+    srv.request.message = "Please click the button, if you can help with specifying the 'fetch' task"; 
+    buttons.push_back("button"); 
+    srv.request.options = buttons;
+    srv.request.timeout = segbot_gui::QuestionDialogRequest::NO_TIMEOUT; 
+    gui_service_client->waitForExistence(); 
+    gui_service_client->call(srv); 
 
     ROS_INFO("fetch_object_service: task specified"); 
 
     // what's the object's name? saved to room_from
     srv.request.type = 2;
     srv.request.message = "What is the object's name?"; 
-    gui_service_client.call(srv);
+    gui_service_client->call(srv);
     object_name = srv.response.text;
 
     // where to get the object, saved to room_from
     srv.request.type = 2;
     srv.request.message = "Where to get the object? E.g., l3_420."; 
-    gui_service_client.call(srv);
+    gui_service_client->call(srv);
     room_from = srv.response.text;
 
     // where to deliver the object, saved to room_to
     srv.request.type = 2;
     srv.request.message = "Where to deliver the object? E.g., l3_420."; 
-    gui_service_client.call(srv);
+    gui_service_client->call(srv);
     room_to = srv.response.text;
 
     actionlib::SimpleActionClient<bwi_kr_execution::ExecutePlanAction> 
-        asp_plan_client("action_executor/execute_plan", true); 
+        asp_plan_client("/action_executor/execute_plan", true); 
     asp_plan_client.waitForServer();
 
     // print to gui: moving to the first room
     srv.request.type = 0;
     srv.request.message = "Moving to room: " + room_from; 
-    gui_service_client.call(srv);
+    gui_service_client->call(srv);
 
     // wrapping up a "goal" for moving the robot platform
     bwi_kr_execution::ExecutePlanGoal goal;
@@ -82,13 +88,15 @@ bool callback(bwi_scavenger::FetchObject::Request &req,
     // request to load object
     srv.request.type = 1; 
     srv.request.message = "Please help me load object: " + object_name; 
-    srv.request.options = std::vector <std::string> (1, "Loaded");
-    gui_service_client.call(srv); 
+    buttons.clear();
+    buttons = std::vector <std::string> (1, "Loaded"); 
+    srv.request.options = buttons;
+    gui_service_client->call(srv); 
 
     // print to gui: moving to the second room
     srv.request.type = 0;
     srv.request.message = "Moving to room: " + room_to; 
-    gui_service_client.call(srv);
+    gui_service_client->call(srv);
 
     // move to the second room for delivery
     fluent.variables.clear(); 
@@ -111,8 +119,9 @@ bool callback(bwi_scavenger::FetchObject::Request &req,
     // request to unload object
     srv.request.type = 1; 
     srv.request.message = "Please help me unload object: " + object_name; 
-    srv.request.options = std::vector <std::string> (1, "Unloaded");
-    gui_service_client.call(srv); 
+    buttons = std::vector <std::string> (1, "Unloaded"); 
+    srv.request.options = buttons;
+    gui_service_client->call(srv); 
 
     ROS_INFO("fetch_object_service task done"); 
 
@@ -135,6 +144,9 @@ int main(int argc, char **argv) {
     
     ros::ServiceServer service = nh->advertiseService("fetch_object_service", 
         callback); 
+
+    gui_service_client = new ros::ServiceClient(nh->serviceClient <segbot_gui::QuestionDialog> ("question_dialog")); 
+
     ROS_INFO("fetch_object_service ready"); 
     ros::spin(); 
 
