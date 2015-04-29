@@ -2,6 +2,7 @@
 #include <iostream>
 #include <ctime>
 #include <cstdio> 
+#include <boost/filesystem.hpp>
 
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
@@ -180,6 +181,8 @@ bool callback_detection(bwi_scavenger::ObjectDetection::Request &req,
           cnt = 0;
 
         ros::param::param<std::string>("~directory", directory, default_dir);
+        if (boost::filesystem::is_directory(directory) == false)
+            boost::filesystem::create_directory(directory);
         std::string file_object = directory + "object_matched.jpg"; 
         if (cnt >= 5) {
             imwrite(file_object, frame);

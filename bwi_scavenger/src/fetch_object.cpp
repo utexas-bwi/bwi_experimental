@@ -5,6 +5,7 @@
 #include <string>
 #include <fstream>
 #include <iostream>
+#include <boost/filesystem.hpp>
 
 #include "bwi_scavenger/FetchObject.h"
 #include "bwi_kr_execution/ExecutePlanAction.h"
@@ -126,8 +127,10 @@ bool callback(bwi_scavenger::FetchObject::Request &req,
     ROS_INFO("fetch_object_service task done"); 
 
     std::ofstream fs;
+    if (boost::filesystem::is_directory(default_dir) == false)
+        boost::filesystem::create_directory(default_dir); 
     file = default_dir + "fetch_object_log.txt";
-    fs.open(file.c_str()); 
+    fs.open(file.c_str(), std::ofstream::app); 
     fs << room_from + "\n" + object_name + "\n" + room_to + "\n"; 
     fs.close(); 
 

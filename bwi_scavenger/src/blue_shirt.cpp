@@ -3,7 +3,6 @@
 #include <std_msgs/String.h>
 #include <pcl_ros/point_cloud.h>
 #include <pcl/point_types.h>
-#include <boost/foreach.hpp>
 #include <stdio.h>
 #include <cv_bridge/cv_bridge.h>
 #include <image_transport/image_transport.h>
@@ -150,6 +149,8 @@ int main(int argc, char** argv)
 
     // directory to save files, used for service results
     ros::param::param<std::string>("~directory", directory, default_dir);
+    if (boost::filesystem::is_directory(directory) == false) 
+        boost::filesystem::create_directory(directory);
     file = directory + "shirt.jpg"; 
 
     ros::ServiceServer service = nh->advertiseService("blue_shirt_service", 
