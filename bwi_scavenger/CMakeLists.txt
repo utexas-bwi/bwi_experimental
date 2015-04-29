@@ -136,11 +136,13 @@ target_link_libraries(scav_hunt ${catkin_LIBRARIES})
 
 add_executable(target_search src/target_search.cpp)
 target_link_libraries(target_search ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
-# add_dependencies(vision_server)
 
 add_executable(vision_server src/vision_server.cpp)
 target_link_libraries(vision_server ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
-# add_dependencies(blue_shirt object_detection take_human_input white_board)
+
+add_executable(fetch_object src/fetch_object.cpp)
+target_link_libraries(fetch_object ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+
 #############
 ## Install ##
 #############

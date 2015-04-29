@@ -75,7 +75,7 @@ void task_object()
     ROS_INFO("%s: task_object service ready",ros::this_node::getName().c_str()); 
     client.waitForExistence(); 
     client.call(srv); 
-    file_board = srv.response.path_to_image; 
+    file_object = srv.response.path_to_image; 
 }
 
 void task_board()
@@ -94,8 +94,16 @@ void task_board()
 }
 
 void task_fetch() {
-    ROS_ERROR("not implemented yet");
-    return; 
+    ros::ServiceClient client = nh->serviceClient
+        <bwi_scavenger::FetchObject> ("fetch_object_service");
+    bwi_scavenger::FetchObject srv;
+
+    ROS_INFO("%s: fetch_object waitForExistence()",
+        ros::this_node::getName().c_str()); 
+    client.waitForExistence(); 
+    client.call(srv); 
+
+    file_fetch = srv.response.path_to_log; 
 }
 
 void task_dialog() {
@@ -177,10 +185,11 @@ int main(int argc, char **argv){
     ros::Rate rate(10); 
     ros::Duration(1.0).sleep();
 
-    ros::param::param <std::string> ("~directory", directory, "/home/bwi/shiqi/");
-    ros::param::param <std::string> ("~shirt_color", shirt_color, "blue"); 
-    ros::param::param <std::string> ("~object_name", object_name, "unspecified"); 
-    ros::param::param <std::string> ("~path_to_template", file_template, directory + "template.jpg"); 
+    ros::param::param<std::string>("~directory", directory, "/home/bwi/shiqi/");
+    ros::param::param<std::string>("~shirt_color", shirt_color, "blue"); 
+    ros::param::param<std::string>("~object_name", object_name, "unspecified"); 
+    ros::param::param<std::string>("~path_to_template", file_template, 
+        directory + "template.jpg"); 
 
     // the buttons are always there: clicking a "DONE" button shows the result
     // clicking a "DOING"/"TODO" button does nothing
@@ -218,7 +227,7 @@ int main(int argc, char **argv){
             continue; 
         }
 
-        ROS_INFO("%s: do the first on todo list", ros::this_node::getName().c_str()); 
+        ROS_INFO("%s: do the 1st on todo list", ros::this_node::getName().c_str()); 
         // otherwise, change the status first todo task into "DOING"
         task_statuses[todo_tasks[0]] = DOING; 
         print_to_gui( & gui_service_client); 
