@@ -119,27 +119,27 @@ include_directories(
 
 ## Declare a cpp executable
 
-add_executable(blue_shirt src/blue_shirt.cpp)
-target_link_libraries(blue_shirt ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+# add_executable(blue_shirt src/blue_shirt.cpp)
+# target_link_libraries(blue_shirt ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 
-add_executable(white_board src/white_board.cpp)
-target_link_libraries(white_board ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+# add_executable(white_board src/white_board.cpp)
+# target_link_libraries(white_board ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 
-add_executable(img_capture src/img_capture.cpp)
-target_link_libraries(img_capture ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+# add_executable(img_capture src/img_capture.cpp)
+# target_link_libraries(img_capture ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 
-add_executable(object_detection src/object_detection.cpp)
-target_link_libraries(object_detection ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+# add_executable(object_detection src/object_detection.cpp)
+# target_link_libraries(object_detection ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 
-add_executable(scav_hunt src/scav_hunt.cpp)
-target_link_libraries(scav_hunt ${catkin_LIBRARIES})
+# add_executable(scav_hunt src/scav_hunt.cpp)
+# target_link_libraries(scav_hunt ${catkin_LIBRARIES})
 
-add_executable(target_search src/target_search.cpp)
-target_link_libraries(target_search ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+# add_executable(target_search src/target_search.cpp)
+# target_link_libraries(target_search ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 # add_dependencies(vision_server)
 
-add_executable(vision_server src/vision_server.cpp)
-target_link_libraries(vision_server ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+# add_executable(vision_server src/vision_server.cpp)
+# target_link_libraries(vision_server ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 # add_dependencies(blue_shirt object_detection take_human_input white_board)
 #############
 ## Install ##
