@@ -14,4 +14,6 @@
         <param name="tolerance" value="$(arg sim_tolerance)" />
     </node>
 
+    <include file="$(find bwi_kr_execution)/launch/bwi_kr_execution.launch" />
+
 </launch>

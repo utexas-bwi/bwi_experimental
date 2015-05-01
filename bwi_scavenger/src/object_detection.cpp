@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <iostream>
-#include <ctime>
 #include <cstdio> 
 #include <boost/filesystem.hpp>
 
@@ -23,14 +22,11 @@
 #include "bwi_scavenger/ObjectDetection.h"
 
 using namespace cv;
-using namespace std;
-
 
 cv_bridge::CvImageConstPtr cv_ptr;
 Mat frame;
 
 std::string file, name, directory; 
-enum Status {RUNNING, DONE};
 std::string default_dir = "/home/bwi/shiqi/";
 
 
@@ -68,36 +64,26 @@ bool callback_detection(bwi_scavenger::ObjectDetection::Request &req,
     FlannBasedMatcher matcher;
     std::vector< DMatch > matches;
 
-
-    namedWindow("WindowName", CV_WINDOW_AUTOSIZE);
-
-
-
-
-
-    // enable this "latch" function, so that the scav_hunt node can directly get
-    // the last published message, even if it was published before the
-    // subscriber gets connected
+    // namedWindow("WindowName", CV_WINDOW_AUTOSIZE);
 
     int cnt = 0;
-    ros::Rate r(10);
-    Status status = RUNNING; 
 
     ros::param::param<std::string>("~name", name, "NAME");
 
     while (ros::ok()) {
 
-
-        std_msgs::String msg; 
+        ros::spinOnce();
 
         if (frame.empty()) {
-          printf(".");
+          ROS_WARN("frame empty");
+          ros::Duration(0.1).sleep(); 
           ros::spinOnce();
           continue;
         }
 
         detector.detect(frame, keypoints_frame);
         extractor.compute(frame, keypoints_frame, descriptors_frame);
+        // Finds the best match for each descriptor from a query set.
         matcher.match(descriptors_object, descriptors_frame, matches);
 
         //-- Quick calculation of max and min distances between keypoints
@@ -186,19 +172,16 @@ bool callback_detection(bwi_scavenger::ObjectDetection::Request &req,
         std::string file_object = directory + "object_matched.jpg"; 
         if (cnt >= 5) {
             imwrite(file_object, frame);
-            status = DONE; 
             res.path_to_image = file_object; 
             return true;
         }
 
-
         imshow( "WindowName", img_matches );
         waitKey(1);
 
-        ros::spinOnce();
-        r.sleep();
-
     }
+
+    destroyAllWindows(); 
 
     return true;
 }
@@ -206,12 +189,14 @@ bool callback_detection(bwi_scavenger::ObjectDetection::Request &req,
 int main(int argc, char **argv) {
     
     ros::init(argc, argv, "object_detection_server");
-    
     ros::NodeHandle nh;
 
+    
+    ros::Subscriber sub = nh.subscribe("/nav_kinect/rgb/image_color", 1, callback);
     ros::ServiceServer service = nh.advertiseService("object_detection_service", 
         callback_detection); 
-    ros::Subscriber sub = nh.subscribe("/nav_kinect/rgb/image_color", 1, callback);
+
+    ros::Rate r(10);
     ros::Duration(2.0).sleep();
 
     ros::spin(); 
