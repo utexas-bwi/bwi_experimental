@@ -5,6 +5,7 @@
 #include "bwi_scavenger/TargetSearch.h"
 #include "bwi_scavenger/Dialog.h"
 #include "bwi_scavenger/FetchObject.h"
+#include "bwi_scavenger/ScavStatus.h"
 
 #include <boost/lexical_cast.hpp>
 
@@ -22,14 +23,11 @@ std::string directory = "", shirt_color = "", object_name = "",
 std::string file_shirt = "", file_object = "", file_board = "", file_fetch = "",
     file_dialog = ""; 
 
-enum Status { TODO, DOING, DONE };
 enum Task { WHITEBOARD=0, COLORSHIRT=1, OBJECTSEARCH=2, FETCHOBJECT=3, DIALOG=4 }; 
 
 std::vector <std::string> task_descriptions;
 
-// status list representing TODO/DOING/DONE of each task
-std::vector <Status> task_statuses; 
-
+std::vector <int> task_statuses; 
 
 
 void task_shirt()
@@ -120,9 +118,9 @@ void print_to_gui( ros::ServiceClient *gui_service_client ) {
     for (int i=0; i < number_of_tasks; i++) {
         
         switch ( task_statuses[i] ) {
-            case TODO: message +=  "\t\t"; break;
-            case DOING: message += " ->\t\t"; break;
-            case DONE: message +=  " done\t"; break;
+            case bwi_scavenger::ScavStatus::TODO: message +=  "\t"; break;
+            case bwi_scavenger::ScavStatus::ONGOING: message += " ->\t"; break;
+            case bwi_scavenger::ScavStatus::FINISHED: message +=  " done\t"; break;
         }
 
         str_i.clear(); 
@@ -150,20 +148,31 @@ void print_to_gui( ros::ServiceClient *gui_service_client ) {
     std::string eog = "eog ";
     std::string gedit = "gedit "; 
     
-    if (srv.response.index == 0 && task_statuses[0] == DONE)
+    if (srv.response.index == 0 && task_statuses[0] == bwi_scavenger::ScavStatus::FINISHED)
+    {    
         system((eog + file_shirt).c_str());
-    
-    else if (srv.response.index == 1 && task_statuses[1] == DONE)
+        ROS_INFO("%s", (eog + file_shirt).c_str()); 
+    }
+    else if (srv.response.index == 1 && task_statuses[1] == bwi_scavenger::ScavStatus::FINISHED)
+    {
         system((eog + file_object).c_str());
-    
-    else if (srv.response.index == 2 && task_statuses[2] == DONE)
+        ROS_INFO("%s", (eog + file_object).c_str()); 
+    }
+    else if (srv.response.index == 2 && task_statuses[2] == bwi_scavenger::ScavStatus::FINISHED)
+    {
         system((eog + file_board).c_str());
-
-    else if (srv.response.index == 3 && task_statuses[3] == DONE)
+        ROS_INFO("%s", (eog + file_board).c_str());
+    }
+    else if (srv.response.index == 3 && task_statuses[3] == bwi_scavenger::ScavStatus::FINISHED)
+    {
         system((gedit + file_fetch).c_str()); 
-
-    else if (srv.response.index == 4 && task_statuses[4] == DONE)
+        ROS_INFO("%s", (gedit + file_fetch).c_str());
+    }
+    else if (srv.response.index == 4 && task_statuses[4] == bwi_scavenger::ScavStatus::FINISHED)
+    { 
         system((gedit + file_dialog).c_str()); 
+        ROS_INFO("%s", (gedit + file_dialog).c_str());
+    }
 }
 
 
@@ -175,13 +184,21 @@ int main(int argc, char **argv){
     ros::ServiceClient gui_service_client = nh->serviceClient 
         <segbot_gui::QuestionDialog> ("question_dialog");
 
+    task_statuses = std::vector <int> (task_descriptions.size(), bwi_scavenger::ScavStatus::TODO); 
+    bwi_scavenger::ScavStatus msg; 
+
+    msg.names.push_back("white board"); 
+    msg.names.push_back("color shirt"); 
+    msg.names.push_back("object search"); 
+    msg.names.push_back("object fetching"); 
+    msg.names.push_back("dialog"); 
+
     task_descriptions.push_back("find a person standing near a whiteboard"); 
     task_descriptions.push_back("find a person wearing a color shirt and take a picture: "); 
     task_descriptions.push_back("find and take a picture of object: "); 
     task_descriptions.push_back("fetch an object for a person"); 
     task_descriptions.push_back("communicate with natural language"); 
 
-    task_statuses = std::vector <Status> (task_descriptions.size(), TODO); 
     ros::Rate rate(10); 
     ros::Duration(1.0).sleep();
 
@@ -197,6 +214,9 @@ int main(int argc, char **argv){
     std::vector<int> todo_tasks, doing_tasks, done_tasks;
     int number_of_tasks = task_descriptions.size(); 
 
+    ros::Publisher status_pub = nh->advertise <bwi_scavenger::ScavStatus> 
+        ("scav_hunt_status", 100, true); 
+
     ROS_INFO("%s: initialization finished", ros::this_node::getName().c_str()); 
     while (ros::ok()) {
 
@@ -206,12 +226,15 @@ int main(int argc, char **argv){
         todo_tasks.clear(); doing_tasks.clear(); done_tasks.clear(); 
 
         for (int i=0; i < number_of_tasks; i++) {
-            switch ( static_cast<Status> (task_statuses[i]) ) {
-                case TODO: todo_tasks.push_back(i); break;
-                case DOING: doing_tasks.push_back(i); break;
-                case DONE: done_tasks.push_back(i); break;
+            msg.statuses.clear(); 
+            msg.statuses.push_back(task_statuses[i]);
+            switch ( task_statuses[i] ) {
+                case bwi_scavenger::ScavStatus::TODO: todo_tasks.push_back(i); break;
+                case bwi_scavenger::ScavStatus::ONGOING: doing_tasks.push_back(i); break;
+                case bwi_scavenger::ScavStatus::FINISHED: done_tasks.push_back(i); break;
             }
         }
+        status_pub.publish(msg);
 
         if (done_tasks.size() == number_of_tasks) //if all tasks have been done
         {
@@ -229,7 +252,7 @@ int main(int argc, char **argv){
 
         ROS_INFO("%s: do the 1st on todo list", ros::this_node::getName().c_str()); 
         // otherwise, change the status first todo task into "DOING"
-        task_statuses[todo_tasks[0]] = DOING; 
+        task_statuses[todo_tasks[0]] = bwi_scavenger::ScavStatus::ONGOING; 
         print_to_gui( & gui_service_client); 
 
         ROS_INFO("%s: select a task", ros::this_node::getName().c_str()); 
@@ -248,7 +271,7 @@ int main(int argc, char **argv){
         }
         ROS_INFO("%s: task done", ros::this_node::getName().c_str()); 
 
-        task_statuses[todo_tasks[0]] = DONE; 
+        task_statuses[todo_tasks[0]] = bwi_scavenger::ScavStatus::FINISHED; 
 
     }
 }
