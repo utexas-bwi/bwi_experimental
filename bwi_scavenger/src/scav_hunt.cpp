@@ -1,6 +1,7 @@
 
 #include "ros/ros.h"
 #include "std_msgs/String.h"
+#include "std_msgs/Int32.h"
 #include "segbot_gui/QuestionDialog.h"
 #include "bwi_scavenger/TargetSearch.h"
 #include "bwi_scavenger/Dialog.h"
@@ -184,20 +185,20 @@ int main(int argc, char **argv){
     ros::ServiceClient gui_service_client = nh->serviceClient 
         <segbot_gui::QuestionDialog> ("question_dialog");
 
-    task_statuses = std::vector <int> (task_descriptions.size(), bwi_scavenger::ScavStatus::TODO); 
-    bwi_scavenger::ScavStatus msg; 
-
-    msg.names.push_back("white board"); 
-    msg.names.push_back("color shirt"); 
-    msg.names.push_back("object search"); 
-    msg.names.push_back("object fetching"); 
-    msg.names.push_back("dialog"); 
-
     task_descriptions.push_back("find a person standing near a whiteboard"); 
     task_descriptions.push_back("find a person wearing a color shirt and take a picture: "); 
     task_descriptions.push_back("find and take a picture of object: "); 
     task_descriptions.push_back("fetch an object for a person"); 
     task_descriptions.push_back("communicate with natural language"); 
+
+    bwi_scavenger::ScavStatus msg; 
+    task_statuses = std::vector <int32_t> 
+        (task_descriptions.size(), bwi_scavenger::ScavStatus::TODO); 
+    msg.names.push_back("white board"); 
+    msg.names.push_back("color shirt"); 
+    msg.names.push_back("object search"); 
+    msg.names.push_back("object fetching"); 
+    msg.names.push_back("dialog"); 
 
     ros::Rate rate(10); 
     ros::Duration(1.0).sleep();
@@ -225,16 +226,23 @@ int main(int argc, char **argv){
 
         todo_tasks.clear(); doing_tasks.clear(); done_tasks.clear(); 
 
+        msg.statuses.clear(); 
         for (int i=0; i < number_of_tasks; i++) {
-            msg.statuses.clear(); 
+
             msg.statuses.push_back(task_statuses[i]);
+
             switch ( task_statuses[i] ) {
-                case bwi_scavenger::ScavStatus::TODO: todo_tasks.push_back(i); break;
-                case bwi_scavenger::ScavStatus::ONGOING: doing_tasks.push_back(i); break;
-                case bwi_scavenger::ScavStatus::FINISHED: done_tasks.push_back(i); break;
+                case bwi_scavenger::ScavStatus::TODO: 
+                    todo_tasks.push_back(i); break;
+                case bwi_scavenger::ScavStatus::ONGOING: 
+                    doing_tasks.push_back(i); break;
+                case bwi_scavenger::ScavStatus::FINISHED: 
+                    done_tasks.push_back(i); break;
             }
         }
+
         status_pub.publish(msg);
+
 
         if (done_tasks.size() == number_of_tasks) //if all tasks have been done
         {
