@@ -9,7 +9,7 @@
 
 #include "bwi_scavenger/FetchObject.h"
 #include "bwi_kr_execution/ExecutePlanAction.h"
-#include "segbot_gui/QuestionDialog.h"
+#include "bwi_msgs/QuestionDialog.h"
 
 
 ros::NodeHandle *nh; 
@@ -27,14 +27,14 @@ bool callback(bwi_scavenger::FetchObject::Request &req,
     ROS_INFO("fetch_object_service request received"); 
     
     ros::Duration(0.5).sleep(); 
-    segbot_gui::QuestionDialog srv;
+    bwi_msgs::QuestionDialog srv;
     
     // specify the task 
-    srv.request.type = segbot_gui::QuestionDialogRequest::CHOICE_QUESTION; 
+    srv.request.type = bwi_msgs::QuestionDialogRequest::CHOICE_QUESTION; 
     srv.request.message = "Please click the button, if you can help with specifying the 'fetch' task"; 
     buttons.push_back("button"); 
     srv.request.options = buttons;
-    srv.request.timeout = segbot_gui::QuestionDialogRequest::NO_TIMEOUT; 
+    srv.request.timeout = bwi_msgs::QuestionDialogRequest::NO_TIMEOUT; 
     gui_service_client->waitForExistence(); 
     gui_service_client->call(srv); 
 
@@ -148,7 +148,7 @@ int main(int argc, char **argv) {
     ros::ServiceServer service = nh->advertiseService("fetch_object_service", 
         callback); 
 
-    gui_service_client = new ros::ServiceClient(nh->serviceClient <segbot_gui::QuestionDialog> ("question_dialog")); 
+    gui_service_client = new ros::ServiceClient(nh->serviceClient <bwi_msgs::QuestionDialog> ("question_dialog")); 
 
     ROS_INFO("fetch_object_service ready"); 
     ros::spin(); 

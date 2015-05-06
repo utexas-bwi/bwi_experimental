@@ -2,7 +2,7 @@
 #include "ros/ros.h"
 #include "std_msgs/String.h"
 #include "std_msgs/Int32.h"
-#include "segbot_gui/QuestionDialog.h"
+#include "bwi_msgs/QuestionDialog.h"
 #include "bwi_scavenger/TargetSearch.h"
 #include "bwi_scavenger/Dialog.h"
 #include "bwi_scavenger/FetchObject.h"
@@ -138,7 +138,7 @@ void print_to_gui( ros::ServiceClient *gui_service_client ) {
             message += "\n"; 
     }
 
-    segbot_gui::QuestionDialog srv; 
+    bwi_msgs::QuestionDialog srv; 
 
     srv.request.type = 1;
     srv.request.message = message; 
@@ -183,7 +183,7 @@ int main(int argc, char **argv){
     nh = new ros::NodeHandle();
 
     ros::ServiceClient gui_service_client = nh->serviceClient 
-        <segbot_gui::QuestionDialog> ("question_dialog");
+        <bwi_msgs::QuestionDialog> ("question_dialog");
 
     task_descriptions.push_back("find a person standing near a whiteboard"); 
     task_descriptions.push_back("find a person wearing a color shirt and take a picture: "); 
