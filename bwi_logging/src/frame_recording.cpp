@@ -28,7 +28,7 @@ void callback(const sensor_msgs::ImageConstPtr& rgb_img,
     cv_bridge::CvImageConstPtr rgb_pt, dep_pt;
 
     rgb_pt = cv_bridge::toCvShare(rgb_img, sensor_msgs::image_encodings::BGR8);
-    dep_pt = cv_bridge::toCvShare(dep_img, sensor_msgs::image_encodings::BGR8); 
+    dep_pt = cv_bridge::toCvShare(dep_img, sensor_msgs::image_encodings::TYPE_16UC1); 
 
     std::string rgb_file, dep_file, rgb_sec, dep_sec; 
     os.str(""); os << cnt; 
@@ -63,7 +63,7 @@ int main(int argc, char** argv)
     start = ros::Time::now(); 
 
     message_filters::Subscriber<sensor_msgs::Image> rgb_sub(*nh_pt,
-        "/nav_kinect/rgb/image_raw", 1); 
+        "/nav_kinect/rgb/image_color", 1); 
     message_filters::Subscriber<sensor_msgs::Image> depth_sub(*nh_pt, 
         "/nav_kinect/depth_registered/image_raw", 1);
     
