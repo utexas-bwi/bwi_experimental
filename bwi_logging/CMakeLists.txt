@@ -4,7 +4,13 @@ project(bwi_logging)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED)
+find_package(catkin REQUIRED
+    roscpp
+    sensor_msgs
+    cv_bridge
+    image_transport
+    message_filters
+)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -78,7 +84,7 @@ find_package(catkin REQUIRED)
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES bwi_logging
-#  CATKIN_DEPENDS other_catkin_pkg
+    CATKIN_DEPENDS roscpp message_filters sensor_msgs
 #  DEPENDS system_lib
 )
 
@@ -88,7 +94,10 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-# include_directories(include)
+include_directories(
+    include
+    ${catkin_INCLUDE_DIRS}
+)
 
 ## Declare a cpp library
 # add_library(bwi_logging
@@ -97,15 +106,16 @@ catkin_package(
 
 ## Declare a cpp executable
 # add_executable(bwi_logging_node src/bwi_logging_node.cpp)
+add_executable(frame_recording src/frame_recording.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 # add_dependencies(bwi_logging_node bwi_logging_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(bwi_logging_node
-#   ${catkin_LIBRARIES}
-# )
+target_link_libraries( 
+    frame_recording ${catkin_LIBRARIES}
+)
 
 #############
 ## Install ##
