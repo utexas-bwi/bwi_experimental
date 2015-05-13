@@ -10,6 +10,8 @@ find_package(catkin REQUIRED
     cv_bridge
     image_transport
     message_filters
+    nav_msgs
+    geometry_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -84,7 +86,7 @@ find_package(catkin REQUIRED
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES bwi_logging
-    CATKIN_DEPENDS roscpp message_filters sensor_msgs
+    CATKIN_DEPENDS roscpp message_filters sensor_msgs nav_msgs geometry_msgs
 #  DEPENDS system_lib
 )
 

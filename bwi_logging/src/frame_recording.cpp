@@ -6,47 +6,79 @@
 #include <message_filters/sync_policies/approximate_time.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/image_encodings.h> // for saving images
+#include <nav_msgs/Odometry.h>
 #include <cv_bridge/cv_bridge.h>
 #include <opencv2/opencv.hpp>
 #include <geometry_msgs/PoseWithCovarianceStamped.h> // for amcl pose
 #include <geometry_msgs/Pose.h>
 #include <iostream>
 #include <sstream>
+#include <fstream> // for writing (x, y, ori) text files
+#include <math.h> // for atan2(y, x)
+
+#define PI 3.14159265
 
 ros::NodeHandle *nh_pt; 
 
-ros::Time start, amcl_time; 
+ros::Time start, amcl_time, interp_time; 
 int cnt; 
 double frame_rate; 
 std::string path; 
 
 // supposed to share the same stamp
-geometry_msgs::Pose amcl_pose, interpolation_pose; 
+geometry_msgs::Pose amcl_pose; 
  
-geometry_msgs::Pose odom_pose_at_amcl_frequency, odom_pose_at_odom_frequency; 
+geometry_msgs::Pose odom_pose_at_amcl_freq, odom_pose_at_odom_freq; 
+
+struct InterpolationPose {
+    double x;  
+    double y;
+    double ori; 
+} interp_pose; 
 
 // callback for updating amcl time and amcl pose
 void amclCallback(const geometry_msgs::PoseWithCovarianceStampedConstPtr& msg)
 {
     amcl_time = msg->header.stamp; 
     amcl_pose = msg->pose.pose; 
-    odom_pose_at_amcl_frequency = odom_pose_at_amcl_frequency; 
+    odom_pose_at_amcl_freq = odom_pose_at_amcl_freq; 
 }
 
 // callback for odom
 void odomCallback(const nav_msgs::OdometryConstPtr& odom_msg)
 {
     ros::Time odom_time = odom_msg->header.stamp; 
-    odom_pose_at_odom_frequency = odom_msg->pose.pose;
+    odom_pose_at_odom_freq = odom_msg->pose.pose;
 
-    // TODO: interpolation_pose = (odom_time - amcl_time) * 
-    // (amcl_pose + odom_pose_at_odom_frequency - odom_pose_at_amcl_frequency)
+    ros::Duration diff = odom_time - amcl_time; 
+    interp_time = odom_time; 
+
+    double x, y, amcl_ori, ori_diff, angle_in_radians; 
+
+    x = amcl_pose.position.x + odom_pose_at_odom_freq.position.x - 
+        odom_pose_at_amcl_freq.position.x; 
+    y = amcl_pose.position.y + odom_pose_at_odom_freq.position.y - 
+        odom_pose_at_amcl_freq.position.y; 
+    amcl_ori = 2.0 * atan2(amcl_pose.orientation.z, amcl_pose.orientation.w); 
+    ori_diff = (2.0 * atan2(odom_pose_at_odom_freq.orientation.z, 
+                            odom_pose_at_odom_freq.orientation.w) ) - 
+               (2.0 * atan2(odom_pose_at_amcl_freq.orientation.z, 
+                            odom_pose_at_amcl_freq.orientation.w) ); 
+    angle_in_radians = amcl_ori + ori_diff; 
+    angle_in_radians = fmod( angle_in_radians + PI, 2*PI) - PI; 
+
+    ROS_INFO("interp_pose.x: %f", x); 
+    ROS_INFO("interp_pose.y: %f", y); 
+    ROS_INFO("interp_pose.ori: %f", angle_in_radians * 180.0 / PI); 
+
+    interp_pose.x = x; 
+    interp_pose.y = y;
+    interp_pose.ori = angle_in_radians; 
 }
 
 // callback for saving log files at a given frame rate
 void syncCallback(const sensor_msgs::ImageConstPtr& rgb_img, 
-    const sensor_msgs::ImageConstPtr& dep_img, 
-    const nav_msgs::OdometryConstPtr& odom_msg)
+    const sensor_msgs::ImageConstPtr& dep_img)
 {
     std::ostringstream os; 
     ros::Duration diff = ros::Time::now() - start; 
@@ -59,10 +91,11 @@ void syncCallback(const sensor_msgs::ImageConstPtr& rgb_img,
     rgb_pt = cv_bridge::toCvShare(rgb_img, sensor_msgs::image_encodings::BGR8);
     dep_pt = cv_bridge::toCvShare(dep_img, sensor_msgs::image_encodings::TYPE_16UC1); 
 
-    std::string rgb_file, dep_file, rgb_sec, dep_sec; 
+    std::string rgb_file, dep_file, pos_file, rgb_sec, dep_sec; 
     os.str(""); os << cnt; 
     rgb_file = "rgb" + os.str() + ".jpg"; 
     dep_file = "depth" + os.str() + ".jpg"; 
+    pos_file = "position" + os.str() + ".txt"; 
 
     os.str(""); os << rgb_pt->header.stamp.sec; 
     rgb_sec = os.str();
@@ -73,18 +106,23 @@ void syncCallback(const sensor_msgs::ImageConstPtr& rgb_img,
     cv::Mat rgb_frame = rgb_pt->image; 
     cv::Mat dep_frame = dep_pt->image; 
 
+    os.clear();
+    os << interp_pose.x << " " << interp_pose.y << " " << interp_pose.ori << "\n"; 
     try {
         cv::imwrite(path + "/rgb/" + rgb_file, rgb_frame); 
         cv::imwrite(path + "/depth/" + dep_file, dep_frame); 
-        // TODO: save position (x, y, orientation) to file
+        std::ofstream output( (path + "/position/" + pos_file).c_str() ); 
+        output << os.str(); 
+        output.close(); 
     } 
-    catch (cv::runtime_error& ex) {
-        ROS_ERROR("Not being able to save images: %s", ex.what()); 
+    catch (std::runtime_error & ex) {
+        ROS_ERROR("Not being able to save log files: %s", ex.what()); 
         return; 
     }
     
     ROS_INFO_STREAM(rgb_file << " saved with stamp.sec: " << rgb_sec); 
     ROS_INFO_STREAM(dep_file << " saved with stamp.sec: " << dep_sec); 
+    ROS_INFO_STREAM(pos_file << " saved with stamp.sec: " << interp_time); 
 
     cnt++; 
 }
@@ -124,3 +162,5 @@ int main(int argc, char** argv)
 
     return 0; 
 }
+
+
