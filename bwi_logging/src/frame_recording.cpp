@@ -41,7 +41,7 @@ void amclCallback(const geometry_msgs::PoseWithCovarianceStampedConstPtr& msg)
 {
     amcl_time = msg->header.stamp; 
     amcl_pose = msg->pose.pose; 
-    odom_pose_at_amcl_freq = odom_pose_at_amcl_freq; 
+    odom_pose_at_amcl_freq = odom_pose_at_odom_freq; 
 }
 
 // callback for odom
@@ -60,16 +60,16 @@ void odomCallback(const nav_msgs::OdometryConstPtr& odom_msg)
     y = amcl_pose.position.y + odom_pose_at_odom_freq.position.y - 
         odom_pose_at_amcl_freq.position.y; 
     amcl_ori = 2.0 * atan2(amcl_pose.orientation.z, amcl_pose.orientation.w); 
-    ori_diff = (2.0 * atan2(odom_pose_at_odom_freq.orientation.z, 
-                            odom_pose_at_odom_freq.orientation.w) ) - 
-               (2.0 * atan2(odom_pose_at_amcl_freq.orientation.z, 
-                            odom_pose_at_amcl_freq.orientation.w) ); 
-    angle_in_radians = amcl_ori + ori_diff; 
+
+    ori_diff = atan2(odom_pose_at_odom_freq.orientation.z, odom_pose_at_odom_freq.orientation.w) - 
+               atan2(odom_pose_at_amcl_freq.orientation.z, odom_pose_at_amcl_freq.orientation.w); 
+    ori_diff *= 2.0; 
+    angle_in_radians = amcl_ori + ori_diff + PI + PI; 
     angle_in_radians = fmod( angle_in_radians + PI, 2*PI) - PI; 
 
-    ROS_INFO("interp_pose.x: %f", x); 
-    ROS_INFO("interp_pose.y: %f", y); 
-    ROS_INFO("interp_pose.ori: %f", angle_in_radians * 180.0 / PI); 
+    // ROS_INFO("interp_pose.x: %f", x); 
+    // ROS_INFO("interp_pose.y: %f", y); 
+    // ROS_INFO("interp_pose.ori: %f", angle_in_radians * 180.0 / PI); 
 
     interp_pose.x = x; 
     interp_pose.y = y;
@@ -106,12 +106,18 @@ void syncCallback(const sensor_msgs::ImageConstPtr& rgb_img,
     cv::Mat rgb_frame = rgb_pt->image; 
     cv::Mat dep_frame = dep_pt->image; 
 
-    os.clear();
-    os << interp_pose.x << " " << interp_pose.y << " " << interp_pose.ori << "\n"; 
+    os.str("");
+    os << interp_pose.x << " " << interp_pose.y << " " << interp_pose.ori; 
+    // ROS_INFO("interp_pose: %s", os.str().c_str()); 
+
+    cv::Mat float_dep_frame; 
+    float_dep_frame = cv::Mat(dep_frame.size(), CV_8UC1);
+    cv::convertScaleAbs(dep_frame, float_dep_frame, 4.5/255.0, 0.0);
+
     try {
-        cv::imwrite(path + "/rgb/" + rgb_file, rgb_frame); 
-        cv::imwrite(path + "/depth/" + dep_file, dep_frame); 
-        std::ofstream output( (path + "/position/" + pos_file).c_str() ); 
+        cv::imwrite(path + "/log_files/rgb/" + rgb_file, rgb_frame); 
+        cv::imwrite(path + "/log_files/depth/" + dep_file, float_dep_frame); 
+        std::ofstream output( (path + "/log_files/position/" + pos_file).c_str() ); 
         output << os.str(); 
         output.close(); 
     } 
@@ -120,11 +126,11 @@ void syncCallback(const sensor_msgs::ImageConstPtr& rgb_img,
         return; 
     }
     
-    ROS_INFO_STREAM(rgb_file << " saved with stamp.sec: " << rgb_sec); 
-    ROS_INFO_STREAM(dep_file << " saved with stamp.sec: " << dep_sec); 
-    ROS_INFO_STREAM(pos_file << " saved with stamp.sec: " << interp_time); 
+    // ROS_INFO_STREAM(rgb_file << " saved with stamp.sec: " << rgb_sec); 
+    // ROS_INFO_STREAM(dep_file << " saved with stamp.sec: " << dep_sec); 
+    // ROS_INFO_STREAM(pos_file << " saved with stamp.sec: " << interp_time.sec); 
 
-    cnt++; 
+    ROS_INFO("%d saved", cnt++); 
 }
 
 int main(int argc, char** argv) 
