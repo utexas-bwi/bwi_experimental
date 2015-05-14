@@ -61,15 +61,17 @@ void odomCallback(const nav_msgs::OdometryConstPtr& odom_msg)
         odom_pose_at_amcl_freq.position.y; 
     amcl_ori = 2.0 * atan2(amcl_pose.orientation.z, amcl_pose.orientation.w); 
 
-    ori_diff = atan2(odom_pose_at_odom_freq.orientation.z, odom_pose_at_odom_freq.orientation.w) - 
-               atan2(odom_pose_at_amcl_freq.orientation.z, odom_pose_at_amcl_freq.orientation.w); 
+    ori_diff = atan2(odom_pose_at_odom_freq.orientation.z, 
+                     odom_pose_at_odom_freq.orientation.w) - 
+               atan2(odom_pose_at_amcl_freq.orientation.z, 
+                     odom_pose_at_amcl_freq.orientation.w); 
     ori_diff *= 2.0; 
-    angle_in_radians = amcl_ori + ori_diff + PI + PI; 
-    angle_in_radians = fmod( angle_in_radians + PI, 2*PI) - PI; 
+    angle_in_radians = amcl_ori + ori_diff + (10.0 * PI); 
 
-    // ROS_INFO("interp_pose.x: %f", x); 
-    // ROS_INFO("interp_pose.y: %f", y); 
-    // ROS_INFO("interp_pose.ori: %f", angle_in_radians * 180.0 / PI); 
+    if (angle_in_radians < 0) 
+        ROS_ERROR("angle_in_radians is negative"); 
+
+    angle_in_radians = fmod( angle_in_radians + PI, PI*2.0 ) - PI; 
 
     interp_pose.x = x; 
     interp_pose.y = y;
@@ -92,25 +94,28 @@ void syncCallback(const sensor_msgs::ImageConstPtr& rgb_img,
     dep_pt = cv_bridge::toCvShare(dep_img, sensor_msgs::image_encodings::TYPE_16UC1); 
 
     std::string rgb_file, dep_file, pos_file, rgb_sec, dep_sec; 
-    os.str(""); os << cnt; 
+
+    os.str(""); 
+    os << cnt; 
     rgb_file = "rgb" + os.str() + ".jpg"; 
     dep_file = "depth" + os.str() + ".jpg"; 
     pos_file = "position" + os.str() + ".txt"; 
 
-    os.str(""); os << rgb_pt->header.stamp.sec; 
+    os.str(""); 
+    os << rgb_pt->header.stamp.sec; 
     rgb_sec = os.str();
-    os.clear(); 
-    os.str(""); os << dep_pt->header.stamp.sec; 
-    dep_sec = os.str(); 
 
-    cv::Mat rgb_frame = rgb_pt->image; 
-    cv::Mat dep_frame = dep_pt->image; 
+    os.str(""); 
+    os << dep_pt->header.stamp.sec; 
+    dep_sec = os.str(); 
 
     os.str("");
     os << interp_pose.x << " " << interp_pose.y << " " << interp_pose.ori; 
-    // ROS_INFO("interp_pose: %s", os.str().c_str()); 
 
+    cv::Mat rgb_frame = rgb_pt->image; 
+    cv::Mat dep_frame = dep_pt->image; 
     cv::Mat float_dep_frame; 
+
     float_dep_frame = cv::Mat(dep_frame.size(), CV_8UC1);
     cv::convertScaleAbs(dep_frame, float_dep_frame, 4.5/255.0, 0.0);
 
