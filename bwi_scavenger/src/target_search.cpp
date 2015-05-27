@@ -102,7 +102,7 @@ bool observe() {
 
     ROS_INFO("%s: checking vision service availability", 
         ros::this_node::getName().c_str()); 
-    ac->waitForServer(); // will wait for infinite time
+    // ac->waitForServer(); // will wait for infinite time
     ROS_INFO("passed"); 
 
     // publish to /cmd_vel to stop the robot first
@@ -157,7 +157,7 @@ bool  service_callback(bwi_scavenger::TargetSearch::Request &req,
     ROS_INFO("%s: waiting for action service to start.",
         ros::this_node::getName().c_str()); 
 
-    ac->waitForServer(); // will wait for infinite time
+    // ac->waitForServer(); // will wait for infinite time
 
     ROS_INFO("%s: action server started, sending goal.",
         ros::this_node::getName().c_str()); 
@@ -169,10 +169,11 @@ bool  service_callback(bwi_scavenger::TargetSearch::Request &req,
     if (ros::param::get("~positions", yaml_file_positions))
         ROS_INFO("\nFile: %s", yaml_file_positions.c_str()); 
 
-    std::ifstream fin(yaml_file_positions.c_str());
-    YAML::Parser parser(fin);
-    YAML::Node positions;
-    parser.GetNextDocument(positions); 
+    // std::ifstream fin(yaml_file_positions.c_str());
+    // YAML::Parser parser(fin);
+    // YAML::Node positions;
+    // parser.GetNextDocument(positions); 
+    YAML::Node positions = YAML::LoadFile(yaml_file_positions); 
 
     // belief distribution over all possible target positions
     std::vector <float> belief(positions.size(), 1.0/positions.size()); 
@@ -225,8 +226,10 @@ bool  service_callback(bwi_scavenger::TargetSearch::Request &req,
 
             // to determine the goal point
             srv.request.goal.header.frame_id = "level_mux/map"; 
-            positions[i][0] >> srv.request.goal.pose.position.x; 
-            positions[i][1] >> srv.request.goal.pose.position.y; 
+            // positions[i][0] >> srv.request.goal.pose.position.x; 
+            // positions[i][1] >> srv.request.goal.pose.position.y; 
+            srv.request.goal.pose.position.x = positions[i][0].as<double>(); 
+            srv.request.goal.pose.position.y = positions[i][1].as<double>(); 
 
             // call service to compute a path to a possible positon
             client_compute_path.waitForExistence();
@@ -267,12 +270,12 @@ bool  service_callback(bwi_scavenger::TargetSearch::Request &req,
 
         // assumble a goal for analyzing the next scene of interest
         msg_goal.header.frame_id = "level_mux/map";
-        positions[next_goal_index][0] >> msg_goal.pose.position.x; 
-        positions[next_goal_index][1] >> msg_goal.pose.position.y; 
+        msg_goal.pose.position.x = positions[next_goal_index][0].as<double>(); 
+        msg_goal.pose.position.y = positions[next_goal_index][1].as<double>(); 
 
         float tmp_z, tmp_w;
-        positions[next_goal_index][2] >> tmp_z; 
-        positions[next_goal_index][3] >> tmp_w; 
+        tmp_z = positions[next_goal_index][2].as<double>(); 
+        tmp_w = positions[next_goal_index][3].as<double>(); 
         msg_goal.pose.orientation.z = tmp_z; 
         msg_goal.pose.orientation.w = tmp_w; 
         
