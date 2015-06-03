@@ -67,6 +67,7 @@ std::ostream& operator<<(std::ostream& stream, const Action& action) {
 struct State {
   int x;
   int y;
+  bool localized; 
 
   // boost serialize
   private:
@@ -115,6 +116,37 @@ class GridModel : public PredictiveModel<State, Action> {
       default_action_list.push_back(DOWN);
       default_action_list.push_back(LEFT);
       default_action_list.push_back(RIGHT);
+    }
+
+    GridModel(std::string path_to_maps) {
+
+        static_map = parseMap(path_to_maps + "static_map.txt"); 
+        dynamic_map = parseMap(path_to_maps + "dynamic_map.txt"); 
+        sunny_map = parseMap(path_to_maps + "sunny_map.txt"); 
+        trap_map = parseMap(path_to_maps + "trap_map.txt"); 
+
+        height = static_map.size();
+        width = static_map[0].size(); 
+        complete_state_vector.clear(); 
+        for (int x = 0; x < height; x++) {
+            for (int y = 0; y < width; y++) {
+                State s;
+                s.x = x; 
+                s.y = y;
+                s.localized = true; 
+                complete_state_vector.push_back(s); 
+            }
+        }
+        State s; 
+        s.x = -1; 
+        s.y = -1; 
+        s.localized = false; 
+        complete_state_vector.push_back(s);
+
+        default_action_list.push_back(UP);
+        default_action_list.push_back(DOWN);
+        default_action_list.push_back(LEFT);
+        default_action_list.push_back(RIGHT);
     }
 
     virtual bool isTerminalState(const State &state) const {
@@ -178,10 +210,30 @@ class GridModel : public PredictiveModel<State, Action> {
       return std::string("");
     }
 
+    std::vector<std::vector<int>> parseMap(std::string map_file) {
+        std::vector<std::vector<int>> ret;
+        ifstream input_file(map_file);
+        if (intput_file) {
+            std::string str;
+            vector<int> vec;
+            while ( input_file >> str ) {
+                if (str.find("\n" != str.end())) {
+                    ret.push_back(vec);
+                    vec.clear();
+                } else {
+                    vec.push_back(std::stoi(str));
+                }
+            }
+        }
+        return ret;
+    }
+
   private:
 
     std::vector<State> complete_state_vector;
     std::vector<Action> default_action_list;
+    int height, width; 
+    std::vector<std::vector<int>> static_map, dynamic_map, sunny_map, trap_map; 
 };
 
 int main(int argc, char **argv) {
