@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(bwi_nav_reasoning)
 
 find_package(catkin REQUIRED COMPONENTS bwi_rl)
-
+find_package(Boost REQUIRED)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -71,7 +71,10 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-# include_directories(include)
+include_directories(
+    include
+    ${Boost_INCLUDE_DIRS}
+)
 
 ## Declare a cpp library
 # add_library(bwi_nav_reasoning
