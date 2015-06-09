@@ -28,6 +28,7 @@ public:
     std::map<std::vector<int>, State> states_map; 
 
     void parseFile(const std::string file, std::vector<std::vector<int>>& vec); 
+    void writeToFile(const std::string file); 
 }
 
 #endif

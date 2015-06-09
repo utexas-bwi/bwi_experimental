@@ -1,9 +1,6 @@
-
-
 #include "bwi_nav_reasoning/DomainParser.h"
 #include <fstream.h>
 #include <boost/lexical_cast.hpp>
-
 
 DomainParser::DomainParser(const std::string static_obs, 
     const std::string dynamic_obs, const std::string sunny_cells, 
@@ -46,7 +43,7 @@ void DomainParser::parseFile(const std::string filename,
     std::vector<std::vector<int>>& ret) {
  
     ret.clear();    
-    ifstream input_file(filename); 
+    std::ifstream input_file(filename); 
 
     if (input_file) {
         std::string str;
@@ -61,5 +58,68 @@ void DomainParser::parseFile(const std::string filename,
         }
     }
 }
+
+void DomainParser::writeToFile(const std::string filename) {
+
+    std::string str(""); 
+    int state_num = states_map.size();
+    str += "state={0.." + boost::lexical_cast<std::string>(state_num-1) + "}.\n"; 
+    str += "terminal(" + boost::lexical_cast<std::string>(state_num-1) + ").\n";
+
+    std::string str_leftof, str_belowof, str_sunny, str_human; 
+
+    for (std::map<std::vector<int>, State>::iterator it=states_map.begin(); 
+        it!=states_map.end(); it++) {
+
+        std::vector<int> vec(2, 0); 
+
+        vec[0] = it->first[0]; 
+        vec[1] = it->first[1]-1; // to find the one one its left
+
+        if (states_map->find(vec) != states_map.end()) {
+            int index_left = states_map->find(vec)->second.index;
+            str_leftof += "leftof(" + 
+                boost::lexical_cast<std::string>(index_left) + "," + 
+                boost::lexical_cast<std::string>(it->second.index) + ").\n"; 
+        }
+
+        vec[0] = it->first[0]+1; // to find the one below it
+        vec[1] = it->first[1]; 
+
+        if (states_map->find(vec) != state_map.end()) {
+            int index_below = states_map->find(vec)->second.index;
+            str_belowof += "belowof(" + 
+                boost::lexical_cast<std::string>(index_below) + "," +
+                boost::lexical_cast<std::string>(it->second.index) + ").\n";
+        }
+
+        if (it->second.under_sunlight) {
+            str_sunny += "sunny(" + 
+                boost::lexical_cast<std::string>(it->second.index) + ").\n"; 
+        }
+
+        if (it->second.has_human) {
+            str_human ++ "human(" + 
+                boost::lexical_cast<std::string>(it->second.index) + ").\n"; 
+        }
+    }
+
+    std::ofstream output_file(filename);
+    if (output_file.is_open()) {
+        output_file << str_leftof << str_belowof << str_sunny << str_human; 
+    }
+    output_file.close(); 
+}
+
+
+
+
+
+
+
+
+
+
+
 
 
