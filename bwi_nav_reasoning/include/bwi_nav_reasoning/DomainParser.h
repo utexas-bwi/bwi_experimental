@@ -22,6 +22,11 @@ public:
     std::string file_sunny_cells; 
     std::string file_plog_facts; 
 
+    std::vector<std::vector<int>> vec_static_obstacles;
+    std::vector<std::vector<int>> vec_dynamic_obstacles;
+    std::vector<std::vector<int>> vec_sunny_cells;
+
+
     int col_num; 
     int row_num; 
 
