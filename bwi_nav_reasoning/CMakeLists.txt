@@ -82,7 +82,7 @@ include_directories(
 # )
 
 ## Declare a cpp executable
-# add_executable(bwi_nav_reasoning_node src/bwi_nav_reasoning_node.cpp)
+add_executable(bwi_nav_reasoning_node src/bwi_nav_reasoning_node.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes

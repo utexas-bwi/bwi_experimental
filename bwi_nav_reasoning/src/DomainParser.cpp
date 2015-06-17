@@ -8,10 +8,6 @@ DomainParser::DomainParser(const std::string static_obs,
     file_static_obstacle{static_obs}, file_dynamic_obstacle{dynamic_obs}, 
     file_sunny_cells{sunny_cells}, file_plog_facts{plog_facts} {
 
-    std::vector<std::vector<int>> vec_static_obstacles; 
-    std::vector<std::vector<int>> vec_dynamic_obstacles; 
-    std::vector<std::vector<int>> vec_sunny_cells; 
-
     parseFile(file_static_obstacle, vec_static_obstacles); 
     parseFile(file_dynamic_obstacle, vec_dynamic_obstacles); 
     parseFile(file_sunny_cells, vec_sunny_cells); 
@@ -37,6 +33,7 @@ DomainParser::DomainParser(const std::string static_obs,
             }
         }
     }
+
 }
 
 void DomainParser::parseFile(const std::string filename,
