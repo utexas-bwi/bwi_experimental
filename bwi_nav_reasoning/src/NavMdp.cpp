@@ -22,7 +22,7 @@ NavMdp::NavMdp (std::string static_obs, std::string dynamic_obs,
         boost::filesystem::create_directory(tmp_domain_dir); 
 
     // read maps and generate facts to temporary folder
-    path = ros::package::getPath("bwi_nav_reasoning") + "/maps/gdc_atrium/"; 
+    path = ros::package::getPath("bwi_nav_reasoning") + "/maps/"; 
     dparser = DomainParser(path + static_obs, path + dynamic_obs, path + sunny, 
         tmp_domain_dir + "facts.plog");
 
