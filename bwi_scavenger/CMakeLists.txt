@@ -127,8 +127,8 @@ target_link_libraries(white_board ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 add_executable(img_capture src/img_capture.cpp)
 target_link_libraries(img_capture ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 
-add_executable(object_detection src/object_detection.cpp)
-target_link_libraries(object_detection ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+# add_executable(object_detection src/object_detection.cpp)
+# target_link_libraries(object_detection ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 
 add_executable(scav_hunt src/scav_hunt.cpp)
 target_link_libraries(scav_hunt ${catkin_LIBRARIES})
