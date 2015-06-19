@@ -31,4 +31,10 @@
         <param name="directory" value="$(arg logging_directory)" />
     </node>
 
+    <node name="fetch_object" pkg="bwi_scavenger" type="fetch_object" >
+        <param name="directory" value="$(arg logging_directory)" />
+    </node>
+
+    <include file="$(find bwi_kr_execution)/launch/bwi_kr_execution.launch" />
+
 </launch>

@@ -60,11 +60,10 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+add_message_files(
+  FILES
+  ScavStatus.msg
+)
 
 ## Generate services in the 'srv' folder
 add_service_files(
@@ -97,7 +96,7 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES bwi_scavenger
-  CATKIN_DEPENDS roscpp rospy std_msgs actionlib_msgs
+  CATKIN_DEPENDS roscpp rospy std_msgs actionlib_msgs message_runtime
 #  DEPENDS system_lib
 )
 
@@ -136,11 +135,13 @@ target_link_libraries(scav_hunt ${catkin_LIBRARIES})
 
 add_executable(target_search src/target_search.cpp)
 target_link_libraries(target_search ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
-# add_dependencies(vision_server)
 
 add_executable(vision_server src/vision_server.cpp)
 target_link_libraries(vision_server ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
-# add_dependencies(blue_shirt object_detection take_human_input white_board)
+
+add_executable(fetch_object src/fetch_object.cpp)
+target_link_libraries(fetch_object ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+
 #############
 ## Install ##
 #############

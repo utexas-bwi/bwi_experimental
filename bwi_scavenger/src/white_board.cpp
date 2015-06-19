@@ -5,7 +5,6 @@
 
 #include <pcl_ros/point_cloud.h>
 #include <pcl/point_types.h>
-#include <boost/foreach.hpp>
 #include <stdio.h>
 #include <cv_bridge/cv_bridge.h>
 #include <image_transport/image_transport.h>
@@ -107,7 +106,9 @@ void callback(const geometry_msgs::PoseStamped::ConstPtr& msg)
         cv_bridge::CvImageConstPtr cv_ptr;
         cv_ptr = cv_bridge::toCvShare(image, sensor_msgs::image_encodings::BGR8);
 
-        file = directory + "/whiteboard.jpg"; 
+        file = directory + "whiteboard.jpg"; 
+        if (boost::filesystem::is_directory(directory) == false)
+            boost::filesystem::create_directory(directory);
         cv::imwrite(file, cv_ptr->image);
         s = DONE;
 

@@ -8,7 +8,7 @@ import roslib; roslib.load_manifest('bwi_tasks')
 import actionlib
 import actionlib_msgs.msg
 from bwi_kr_execution.msg import *
-import bwi_msgs.srv
+import segbot_gui.srv
 import bwi_rlg.srv
 import os.path
 import string
@@ -208,7 +208,7 @@ def gui_thread(human_waiting, curr_goal):
     rospy.wait_for_service('question_dialog')
     
     handle = rospy.ServiceProxy('question_dialog', \
-                                bwi_msgs.srv.QuestionDialog)
+                                segbot_gui.srv.QuestionDialog)
 
     while not rospy.is_shutdown():
 
@@ -255,7 +255,7 @@ def platform_thread(human_waiting, curr_goal):
     client.wait_for_server()
 
     dialog_handle = rospy.ServiceProxy('question_dialog', \
-                                       bwi_msgs.srv.QuestionDialog)
+                                       segbot_gui.srv.QuestionDialog)
 
     parser_handle = rospy.ServiceProxy('semantic_parser', \
                                        bwi_rlg.srv.SemanticParser)
