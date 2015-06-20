@@ -23,9 +23,11 @@
         <param name="directory" value="$(arg logging_directory)" />
     </node>
 
+    <!-->
     <node name="object_detection" pkg="bwi_scavenger" type="object_detection" >
         <param name="directory" value="$(arg logging_directory)" />
     </node>
+    <-->
 
     <node name="white_board" pkg="bwi_scavenger" type="white_board" >
         <param name="directory" value="$(arg logging_directory)" />
@@ -35,6 +37,8 @@
         <param name="directory" value="$(arg logging_directory)" />
     </node>
 
+    <!-->
     <include file="$(find bwi_kr_execution)/launch/bwi_kr_execution.launch" />
+    <-->
 
 </launch>
