@@ -41,9 +41,12 @@ std::ostream& operator<<(std::ostream& stream, const State& s) {
 
 int main(int argc, char **argv) {
 
+    std::cout << "creating nav model..." << std::endl; 
     boost::shared_ptr<PredictiveModel<State, Action> > model (new NavMdp(
         "/gdc_atrium/static_map.txt", "/gdc_atrium/dynamic_map.txt", 
         "/gdc_atrium/sunny_map.txt", "/tmp/rl_domain/facts.plog")); 
+
+    std::cout << "creating vi estimator..." << std::endl; 
     boost::shared_ptr<VIEstimator<State, Action> > estimator(new
         VITabularEstimator<State, Action>); 
 

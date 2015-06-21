@@ -1,5 +1,6 @@
 #include "bwi_nav_reasoning/DomainParser.h"
 #include <fstream>
+#include <iostream>
 #include <boost/lexical_cast.hpp>
 
 DomainParser::DomainParser(const std::string static_obs, 
@@ -8,9 +9,18 @@ DomainParser::DomainParser(const std::string static_obs,
     file_static_obstacle{static_obs}, file_dynamic_obstacle{dynamic_obs}, 
     file_sunny_cells{sunny_cells}, file_plog_facts{plog_facts} {
 
+    vec_static_obstacles = std::vector<std::vector<int> >(0, std::vector<int>(0,0));
+    vec_dynamic_obstacles = std::vector<std::vector<int> >(0, std::vector<int>(0,0));
+    vec_sunny_cells = std::vector<std::vector<int> >(0, std::vector<int>(0,0));
+
+    std::cout << "parsing model files: " << file_static_obstacle << std::endl;
     parseFile(file_static_obstacle, vec_static_obstacles); 
+    std::cout << "parsing model files: " << file_dynamic_obstacle << std::endl;
     parseFile(file_dynamic_obstacle, vec_dynamic_obstacles); 
+    std::cout << "parsing model files: " << file_sunny_cells << std::endl;
     parseFile(file_sunny_cells, vec_sunny_cells); 
+
+    std::cout << "finished parsing model files" << std::endl;
 
     row_num = vec_static_obstacles.size();
     col_num = vec_static_obstacles[0].size(); 
@@ -34,6 +44,11 @@ DomainParser::DomainParser(const std::string static_obs,
         }
     }
 
+    std::cout << "finished domain files parsing" << std::endl; 
+    
+    std::cout << "writing to file: " << file_plog_facts << std::endl;
+    writeToFile(file_plog_facts); 
+    std::cout << "writing to file finished" << std::endl; 
 }
 
 void DomainParser::parseFile(const std::string filename,
@@ -41,19 +56,24 @@ void DomainParser::parseFile(const std::string filename,
  
     ret.clear();    
     std::ifstream input_file(filename.c_str()); 
+    int num_row, num_col; 
 
-    if (input_file) {
-        std::string str;
-        std::vector<int> vec;
-        while ( input_file >> str) {
-            if (str.find("\n") != std::string::npos) {
-                ret.push_back(vec);
-                vec.clear();
-            } else {
-                vec.push_back(boost::lexical_cast<int>(str)); 
-            }
-        }
+    if (!input_file) {
+        std::cout << "could not open file: " << filename << std::endl; 
     }
+
+    input_file >> num_row; 
+    input_file >> num_col; 
+    for (int i=0; i<num_row; i++) {
+        std::vector<int> vec;
+        for (int j=0; j<num_col; j++) {
+            std::string str;
+            input_file >> str; 
+            vec.push_back(boost::lexical_cast<int>(str)); 
+        }
+        ret.push_back(vec);
+    }
+
 }
 
 void DomainParser::writeToFile(const std::string filename) {
