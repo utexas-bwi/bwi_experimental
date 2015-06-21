@@ -1,8 +1,9 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(bwi_nav_reasoning)
 
-find_package(catkin REQUIRED COMPONENTS bwi_rl)
-find_package(Boost REQUIRED)
+find_package(catkin REQUIRED COMPONENTS roslib roscpp)
+find_package(bwi_rl REQUIRED)
+find_package(Boost REQUIRED COMPONENTS serialization)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -62,7 +63,7 @@ find_package(Boost REQUIRED)
 
 catkin_package(
   INCLUDE_DIRS include
-  CATKIN_DEPENDS bwi_rl
+  CATKIN_DEPENDS roslib roscpp bwi_rl
 )
 
 ###########
@@ -73,6 +74,7 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(
     include
+    ${bwi_rl_INCLUDE_DIRS}
     ${Boost_INCLUDE_DIRS}
 )
 
@@ -82,16 +84,17 @@ include_directories(
 # )
 
 ## Declare a cpp executable
-add_executable(bwi_nav_reasoning_node src/bwi_nav_reasoning_node.cpp)
+add_executable(bwi_nav_reasoning_node src/test.cpp src/DomainParser.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 # add_dependencies(bwi_nav_reasoning_node bwi_nav_reasoning_generate_messages_cpp)
 
-## Specify libraries to link a library or executable target against
-# target_link_libraries(bwi_nav_reasoning_node
-#   ${catkin_LIBRARIES}
-# )
+# Specify libraries to link a library or executable target against
+target_link_libraries(bwi_nav_reasoning_node
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
 
 #############
 ## Install ##

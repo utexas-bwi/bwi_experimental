@@ -5,7 +5,6 @@
 #include <string>
 #include <vector>
 #include <map>
-#include "bwi_nav_reasoning/MdpModel.h"
 #include "bwi_nav_reasoning/StateAction.h"
 
 class DomainParser {
@@ -22,9 +21,9 @@ public:
     std::string file_sunny_cells; 
     std::string file_plog_facts; 
 
-    std::vector<std::vector<int>> vec_static_obstacles;
-    std::vector<std::vector<int>> vec_dynamic_obstacles;
-    std::vector<std::vector<int>> vec_sunny_cells;
+    std::vector<std::vector<int> > vec_static_obstacles;
+    std::vector<std::vector<int> > vec_dynamic_obstacles;
+    std::vector<std::vector<int> > vec_sunny_cells;
 
 
     int col_num; 
@@ -32,8 +31,8 @@ public:
 
     std::map<std::vector<int>, State> states_map; 
 
-    void parseFile(const std::string file, std::vector<std::vector<int>>& vec); 
+    void parseFile(const std::string file, std::vector<std::vector<int> >& vec); 
     void writeToFile(const std::string file); 
-}
+}; 
 
 #endif
