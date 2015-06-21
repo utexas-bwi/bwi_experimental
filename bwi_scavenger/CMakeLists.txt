@@ -141,6 +141,7 @@ target_link_libraries(vision_server ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 
 add_executable(fetch_object src/fetch_object.cpp)
 target_link_libraries(fetch_object ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+add_dependencies(fetch_object bwi_scavenger)
 
 #############
 ## Install ##
