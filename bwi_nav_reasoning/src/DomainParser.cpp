@@ -1,5 +1,5 @@
 #include "bwi_nav_reasoning/DomainParser.h"
-#include <fstream.h>
+#include <fstream>
 #include <boost/lexical_cast.hpp>
 
 DomainParser::DomainParser(const std::string static_obs, 
@@ -16,7 +16,7 @@ DomainParser::DomainParser(const std::string static_obs,
     col_num = vec_static_obstacles[0].size(); 
 
     int cnt = 0; 
-    vector<int> key(2, 0); 
+    std::vector<int> key(2, 0); 
     for (int i=0; i<row_num; i++) {
         for (int j=0; j<col_num; j++) {
             // when the cell is open
@@ -25,8 +25,8 @@ DomainParser::DomainParser(const std::string static_obs,
                 s.row = i;
                 s.col = j;
                 s.index = cnt++; 
-                s.under_sunlight = (vec_sunny_cells == 1); 
-                s.has_human = (vec_dynamic_obstacles == 1); 
+                s.under_sunlight = (vec_sunny_cells[i][j] == 1); 
+                s.has_human = (vec_dynamic_obstacles[i][j] == 1); 
                 key[0] = i;
                 key[1] = j;
                 states_map[key] = s; 
@@ -37,16 +37,16 @@ DomainParser::DomainParser(const std::string static_obs,
 }
 
 void DomainParser::parseFile(const std::string filename,
-    std::vector<std::vector<int>>& ret) {
+    std::vector<std::vector<int> >& ret) {
  
     ret.clear();    
-    std::ifstream input_file(filename); 
+    std::ifstream input_file(filename.c_str()); 
 
     if (input_file) {
         std::string str;
-        vector<int> vec;
+        std::vector<int> vec;
         while ( input_file >> str) {
-            if (str.find("\n" != str.end())) {
+            if (str.find("\n") != std::string::npos) {
                 ret.push_back(vec);
                 vec.clear();
             } else {
@@ -73,8 +73,8 @@ void DomainParser::writeToFile(const std::string filename) {
         vec[0] = it->first[0]; 
         vec[1] = it->first[1]-1; // to find the one one its left
 
-        if (states_map->find(vec) != states_map.end()) {
-            int index_left = states_map->find(vec)->second.index;
+        if (states_map.find(vec) != states_map.end()) {
+            int index_left = states_map.find(vec)->second.index;
             str_leftof += "leftof(" + 
                 boost::lexical_cast<std::string>(index_left) + "," + 
                 boost::lexical_cast<std::string>(it->second.index) + ").\n"; 
@@ -83,8 +83,8 @@ void DomainParser::writeToFile(const std::string filename) {
         vec[0] = it->first[0]+1; // to find the one below it
         vec[1] = it->first[1]; 
 
-        if (states_map->find(vec) != state_map.end()) {
-            int index_below = states_map->find(vec)->second.index;
+        if (states_map.find(vec) != states_map.end()) {
+            int index_below = states_map.find(vec)->second.index;
             str_belowof += "belowof(" + 
                 boost::lexical_cast<std::string>(index_below) + "," +
                 boost::lexical_cast<std::string>(it->second.index) + ").\n";
@@ -96,12 +96,12 @@ void DomainParser::writeToFile(const std::string filename) {
         }
 
         if (it->second.has_human) {
-            str_human ++ "human(" + 
+            str_human += "human(" + 
                 boost::lexical_cast<std::string>(it->second.index) + ").\n"; 
         }
     }
 
-    std::ofstream output_file(filename);
+    std::ofstream output_file(filename.c_str());
     if (output_file.is_open()) {
         output_file << str_leftof << str_belowof << str_sunny << str_human; 
     }
