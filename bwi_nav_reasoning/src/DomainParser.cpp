@@ -43,6 +43,12 @@ DomainParser::DomainParser(const std::string static_obs,
             }
         }
     }
+    State s;
+    s.row = s.col = -1;
+    s.index = cnt;
+    key[0] = -1;
+    key[1] = -1;
+    states_map[key] = s; 
 
     std::cout << "finished domain files parsing" << std::endl; 
     
@@ -122,10 +128,13 @@ void DomainParser::writeToFile(const std::string filename) {
     }
 
     std::ofstream output_file(filename.c_str());
+    str += str_leftof + str_belowof + str_sunny + str_human;
+
     if (output_file.is_open()) {
-        output_file << str_leftof << str_belowof << str_sunny << str_human; 
+        output_file << str; 
     }
     output_file.close(); 
+
 }
 
 

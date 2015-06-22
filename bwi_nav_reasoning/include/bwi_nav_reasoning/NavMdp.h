@@ -13,6 +13,10 @@
 #include <boost/filesystem.hpp>
 #include <fstream>
 
+#define EPSILON (0.00001)
+
+float action_cost=-1.0, success_reward=10.0, failure_penalty=-10.0; 
+
 struct TransValue {
     std::vector<State> ns; 
     std::vector<float> rewards; 
@@ -23,6 +27,25 @@ struct TransKey {
     State state;
     Action action; 
 }; 
+
+std::ostream& operator<<(std::ostream& stream, const Action& action) {          
+  if (action == UP) {                                                           
+    stream << "Up";                                                             
+  } else if (action == DOWN) {                                                  
+    stream << "Down";                                                           
+  } else if (action == LEFT) {                                                  
+    stream << "Left";                                                           
+  } else {                                                                      
+    stream << "Right";                                                          
+  }                                                                             
+  return stream;                                                                
+}                                                                               
+ 
+std::ostream& operator<<(std::ostream& stream, const State& s) {                
+  stream << "(" << s.row << "," << s.col << ")";
+  return stream;                                                                
+}                                                                               
+
 
 bool operator<(const TransKey& l, const TransKey& r) {
     if (l.state.index < r.state.index) return true;
@@ -57,6 +80,8 @@ public:
 
     int terminal_row, terminal_col; 
 
+
+
     DomainParser dparser; 
 
     NavMdp(std::string static_obs, std::string dynamic_obs, std::string sunny,
@@ -81,7 +106,7 @@ public:
     std::string generateDescription(unsigned int indentation=0); 
 
     float getProbability(const State &s, const Action &a, const State &ns); 
-    void setTerminalState(int row, int col); 
+    void setTerminalState(State s); 
 }; 
 
 
@@ -118,9 +143,15 @@ NavMdp::NavMdp (std::string static_obs, std::string dynamic_obs,
     getActionsAtState(all_states[0], all_actions);  
 
     std::cout << "computing transition dynamics..." << std::endl; 
+    int cnt = 0; 
     for (int i=0; i<all_states.size(); i++) {
+
+        if (i*1.0/all_states.size() >= cnt*1.0/100.0) {
+            while (i*1.0/all_states.size() > (++cnt)*1.0/100.0) {}
+            std::cout << "\rfinished: " << cnt << "\%" << std::endl;
+        }
+
         for (int j=0; j<all_actions.size(); j++) {
-            std::cout << "state index " << i << " action index " << j << std::endl; 
             TransKey k; 
             TransValue v; 
 
@@ -156,6 +187,14 @@ void NavMdp::getStateVector(std::vector<State> &states) {
     std::map<std::vector<int>, State>::iterator it; 
     for (it=dparser.states_map.begin(); it!=dparser.states_map.end(); ++it)
         states.push_back(it->second); 
+
+    State s;           
+    s.row = s.col = -1; 
+    s.index = states.size();                                                              
+    s.under_sunlight = -1;                                                      
+    s.has_human = -1;                                                           
+    states.push_back(s);
+
 }
 
 void NavMdp::getTransitionDynamics(const State &s, const Action &a, 
@@ -171,10 +210,32 @@ void NavMdp::getTransitionDynamics(const State &s, const Action &a,
     ns = v.ns;
     rewards = v.rewards;
     probs = v.probs; 
+
+    float sum = 0; 
+    for (int i=0; i<ns.size(); i++)
+        sum += probs[i]; 
+    if (sum > 1.0 + EPSILON or sum < 1.0 - EPSILON) {
+        std::cout << "Error: probabilities do not sum to 1" << std::endl;
+        std::cout << "state index: " << s.index << " " << s << "; action: " 
+            << a << std::endl; 
+        for (int i=0; i<ns.size(); i++) {
+            std::cout << "ns: " << ns[i] << " reward: " << rewards[i] 
+                << " prob: " << probs[i] << std::endl;
+        }
+    }
+    
 }
 void NavMdp::getTransitionDynamicsSlow(const State &s, const Action &a, 
     std::vector<State> &ns, std::vector<float> &reward, 
     std::vector<float> &probs) {
+
+    if (s.row == -1 and s.col == -1) {
+        ns.clear();
+        ns.push_back(s);
+        reward = std::vector<float>(1, 0.0);
+        probs = std::vector<float>(1, 1.0); 
+        return; 
+    }
 
     int r = s.row, c = s.col; 
 
@@ -186,32 +247,48 @@ void NavMdp::getTransitionDynamicsSlow(const State &s, const Action &a,
     reward.push_back(-1.0); 
     probs.push_back(getProbability(s, a, s)); 
 
-    std::vector<int> rc = std::vector<int>(2, 0); 
+    std::vector<int> row_col = std::vector<int>(2, 0); 
     std::map<std::vector<int>, State>::iterator it; 
 
-    rc[0] = r-1; 
-    it = dparser.states_map.find(rc); 
+    row_col[0] = r-1; 
+    row_col[1] = c; 
+    it = dparser.states_map.find(row_col); 
     if (it != dparser.states_map.end()) {
-        ns.push_back(it->second); reward.push_back(-1.0); 
+        ns.push_back(it->second); 
+        reward.push_back(isTerminalState(it->second) ? success_reward : action_cost);
         probs.push_back(getProbability(s, a, it->second)); 
     }
-    rc[0] = r+1;
-    it = dparser.states_map.find(rc); 
+
+    row_col[0] = r+1;
+    it = dparser.states_map.find(row_col); 
     if (it != dparser.states_map.end()) {
-        ns.push_back(it->second); reward.push_back(-1.0); 
+        ns.push_back(it->second); 
+        reward.push_back(isTerminalState(it->second) ? success_reward : action_cost);
         probs.push_back(getProbability(s, a, it->second)); 
     }
-    rc[0] = r; 
-    rc[1] = c-1; 
-    it = dparser.states_map.find(rc); 
+    row_col[0] = r; 
+    row_col[1] = c-1; 
+    it = dparser.states_map.find(row_col); 
     if (it != dparser.states_map.end()) {
-        ns.push_back(it->second); reward.push_back(-1.0); 
+        ns.push_back(it->second);
+        reward.push_back(isTerminalState(it->second) ? success_reward : action_cost);
         probs.push_back(getProbability(s, a, it->second)); 
     }
-    rc[1] = c+1; 
-    it = dparser.states_map.find(rc); 
+    row_col[1] = c+1; 
+    it = dparser.states_map.find(row_col); 
     if (it != dparser.states_map.end()) {
-        ns.push_back(it->second); reward.push_back(-1.0); 
+        ns.push_back(it->second); 
+        reward.push_back(isTerminalState(it->second) ? success_reward : action_cost);
+        probs.push_back(getProbability(s, a, it->second)); 
+    }
+
+    // then add the terminal state into the "next state" list
+    row_col[0] = -1; 
+    row_col[1] = -1; 
+    it = dparser.states_map.find(row_col); 
+    if (it != dparser.states_map.end()) {
+        ns.push_back(it->second); 
+        reward.push_back(isTerminalState(it->second) ? success_reward : action_cost);
         probs.push_back(getProbability(s, a, it->second)); 
     }
 }
@@ -220,14 +297,14 @@ bool NavMdp::isTerminalState(const State &s) const {
     return s.row == terminal_row && s.col == terminal_col; 
 }
 
-void NavMdp::setTerminalState(int row, int col) {
-    terminal_row = row; 
-    terminal_col = col; 
+void NavMdp::setTerminalState(State s) {
+    terminal_row = s.row; 
+    terminal_col = s.col; 
 }
 
 float NavMdp::getProbability(const State &s, const Action &a, const State &ns) {
     std::string next_s_index, curr_s_index, action_name, query;
-    
+
     curr_s_index = boost::lexical_cast<std::string> (s.index); 
     next_s_index = boost::lexical_cast<std::string> (ns.index);
 
@@ -260,7 +337,6 @@ float NavMdp::getProbability(const State &s, const Action &a, const State &ns) {
     // call plog solver to compute the probability
     cmd = path_to_plog + tmp_domain_dir + "/all.plog"; 
     std::string output = getStdoutFromCommand(cmd); 
-    std::cout << "output from p-log: \n" << output << std::endl; 
 
     int prob_start, prob_end; 
     
@@ -272,7 +348,6 @@ float NavMdp::getProbability(const State &s, const Action &a, const State &ns) {
     }
 
     std::string str_prob = output.substr(prob_start, prob_end - prob_start); 
-    std::cout << "str_prob: " << str_prob << std::endl; 
 
     return boost::lexical_cast<float> (str_prob); 
 }

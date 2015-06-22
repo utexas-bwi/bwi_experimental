@@ -20,25 +20,6 @@ bool operator==(const State& l, const State& r) {
   return (l.row == r.row && l.col == r.col);                                            
 }                                                                               
 
-
-std::ostream& operator<<(std::ostream& stream, const Action& action) {
-  if (action == UP) {
-    stream << "Up";
-  } else if (action == DOWN) {
-    stream << "Down";
-  } else if (action == LEFT) {
-    stream << "Left";
-  } else {
-    stream << "Right";
-  }
-  return stream;
-}
-
-std::ostream& operator<<(std::ostream& stream, const State& s) {
-  stream << "(" << s.row << "," << s.col << ")";
-  return stream;
-}
-
 int main(int argc, char **argv) {
 
     std::cout << "creating nav model..." << std::endl; 
@@ -54,9 +35,15 @@ int main(int argc, char **argv) {
     std::cout << "Computing policy..." << std::endl;
     vi.computePolicy(); 
 
-    State s; 
-    s.row = s.col = 0; // top-left conner
-    std::cout << "best action at state " << s << " is " << vi.getBestAction(s) << std::endl; 
+    State s, terminal; 
+    s.row = 2;
+    s.col = 3; 
+    terminal.row = 0; 
+    terminal.col = 3; 
+    boost::shared_ptr<NavMdp> nav_model = boost::dynamic_pointer_cast<NavMdp>(model); 
+    nav_model->setTerminalState(terminal); 
+    std::cout << "best action at state " << s << ", terminal " << terminal 
+        << " is " << vi.getBestAction(s) << std::endl; 
 
     return 0; 
 }
