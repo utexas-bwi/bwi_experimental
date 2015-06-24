@@ -43,6 +43,7 @@ DomainParser::DomainParser(const std::string static_obs,
             }
         }
     }
+
     State s;
     s.row = s.col = -1;
     s.index = cnt;

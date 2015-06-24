@@ -22,28 +22,36 @@ bool operator==(const State& l, const State& r) {
 
 int main(int argc, char **argv) {
 
+    State start, term; 
+    term.row = 0;
+    term.col = 3;
+    start.row = 2;
+    start.col = 4; 
+
     std::cout << "creating nav model..." << std::endl; 
-    boost::shared_ptr<PredictiveModel<State, Action> > model (new NavMdp(
-        "/gdc_atrium/static_map.txt", "/gdc_atrium/dynamic_map.txt", 
-        "/gdc_atrium/sunny_map.txt", "/tmp/rl_domain/facts.plog")); 
+    // boost::shared_ptr<PredictiveModel<State, Action> > model (new NavMdp(
+    boost::shared_ptr<NavMdp> model (new NavMdp(
+        "gdc_atrium/static_map_small.txt", "gdc_atrium/dynamic_map_small.txt", 
+        "gdc_atrium/sunny_map_small.txt", "tmp/rl_domain/facts.plog", 
+        term.row, term.col)); 
 
     std::cout << "creating vi estimator..." << std::endl; 
     boost::shared_ptr<VIEstimator<State, Action> > estimator(new
         VITabularEstimator<State, Action>); 
 
+    // convert ptr of "model" to a ptr of "nav_model"
+    //boost::shared_ptr<NavMdp> nav_model = boost::dynamic_pointer_cast<NavMdp>(model); 
+
+    // compute policy
     ValueIteration<State, Action> vi(model, estimator);
+
     std::cout << "Computing policy..." << std::endl;
     vi.computePolicy(); 
 
-    State s, terminal; 
-    s.row = 2;
-    s.col = 3; 
-    terminal.row = 0; 
-    terminal.col = 3; 
-    boost::shared_ptr<NavMdp> nav_model = boost::dynamic_pointer_cast<NavMdp>(model); 
-    nav_model->setTerminalState(terminal); 
-    std::cout << "best action at state " << s << ", terminal " << terminal 
-        << " is " << vi.getBestAction(s) << std::endl; 
+
+    std::cout << "best action at state " << start << ", terminal " << term
+        << " is " << vi.getBestAction(start) << std::endl; 
 
     return 0; 
 }
+

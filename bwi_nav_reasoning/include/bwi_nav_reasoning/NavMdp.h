@@ -15,7 +15,7 @@
 
 #define EPSILON (0.00001)
 
-float action_cost=-1.0, success_reward=10.0, failure_penalty=-10.0; 
+static float action_cost=-1.0, success_reward=10.0, failure_penalty=-10.0; 
 
 struct TransValue {
     std::vector<State> ns; 
@@ -80,12 +80,10 @@ public:
 
     int terminal_row, terminal_col; 
 
-
-
     DomainParser dparser; 
 
     NavMdp(std::string static_obs, std::string dynamic_obs, std::string sunny,
-        std::string facts); 
+        std::string facts, int, int); 
 
     bool isTerminalState(const State &s) const; 
 
@@ -106,15 +104,17 @@ public:
     std::string generateDescription(unsigned int indentation=0); 
 
     float getProbability(const State &s, const Action &a, const State &ns); 
-    void setTerminalState(State s); 
 }; 
 
 
 NavMdp::NavMdp (std::string static_obs, std::string dynamic_obs, 
-        std::string sunny, std::string facts) {
+        std::string sunny, std::string facts, int term_row, int term_col) {
 
+    terminal_row = term_row;
+    terminal_col = term_col; 
+    
     std::string path; 
-    path_to_plog = "/home/szhang/software/p-log/plog/src/plog -t "; 
+    path_to_plog = "cd /tmp && /home/szhang/software/p-log/plog/src/plog -t "; 
 
     // if create an empty folder under /tmp/... for temporary files
     tmp_domain_dir = "/tmp/rl_domain/"; 
@@ -151,6 +151,8 @@ NavMdp::NavMdp (std::string static_obs, std::string dynamic_obs,
             std::cout << "\rfinished: " << cnt << "\%" << std::endl;
         }
 
+        std::cout << all_states[i] << std::endl; 
+
         for (int j=0; j<all_actions.size(); j++) {
             TransKey k; 
             TransValue v; 
@@ -167,6 +169,13 @@ NavMdp::NavMdp (std::string static_obs, std::string dynamic_obs,
             v.rewards = tmp_rewards;
             v.probs = tmp_probs;
             trans_map[k] = v;
+
+            std::cout << "\t" << all_actions[j] << std::endl;
+            for (int ii = 0; ii < tmp_next_states.size(); ii++) {
+                std::cout << "\t\tns: " << v.ns[ii] << " reward: " << 
+                    v.rewards[ii] << " prob: " << v.probs[ii] << std::endl; 
+            }
+            
         }
     }
 
@@ -187,13 +196,6 @@ void NavMdp::getStateVector(std::vector<State> &states) {
     std::map<std::vector<int>, State>::iterator it; 
     for (it=dparser.states_map.begin(); it!=dparser.states_map.end(); ++it)
         states.push_back(it->second); 
-
-    State s;           
-    s.row = s.col = -1; 
-    s.index = states.size();                                                              
-    s.under_sunlight = -1;                                                      
-    s.has_human = -1;                                                           
-    states.push_back(s);
 
 }
 
@@ -229,6 +231,7 @@ void NavMdp::getTransitionDynamicsSlow(const State &s, const Action &a,
     std::vector<State> &ns, std::vector<float> &reward, 
     std::vector<float> &probs) {
 
+    // if terminal state, identify the end of this episode
     if (s.row == -1 and s.col == -1) {
         ns.clear();
         ns.push_back(s);
@@ -243,6 +246,7 @@ void NavMdp::getTransitionDynamicsSlow(const State &s, const Action &a,
     reward.clear(); 
     probs.clear(); 
 
+    // always has a probability of not moving at all, so state does not change
     ns.push_back(s); 
     reward.push_back(-1.0); 
     probs.push_back(getProbability(s, a, s)); 
@@ -288,18 +292,13 @@ void NavMdp::getTransitionDynamicsSlow(const State &s, const Action &a,
     it = dparser.states_map.find(row_col); 
     if (it != dparser.states_map.end()) {
         ns.push_back(it->second); 
-        reward.push_back(isTerminalState(it->second) ? success_reward : action_cost);
+        reward.push_back((s.row == -1 and s.col == -1) ? 0 : failure_penalty);
         probs.push_back(getProbability(s, a, it->second)); 
     }
 }
 
 bool NavMdp::isTerminalState(const State &s) const {
-    return s.row == terminal_row && s.col == terminal_col; 
-}
-
-void NavMdp::setTerminalState(State s) {
-    terminal_row = s.row; 
-    terminal_col = s.col; 
+    return (s.row == terminal_row) and (s.col == terminal_col); 
 }
 
 float NavMdp::getProbability(const State &s, const Action &a, const State &ns) {
