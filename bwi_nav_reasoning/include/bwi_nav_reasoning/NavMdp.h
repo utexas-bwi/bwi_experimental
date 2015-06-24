@@ -114,7 +114,15 @@ NavMdp::NavMdp (std::string static_obs, std::string dynamic_obs,
     terminal_col = term_col; 
     
     std::string path; 
-    path_to_plog = "cd /tmp && /home/szhang/software/p-log/plog/src/plog -t "; 
+    
+    std::string zoidberg_plog("/home/shiqi/software/p-log/plog/install/plog");
+    std::string sony_laptop_plog("/home/szhang/software/p-log/plog/src/plog");
+    if (boost::filesystem::exists(zoidberg_plog))
+        path_to_plog = "cd /tmp && " + zoidberg_plog + " -t "; 
+    else if (boost::filesystem::exists(sony_laptop_plog))
+        path_to_plog + "cd /tmp && " + sony_laptop_plog + " -t "; 
+    else
+        std::cout << "cannot find plog installed" << std::endl; 
 
     // if create an empty folder under /tmp/... for temporary files
     tmp_domain_dir = "/tmp/rl_domain/"; 
