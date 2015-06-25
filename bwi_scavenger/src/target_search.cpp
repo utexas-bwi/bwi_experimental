@@ -253,7 +253,7 @@ bool  service_callback(bwi_scavenger::TargetSearch::Request &req,
         for (unsigned i = 0; i < positions.size(); i++) {
             
             // exit of this program
-            if (belief[i] > 0.8) {
+            if (belief[i] > 0.9) {
                 res.path_to_image = ac->getResult()->path_to_image; 
                 return true; 
             }
