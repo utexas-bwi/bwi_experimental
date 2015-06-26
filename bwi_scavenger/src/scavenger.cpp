@@ -1,7 +1,10 @@
 
+#include <ros/package.h>
+#include <thread>
 
 #include "ScavengerTask.h"
 #include "TaskManager.h"
+#include "SearchPlanner.h"
 
 #include "TaskColorShirt.h"
 #include "TaskWhiteBoard.h"
@@ -11,9 +14,14 @@
 
 enum TaskStatus{ ONGOING, FINISHED, TODO }; 
 
+ros::NodeHandle *nh; 
+
+
+}
+
 int main(int argc, char **argv) {
 
-    ros::NodeHandle *nh = new ros::NodeHandle();
+    nh = new ros::NodeHandle();
 
     TaskManager task_manager = new TaskManager(); 
 

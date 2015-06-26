@@ -20,6 +20,8 @@ public:
         nh(node_handle), directory(path_of_dir), color(shirt_color) {}
 
     void executeTask(int timeout, TaskResult &result, std::string &record); 
+    void visionThread();
+    void motionThread(); 
 
     SearchPlanner *search_planner; 
 

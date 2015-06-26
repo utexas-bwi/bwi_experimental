@@ -8,9 +8,35 @@
 #include "bwi_kr_execution/ExecutePlanAction.h"
 #include "bwi_msgs/QuestionDialog.h"
 
+std::string path_to_text; 
+SearchPlanner *planner;  // motion thread terminated when vision is done
 
 ScavTaskFetchObject::executeTask(int timeout, TaskResult &result, std::string &record) {
+
+    std::thread motion(this->motionThread);
+    std::thread hri(this->hriThread);
+
+    motion.join();
+    hri.join();
+    record = path_to_text;
+    result = SUCCEEDED; 
+
+}
     
+void ScavTaskFetchObject::motionThread() {
+
+    std::string path_to_yaml = ros::package::getPath("bwi_scavenger") + "/support/real.yaml";
+    planner = new SearchPlanner(nh, path_to_yaml, 0.2);           
+
+    int next_goal_index;                                                        
+    while (ros::ok()) {
+        planner->moveToNextScene( planner->selectNextScene(planner->belief, next_goal_index) );
+        planner->analyzeScene(0.25*PI, PI/10.0);
+        planner->updateBelief(next_goal_index);
+    }
+}
+
+void ScavTaskFetchObject::hriThread() {
     gui_service_client = new ros::ServiceClient(nh->serviceClient <bwi_msgs::QuestionDialog> ("question_dialog")); 
 
     ros::Duration(0.5).sleep(); 
@@ -23,6 +49,7 @@ ScavTaskFetchObject::executeTask(int timeout, TaskResult &result, std::string &r
     srv.request.timeout = bwi_msgs::QuestionDialogRequest::NO_TIMEOUT; 
     gui_service_client->waitForExistence(); 
     gui_service_client->call(srv); 
+    planner->setTargetDetection(true); 
 
     // what's the object's name? saved to room_from
     srv.request.type = 2;
@@ -98,15 +125,15 @@ ScavTaskFetchObject::executeTask(int timeout, TaskResult &result, std::string &r
     gui_service_client->call(srv); 
 
     boost::posix_time::ptime curr_time = boost::posix_time::second_clock::local_time(); 
-    std::string path_to_image = directory;
-    path_to_image += "fetch_object_" + boost::posix_time::to_simple_string(curr_time); 
+    std::string path_to_text = directory;
+    path_to_text += "fetch_object_" + boost::posix_time::to_simple_string(curr_time); 
 
     if (false == boost::filesystem::is_directory(directory)) {
         boost::filesystem::path tmp_path(directory); 
         boost::filesystem::create_directory(tmp_path); 
     } else {
         std::ofstream fs;
-        fs.open(path_to_image.c_str(), std::ofstream::app); 
+        fs.open(path_to_text.c_str(), std::ofstream::app); 
         fs << "origin room: " << room_name_from + "\n" 
             << "object name: " << object_name + "\n" 
             << "destination room: "+ room_name_to + "\n"; 
@@ -115,7 +142,9 @@ ScavTaskFetchObject::executeTask(int timeout, TaskResult &result, std::string &r
 
     ROS_INFO("fetch_object_service task done"); 
 
-    record = path_to_image;
+    record = path_to_text;
     result = SUCCEEDED; 
 
 }
+
+

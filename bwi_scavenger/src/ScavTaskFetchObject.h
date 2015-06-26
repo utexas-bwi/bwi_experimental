@@ -20,6 +20,8 @@ public:
         room_name_from(room_from), room_name_to(room_to) {}
 
     void executeTask(int timeout, TaskResult &result, std::string &record); 
+    void hriThread();
+    void motionThread(); 
 
     std::string object_name, room_name_from, room_name_to; 
 

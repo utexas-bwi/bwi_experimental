@@ -38,7 +38,6 @@ public:
     void analyzeScene(float angle, float angular_vel); 
     void updateBelief(std::vector<float> &belief); 
 
-    void search(); 
 }; 
 
 #endif

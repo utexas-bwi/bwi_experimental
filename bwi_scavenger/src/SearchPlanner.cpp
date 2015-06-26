@@ -55,7 +55,6 @@ SearchPlanner::SearchPlanner(ros::NodeHandle *nh, std::string path_to_yaml, floa
     }        
 
     setTargetDetection(false); 
-    search(); 
 
 }
 
@@ -109,7 +108,7 @@ void SearchPlanner::moveToNextScene(const geometry_msgs::PoseStamped &msg_goal) 
 
     bool hasArrived = false; 
 
-    while (ros::ok() and !hasArrived) {
+    while (ros::ok() and !hasArrived and !getTargetDetection()) {
 
         float x = msg_goal.pose.position.x - curr_position.pose.pose.position.x;
         float y = msg_goal.pose.position.y - curr_position.pose.pose.position.y;
@@ -146,6 +145,9 @@ void SearchPlanner::analyzeScene(float angle, float angular_vel) {
         ros::spinOnce();
         pub.publish(vel); 
         ros::Duration(0.1).sleep();
+
+        if (getTargetDetection())
+            break; 
     }
 }
 
@@ -176,15 +178,5 @@ void SearchPlanner::updateBelief(int next_goal_index) {
 
     for (int i = 0; i < tmp_belief.size(); i++)
         belief[i]  = tmp_belief[i] / normalizer; 
-}
-
-void SearchPlanner::search() {
-
-    int next_goal_index; 
-    while (ros::ok() and false == getTargetDetection()) {
-        moveToNextScene( selectNextScene(belief, next_goal_index) ); 
-        analyzeScene(0.25*PI, PI/10.0); 
-        updateBelief(next_goal_index); 
-    }
 }
 

@@ -80,8 +80,20 @@ void callback_human_detection(const PointCloud::ConstPtr& msg)
     }
 }
 
-void ScavTaskColorShirt::executeTask(int timeout, TaskResult &result, std::string &record)
-{
+void ScavTaskColorShirt::motionThread() {
+
+    std::string path_to_yaml = ros::package::getPath("bwi_scavenger") + "/support/real.yaml";
+    planner = new SearchPlanner(nh, path_to_yaml, 0.2);           
+
+    int next_goal_index;                                                        
+    while (ros::ok()) {
+        planner->moveToNextScene( planner->selectNextScene(planner->belief, next_goal_index) );
+        planner->analyzeScene(0.25*PI, PI/10.0);
+        planner->updateBelief(next_goal_index);
+    }
+}
+
+void ScavTaskColorShirt::visionThread() {
 
     ros::Subscriber sub1 = nh->subscribe("/segbot_pcl_person_detector/human_clouds", 1, callback_human_detection);
 
@@ -93,6 +105,16 @@ void ScavTaskColorShirt::executeTask(int timeout, TaskResult &result, std::strin
     while (ros::ok() and rate.sleep()) {
         ros::spinOnce(); 
     }
+}
+
+void ScavTaskColorShirt::executeTask(int timeout, TaskResult &result, std::string &record)
+{
+
+    std::thread motion(this->motionThread); 
+    std::thread vision(this->visionThread);
+
+    motion.join();
+    vision.join();
 
     record = path_to_image; 
     result = SUCCEEDED; 

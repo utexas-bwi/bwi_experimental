@@ -12,13 +12,15 @@ typedef pcl::PointCloud<pcl::PointXYZRGB> PointCloud;
 
 sensor_msgs::ImageConstPtr image; 
 std::string path_to_image; 
+SearchPlanner *planner;  // motion thread terminated when vision is done
 
-/*
+/*---------------------------------------------------------------
         a           b           1, board near conference room
            m                    2, board near 400/500 doors
         c           d       
     M of coordinates(x,y) is inside the rectangle iff, 
-    (0 < AM dot AB < AB dot AB) AND (0 < AM dot AC < AC dot AC) */
+    (0 < AM dot AB < AB dot AB) AND (0 < AM dot AC < AC dot AC) 
+-----------------------------------------------------------------*/
 
 bool ScavTaskWhiteBoard::inRectangle(my_pose* m, my_pose* a, my_pose* b, my_pose* c) 
 {
@@ -57,6 +59,7 @@ void callback_human_detected(const geometry_msgs::PoseStamped::ConstPtr& msg)
             boost::filesystem::create_directory(tmp_path);
         } 
         cv::imwrite(file, cv_ptr->image);
+        planner->setTargetDetection(true); // change status to terminate the motion thread
     }
 }
 
@@ -64,10 +67,21 @@ void callback_image(const sensor_msgs::ImageConstPtr& msg) {
     image = msg;
 }
 
-void ScavTaskWhiteBoard::executeTask(int timeout, TaskResult &result, std::string &record) {
+void ScavTaskWhiteBoard::motionThread() {
+    std::string path_to_yaml = ros::package::getPath("bwi_scavenger") + "/support/real.yaml";
+    planner = new SearchPlanner(nh, path_to_yaml, 0.2);           
+
+    int next_goal_index;                                                        
+    while (ros::ok()) {
+        planner->moveToNextScene( planner->selectNextScene(planner->belief, next_goal_index) );
+        planner->analyzeScene(0.25*PI, PI/10.0);
+        planner->updateBelief(next_goal_index);
+    }
+}
+
+void ScavTaskWhiteBoard::visionThread() {
 
     ros::Subscriber sub_human = nh.subscribe("/segbot_pcl_person_detector/human_poses", 100, callback_human_detected); 
-
     image_transport::ImageTransport it(nh);
     image_transport::Subscriber sub_image = it.subscribe("/nav_kinect/rgb/image_color", 1, callback_image);
 
@@ -75,7 +89,15 @@ void ScavTaskWhiteBoard::executeTask(int timeout, TaskResult &result, std::strin
     while (ros::ok() and r.sleep()) {
         ros::spinOnce(); 
     }
+}
 
+void ScavTaskWhiteBoard::executeTask(int timeout, TaskResult &result, std::string &record) {
+
+    std::thread motion(this->motionThread);
+    std::thread vision(this->visionThread); 
+
+    motion.join();
+    vision.join(); 
     record = path_to_image; 
     result = SUCCEDDED; 
 }

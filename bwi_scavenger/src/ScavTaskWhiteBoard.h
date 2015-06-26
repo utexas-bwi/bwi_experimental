@@ -21,6 +21,8 @@ public:
         nh(node_handle), directory(path_of_dir); 
 
     void executeTask(int timeout, TaskResut &result, std::string &record); 
+    void visionThread();
+    void motionThread(); 
 
     SearchPlanner *search_planner; 
 
