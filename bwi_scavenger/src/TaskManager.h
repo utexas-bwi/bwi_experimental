@@ -2,16 +2,21 @@
 #ifndef TASKMANAGER_H
 #define TASKMANAGER_H
 
+#include <ros/ros.h>
 #include <vector>
-#include "ScavengerTask.h"
+#include <string>
+
+#include "ScavTask.h"
+
+enum TaskStatus { ONGOING, FINISHED, TODO }; 
 
 struct TaskWithStatus {
     ScavTask *task; 
-    ScavStatus status; 
+    TaskStatus status; 
 
     TaskWithStatus() : task(NULL), status(TODO) {}
 
-    TaskWithStatus(ScavTask *scav_task, ScavStatus scav_status) : 
+    TaskWithStatus(ScavTask *scav_task, TaskStatus scav_status) : 
         task(scav_task), status(scav_status) {}
 }; 
 
@@ -19,15 +24,20 @@ class TaskManager {
 
 public:
 
-    std::vector<TaskWithStatus* > tasks;
+    TaskManager() {}
+    TaskManager(ros::NodeHandle *nh); 
 
-    void addTask(TaskWithStatus *task); 
+    ros::ServiceClient gui_client; 
 
-    void executeNextTask(); 
+    std::vector<TaskWithStatus> tasks;
+
+    void addTask(TaskWithStatus task); 
+
+    void executeNextTask(int timeout); 
     void updateStatusGui(); 
     bool allFinished(); 
 
-}
+}; 
 
 
 #endif

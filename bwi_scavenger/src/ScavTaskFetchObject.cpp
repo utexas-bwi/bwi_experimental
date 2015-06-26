@@ -13,8 +13,8 @@ SearchPlanner *planner;  // motion thread terminated when vision is done
 
 ScavTaskFetchObject::executeTask(int timeout, TaskResult &result, std::string &record) {
 
-    std::thread motion(this->motionThread);
-    std::thread hri(this->hriThread);
+    boost::thread motion(this->motionThread);
+    boost::thread hri(this->hriThread);
 
     motion.join();
     hri.join();

@@ -93,8 +93,8 @@ void ScavTaskWhiteBoard::visionThread() {
 
 void ScavTaskWhiteBoard::executeTask(int timeout, TaskResult &result, std::string &record) {
 
-    std::thread motion(this->motionThread);
-    std::thread vision(this->visionThread); 
+    boost::thread motion(this->motionThread);
+    boost::thread vision(this->visionThread); 
 
     motion.join();
     vision.join(); 

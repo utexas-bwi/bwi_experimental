@@ -4,6 +4,7 @@
 
 #include <ros/ros.h>
 #include <string>
+#include <boost/thread.hpp>
 
 #include "ScavTask.h"
 #include "SearchPlanner.h"
@@ -17,7 +18,9 @@ public:
     ScavTaskColorShirt(); 
 
     ScavTaskColorShirt(ros::NodeHandle *node_handle, std::string path_to_directory, Color shirt_color) : 
-        nh(node_handle), directory(path_of_dir), color(shirt_color) {}
+        nh(node_handle), directory(path_of_dir), color(shirt_color) {
+        task_description = "find a person wearing a color shirt: "; 
+    }
 
     void executeTask(int timeout, TaskResult &result, std::string &record); 
     void visionThread();
@@ -34,6 +37,6 @@ public:
         return pow(pow(c1->r- c2->r, 2.0) + pow(c1->g - c2->g, 2.0) + pow(c1->b - c2->b, 2.0), 0.5);
     }
 
-}
+}; 
 
 #endif
