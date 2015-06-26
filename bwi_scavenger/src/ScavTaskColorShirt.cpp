@@ -6,7 +6,6 @@
 #include <image_transport/image_transport.h>
 #include <sensor_msgs/image_encodings.h>
 
-#include "bwi_scavenger/ColorShirt.h"
 #include "ScavTaskColorShirt.h"
 
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -71,9 +70,13 @@ void callback_human_detection(const PointCloud::ConstPtr& msg)
         std::string time_str = boost::posix_time::to_simple_string(curr_time); 
 
         cv_bridge::CvImageConstPtr cv_ptr = cv_bridge::toCvShare(image, sensor_msgs::image_encodings::BGR8);
-        path_to_image = path_to_directory + "color_shirt_" + time_str, cv_ptr->image; 
-        cv::imwrite(path_to_image);
-
+        
+        if (false == boost::filesystem::is_directory(directory)) {
+            boost::filesystem::path tmp_path(directory);
+            boost::filesystem::create_directory(tmp_path);
+        }
+        path_to_image = directory + "color_shirt_" + time_str; 
+        cv::imwrite(path_to_image, cv_ptr->image);
     }
 }
 
@@ -85,12 +88,11 @@ void ScavTaskColorShirt::executeTask(int timeout, TaskResult &result, std::strin
     image_transport::ImageTransport it(*nh);
     image_transport::Subscriber sub = it.subscribe ("/nav_kinect/rgb/image_color", 1, callback_image_saver);
 
-    ros::Duration(1.0).sleep();
+    ros::Rate rate(10); 
 
-    // 3 threads: receiving point cloud, receiving image, color-shirt service
-    ros::AsyncSpinner spinner(2); 
-    spinner.start(); 
-    ros::waitForShutdown(); 
+    while (ros::ok() and rate.sleep()) {
+        ros::spinOnce(); 
+    }
 
     record = path_to_image; 
     result = SUCCEEDED; 

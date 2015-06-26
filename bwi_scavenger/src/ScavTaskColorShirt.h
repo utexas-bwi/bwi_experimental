@@ -16,15 +16,15 @@ public:
  
     ScavTaskColorShirt(); 
 
-    ScavTaskColorShirt(ros::NodeHandle *node_handle, Color shirt_color) : nh(node_handle), color(shirt_color) {}
-
+    ScavTaskColorShirt(ros::NodeHandle *node_handle, std::string path_to_directory, Color shirt_color) : 
+        nh(node_handle), directory(path_of_dir), color(shirt_color) {}
 
     void executeTask(int timeout, TaskResult &result, std::string &record); 
 
     SearchPlanner *search_planner; 
 
     Color color; 
-    std::string path; 
+    std::string directory; 
 
     // to compute the distance between a Rgb struct and a PCL RGB
     float getColorDistance(const pcl::PointXYZRGB *c1, const Rgb *c2) 
