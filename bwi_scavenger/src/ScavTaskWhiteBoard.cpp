@@ -14,6 +14,14 @@ sensor_msgs::ImageConstPtr image;
 std::string path_to_image; 
 SearchPlanner *planner;  // motion thread terminated when vision is done
 
+
+ScavTaskWhiteBoard::ScavTaskWhiteBoard(ros::NodeHandle *nh, std::string dir) {
+    this->nh = nh; 
+    directory = dir;
+    task_description = "find a person standing near a whiteboard"; 
+}
+
+
 /*---------------------------------------------------------------
         a           b           1, board near conference room
            m                    2, board near 400/500 doors

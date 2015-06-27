@@ -1,14 +1,13 @@
 
 #include <std_msgs/String.h>
-#include <pcl_ros/point_cloud.h>
-#include <pcl/point_types.h>
+
 #include <cv_bridge/cv_bridge.h>
 #include <image_transport/image_transport.h>
 #include <sensor_msgs/image_encodings.h>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 #include "ScavTaskColorShirt.h"
 
-#include <boost/date_time/posix_time/posix_time.hpp>
 
 #define INTMAX (32767)
 #define INTMIN (-32767)
@@ -19,18 +18,11 @@
 
 typedef pcl::PointCloud<pcl::PointXYZRGB> PointCloud;
 
-enum Color{ BLUE, RED, GREEN, YELLOW, ORANGE }; 
-
 sensor_msgs::ImageConstPtr image; 
 
 std::string path_to_image; 
 
-struct Rgb {
-    float r; float g; float b;        
-    Rgb() : r(), g(), b() {}
-    Rgb( float rr, float gg, float bb ) : r(rr), g(gg), b(bb) {}
-} baseline;
-
+Rgb baseline; 
 
 void callback_image_saver(const sensor_msgs::ImageConstPtr& msg) {
     image = msg;
@@ -78,6 +70,13 @@ void callback_human_detection(const PointCloud::ConstPtr& msg)
         path_to_image = directory + "color_shirt_" + time_str; 
         cv::imwrite(path_to_image, cv_ptr->image);
     }
+}
+
+ScavTaskColorShirt::ScavTaskColorShirt(ros::NodeHandle *nh, std::string dir, Color shirt_color) {
+    this->nh = nh; 
+    directory = dir; 
+    color = shirt_color; 
+    task_description = "find a person wearing a color shirt: "; 
 }
 
 void ScavTaskColorShirt::motionThread() {

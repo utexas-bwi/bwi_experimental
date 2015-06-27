@@ -11,6 +11,18 @@
 std::string path_to_text; 
 SearchPlanner *planner;  // motion thread terminated when vision is done
 
+ScavTaskFetchObject::ScavTaskFetchObject(ros::NodeHandle *nh, std::string dir,
+    std::string object, std::string room_from, std::string room_to) {
+
+    this->nh = nh; 
+    directory = dir; 
+    object_name = object;
+    room_name_from = room_from;
+    room_name_to = room_to; 
+    task_description = "fetch an object from a place to another"; 
+}
+
+
 ScavTaskFetchObject::executeTask(int timeout, TaskResult &result, std::string &record) {
 
     boost::thread motion(this->motionThread);

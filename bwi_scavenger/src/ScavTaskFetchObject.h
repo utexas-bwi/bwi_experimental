@@ -13,14 +13,10 @@ class ScavTaskFetchObject : public ScavTask {
 public:
 
     ScavTaskFetchObject();
-    ~ScavTaskFetchObject() { delete gui_service_client }
+    ~ScavTaskFetchObject() { delete gui_service_client; }
 
     ScavTaskFetchObject(ros::NodeHandle *node_handle, std::string path_of_dir, 
-        std::string object, std::string room_from, std::string room_to) : 
-        nh(node_handle), directory(path_of_dir, object_name(object), 
-        room_name_from(room_from), room_name_to(room_to) {
-        task_description = "fetch an object from a place to another"; 
-    }
+        std::string object, std::string room_from, std::string room_to); 
 
     void executeTask(int timeout, TaskResult &result, std::string &record); 
     void hriThread();

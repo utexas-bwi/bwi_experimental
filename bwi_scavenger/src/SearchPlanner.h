@@ -28,8 +28,10 @@ public:
     bool targetDetected; 
     float tolerance; 
 
-    void setTargetDetection(bool detected) : targetDetected(detected) {}
-    void getTargetDetection() { return targetDetected; }
+    void setTargetDetection(bool detected) {
+        targetDetected = detected; 
+    }
+    bool getTargetDetection() { return targetDetected; }
 
     geometry_msgs::PoseWithCovarianceStamped getCurrPosition(); 
 

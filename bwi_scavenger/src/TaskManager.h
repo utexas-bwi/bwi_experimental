@@ -27,6 +27,8 @@ public:
     TaskManager() {}
     TaskManager(ros::NodeHandle *nh); 
 
+    ros::NodeHandle *nh; 
+
     ros::ServiceClient gui_client; 
 
     std::vector<TaskWithStatus> tasks;

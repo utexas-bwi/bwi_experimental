@@ -6,9 +6,8 @@
 #include "bwi_msgs/QuestionDialog.h"
 #include "TaskManager.h"
 
-ros::NodeHandle * nh; 
-
 TaskManager::TaskManager (ros::NodeHandle *nh) {
+    this->nh = nh; 
     gui_client = nh->serviceClient <bwi_msgs::QuestionDialog> ("question_dialog");
 }
 

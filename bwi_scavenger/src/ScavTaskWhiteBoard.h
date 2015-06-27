@@ -18,12 +18,9 @@ class ScavTaskWhiteBoard : public ScavTask {
 public:
 
     ScavTaskWhiteBoard() {}
-    ScavTaskWhiteBoard(ros::NodeHandle *node_handle, std::string path_of_dir) :
-        nh(node_handle), directory(path_of_dir) {
-        task_description = "find a person standing near a whiteboard"; 
-    }
+    ScavTaskWhiteBoard(ros::NodeHandle *node_handle, std::string path_of_dir); 
 
-    void executeTask(int timeout, TaskResut &result, std::string &record); 
+    void executeTask(int timeout, TaskResult &result, std::string &record); 
     void visionThread();
     void motionThread(); 
 

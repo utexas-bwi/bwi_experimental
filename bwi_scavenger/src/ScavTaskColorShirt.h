@@ -3,6 +3,8 @@
 #define SCAVTASKCOLORSHIRT_H
 
 #include <ros/ros.h>
+#include <pcl_ros/point_cloud.h>
+#include <pcl/point_types.h>
 #include <string>
 #include <boost/thread.hpp>
 
@@ -11,16 +13,19 @@
 
 enum Color{ RED, GREEN, BLUE, YELLOW, ORANGE }; 
 
+struct Rgb {
+    float r; float g; float b;        
+    Rgb() : r(), g(), b() {}
+    Rgb( float rr, float gg, float bb ) : r(rr), g(gg), b(bb) {}
+};
+
 class ScavTaskColorShirt : public ScavTask {
 
 public:
  
     ScavTaskColorShirt(); 
 
-    ScavTaskColorShirt(ros::NodeHandle *node_handle, std::string path_to_directory, Color shirt_color) : 
-        nh(node_handle), directory(path_of_dir), color(shirt_color) {
-        task_description = "find a person wearing a color shirt: "; 
-    }
+    ScavTaskColorShirt(ros::NodeHandle *node_handle, std::string path_of_dir, Color shirt_color); 
 
     void executeTask(int timeout, TaskResult &result, std::string &record); 
     void visionThread();
