@@ -16,24 +16,35 @@
 #define SHIRT_HEIGHT_TOP (-0.1)
 #define SHIRT_HEIGHT_BOTTOM (-0.9)
 
-typedef pcl::PointCloud<pcl::PointXYZRGB> PointCloud;
-
 sensor_msgs::ImageConstPtr image; 
 
 std::string path_to_image; 
 
 Rgb baseline; 
 
-void callback_image_saver(const sensor_msgs::ImageConstPtr& msg) {
+std::ostream& operator<<(std::ostream&stream, const Color& color) {
+    if (color == BLUE) 
+        stream << "Blue"; 
+    else if (color == YELLOW)
+        stream << "Yellow"; 
+    else if (color == RED)
+        stream << "Red";
+    else if (color == GREEN)
+        stream << "Green";
+    else if (color == ORANGE)
+        stream << "Orange";
+    return stream; 
+}
+
+void ScavTaskColorShirt::callback_image_saver(const sensor_msgs::ImageConstPtr& msg) {
     image = msg;
 } 
 
-void callback_human_detection(const PointCloud::ConstPtr& msg)
-{
+void ScavTaskColorShirt::callback_human_detection(const PointCloud::ConstPtr& msg) {
 
     int color_cnt = 0; 
 
-    switch (shirt_color) {
+    switch (color) {
         case RED:       baseline = Rgb(255.0, 0.0, 0.0);    break;
         case BLUE:      baseline = Rgb(0.0, 0.0, 255.0);    break;
         case GREEN:     baseline = Rgb(0.0, 255.0, 0.0);    break;
@@ -46,8 +57,9 @@ void callback_human_detection(const PointCloud::ConstPtr& msg)
         // here we assume the waist height is 90cm, and neck height is 160cm; 
         // the robot sensor's height is 60cm
         if (pt.y > SHIRT_HEIGHT_BOTTOM and pt.y < SHIRT_HEIGHT_TOP 
-                and getColorDistance( &pt, &baseline) < DISTANCE_TO_COLOR) 
+                and this->getColorDistance( &pt, &baseline) < DISTANCE_TO_COLOR) {            
             color_cnt++;
+        }
     }
 
     float ratio = (float) color_cnt / (float) msg->points.size();
@@ -56,7 +68,7 @@ void callback_human_detection(const PointCloud::ConstPtr& msg)
 
     if (ratio > COLOR_RATIO && ros::ok()) { 
 
-        ROS_INFO("person wearing %s shirt detected", shirt_color.c_str()); 
+        ROS_INFO_STREAM("person wearing" << color << "shirt detected"); 
         
         boost::posix_time::ptime curr_time = boost::posix_time::second_clock::local_time();  
         std::string time_str = boost::posix_time::to_simple_string(curr_time); 
@@ -82,22 +94,24 @@ ScavTaskColorShirt::ScavTaskColorShirt(ros::NodeHandle *nh, std::string dir, Col
 void ScavTaskColorShirt::motionThread() {
 
     std::string path_to_yaml = ros::package::getPath("bwi_scavenger") + "/support/real.yaml";
-    planner = new SearchPlanner(nh, path_to_yaml, 0.2);           
+    search_planner = new SearchPlanner(nh, path_to_yaml, 0.2);           
 
     int next_goal_index;                                                        
     while (ros::ok()) {
-        planner->moveToNextScene( planner->selectNextScene(planner->belief, next_goal_index) );
-        planner->analyzeScene(0.25*PI, PI/10.0);
-        planner->updateBelief(next_goal_index);
+        search_planner->moveToNextScene( search_planner->selectNextScene(search_planner->belief, next_goal_index) );
+        search_planner->analyzeScene(0.25*PI, PI/10.0);
+        search_planner->updateBelief(next_goal_index);
     }
 }
 
 void ScavTaskColorShirt::visionThread() {
 
-    ros::Subscriber sub1 = nh->subscribe("/segbot_pcl_person_detector/human_clouds", 1, callback_human_detection);
+    ros::Subscriber sub1 = nh->subscribe("/segbot_pcl_person_detector/human_clouds", 1, 
+        &ScavTaskColorShirt::callback_human_detection, this);
 
     image_transport::ImageTransport it(*nh);
-    image_transport::Subscriber sub = it.subscribe ("/nav_kinect/rgb/image_color", 1, callback_image_saver);
+    image_transport::Subscriber sub = it.subscribe("/nav_kinect/rgb/image_color", 1, 
+        &ScavTaskColorShirt::callback_image_saver, this);
 
     ros::Rate rate(10); 
 
@@ -109,8 +123,8 @@ void ScavTaskColorShirt::visionThread() {
 void ScavTaskColorShirt::executeTask(int timeout, TaskResult &result, std::string &record)
 {
 
-    boost::thread motion(this->motionThread); 
-    boost::thread vision(this->visionThread);
+    boost::thread motion( &ScavTaskColorShirt::motionThread, this); 
+    boost::thread vision( &ScavTaskColorShirt::visionThread, this);
 
     motion.join();
     vision.join();
@@ -118,5 +132,4 @@ void ScavTaskColorShirt::executeTask(int timeout, TaskResult &result, std::strin
     record = path_to_image; 
     result = SUCCEEDED; 
 }
-
 

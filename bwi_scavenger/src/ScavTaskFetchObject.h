@@ -5,9 +5,13 @@
 
 #include <string>
 #include <ros/ros.h> 
+#include <ros/package.h>
 #include <boost/thread.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/date_time.hpp>
 
 #include "ScavTask.h"
+#include "SearchPlanner.h"
 
 class ScavTaskFetchObject : public ScavTask {
 public:
@@ -21,6 +25,8 @@ public:
     void executeTask(int timeout, TaskResult &result, std::string &record); 
     void hriThread();
     void motionThread(); 
+
+    SearchPlanner *search_planner; 
 
     std::string object_name, room_name_from, room_name_to; 
 

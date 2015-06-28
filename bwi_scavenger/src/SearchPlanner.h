@@ -23,6 +23,8 @@ public:
     ros::Publisher pub_simple_goal; 
     ros::Subscriber sub_amcl_pose; 
 
+    ros::NodeHandle *nh;
+
     geometry_msgs::PoseStamped next_goal; 
 
     bool targetDetected; 
@@ -35,10 +37,10 @@ public:
 
     geometry_msgs::PoseWithCovarianceStamped getCurrPosition(); 
 
-    geometry_msgs::PoseStamped selectNextScene(); 
+    geometry_msgs::PoseStamped selectNextScene(const std::vector<float> &b, int &next_goal_index); 
     void moveToNextScene(const geometry_msgs::PoseStamped &next_goal); 
     void analyzeScene(float angle, float angular_vel); 
-    void updateBelief(std::vector<float> &belief); 
+    void updateBelief(int ); 
 
 }; 
 

@@ -47,6 +47,8 @@ include_directories(
 
 ## Declare a cpp executable
 
-add_executable(scavenger src/scavenger.cpp)
+add_executable(scavenger src/scavenger.cpp src/ScavTaskColorShirt.cpp 
+    src/ScavTaskFetchObject.cpp src/ScavTaskWhiteBoard.cpp src/TaskManager.cpp
+    src/SearchPlanner.cpp)
 target_link_libraries(scavenger ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 

@@ -3,13 +3,22 @@
 #define SCAVTASKCOLORSHIRT_H
 
 #include <ros/ros.h>
+#include <ros/package.h>
+// #include <opencv2/improc/improc.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <cv_bridge/cv_bridge.h>
+#include <image_transport/image_transport.h>
+#include <sensor_msgs/image_encodings.h>
 #include <pcl_ros/point_cloud.h>
 #include <pcl/point_types.h>
 #include <string>
 #include <boost/thread.hpp>
+#include <boost/bind.hpp>
 
 #include "ScavTask.h"
 #include "SearchPlanner.h"
+
+typedef pcl::PointCloud<pcl::PointXYZRGB> PointCloud;
 
 enum Color{ RED, GREEN, BLUE, YELLOW, ORANGE }; 
 
@@ -35,6 +44,9 @@ public:
 
     Color color; 
     std::string directory; 
+
+    void callback_image_saver(const sensor_msgs::ImageConstPtr& msg); 
+    void callback_human_detection(const PointCloud::ConstPtr& msg); 
 
     // to compute the distance between a Rgb struct and a PCL RGB
     float getColorDistance(const pcl::PointXYZRGB *c1, const Rgb *c2) 

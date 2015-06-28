@@ -2,14 +2,12 @@
 #include <actionlib/client/simple_action_client.h>
 #include <vector>
 #include <fstream>
-#include <boost/filesystem.hpp>
 
 #include "ScavTaskFetchObject.h"
 #include "bwi_kr_execution/ExecutePlanAction.h"
 #include "bwi_msgs/QuestionDialog.h"
 
 std::string path_to_text; 
-SearchPlanner *planner;  // motion thread terminated when vision is done
 
 ScavTaskFetchObject::ScavTaskFetchObject(ros::NodeHandle *nh, std::string dir,
     std::string object, std::string room_from, std::string room_to) {
@@ -23,10 +21,10 @@ ScavTaskFetchObject::ScavTaskFetchObject(ros::NodeHandle *nh, std::string dir,
 }
 
 
-ScavTaskFetchObject::executeTask(int timeout, TaskResult &result, std::string &record) {
+void ScavTaskFetchObject::executeTask(int timeout, TaskResult &result, std::string &record) {
 
-    boost::thread motion(this->motionThread);
-    boost::thread hri(this->hriThread);
+    boost::thread motion( &ScavTaskFetchObject::motionThread, this);
+    boost::thread hri( &ScavTaskFetchObject::hriThread, this);
 
     motion.join();
     hri.join();
@@ -38,13 +36,13 @@ ScavTaskFetchObject::executeTask(int timeout, TaskResult &result, std::string &r
 void ScavTaskFetchObject::motionThread() {
 
     std::string path_to_yaml = ros::package::getPath("bwi_scavenger") + "/support/real.yaml";
-    planner = new SearchPlanner(nh, path_to_yaml, 0.2);           
+    search_planner = new SearchPlanner(nh, path_to_yaml, 0.2);           
 
     int next_goal_index;                                                        
     while (ros::ok()) {
-        planner->moveToNextScene( planner->selectNextScene(planner->belief, next_goal_index) );
-        planner->analyzeScene(0.25*PI, PI/10.0);
-        planner->updateBelief(next_goal_index);
+        search_planner->moveToNextScene( search_planner->selectNextScene(search_planner->belief, next_goal_index) );
+        search_planner->analyzeScene(0.25*PI, PI/10.0);
+        search_planner->updateBelief(next_goal_index);
     }
 }
 
@@ -61,7 +59,7 @@ void ScavTaskFetchObject::hriThread() {
     srv.request.timeout = bwi_msgs::QuestionDialogRequest::NO_TIMEOUT; 
     gui_service_client->waitForExistence(); 
     gui_service_client->call(srv); 
-    planner->setTargetDetection(true); 
+    search_planner->setTargetDetection(true); 
 
     // what's the object's name? saved to room_from
     srv.request.type = 2;
@@ -73,20 +71,20 @@ void ScavTaskFetchObject::hriThread() {
     srv.request.type = 2;
     srv.request.message = "Where to get the object? E.g., l3_420."; 
     gui_service_client->call(srv);
-    room_from = srv.response.text;
+    room_name_from = srv.response.text;
 
     // where to deliver the object, saved to room_to
     srv.request.type = 2;
     srv.request.message = "Where to deliver the object? E.g., l3_420."; 
     gui_service_client->call(srv);
-    room_to = srv.response.text;
+    room_name_to = srv.response.text;
 
     actionlib::SimpleActionClient<bwi_kr_execution::ExecutePlanAction> asp_plan_client("/action_executor/execute_plan", true); 
     asp_plan_client.waitForServer();
 
     // print to gui: moving to the first room
     srv.request.type = 0;
-    srv.request.message = "Moving to room: " + room_from; 
+    srv.request.message = "Moving to room: " + room_name_from; 
     gui_service_client->call(srv);
 
     // wrapping up a "goal" for moving the robot platform
@@ -96,7 +94,7 @@ void ScavTaskFetchObject::hriThread() {
 
     // move to the room to ask for the object
     fluent.name = "not at";
-    fluent.variables.push_back(room_from);
+    fluent.variables.push_back(room_name_from);
     rule.body.push_back(fluent);
     goal.aspGoal.push_back(rule);
     ROS_INFO("sending goal");
@@ -112,7 +110,7 @@ void ScavTaskFetchObject::hriThread() {
 
     // print to gui: moving to the second room
     srv.request.type = 0;
-    srv.request.message = "Moving to room: " + room_to; 
+    srv.request.message = "Moving to room: " + room_name_to; 
     gui_service_client->call(srv);
 
     // move to the second room for delivery
@@ -121,7 +119,7 @@ void ScavTaskFetchObject::hriThread() {
     goal.aspGoal.clear(); 
 
     fluent.name = "not at";
-    fluent.variables.push_back(room_to);
+    fluent.variables.push_back(room_name_to);
     rule.body.push_back(fluent);
     goal.aspGoal.push_back(rule);
     ROS_INFO("sending goal");
@@ -132,7 +130,7 @@ void ScavTaskFetchObject::hriThread() {
     // request to unload object
     srv.request.type = 1; 
     srv.request.message = "Please help me unload object: " + object_name; 
-    buttons = std::vector <std::string> (1, "Unloaded"); 
+    std::vector<std::string> buttons(1, "Unloaded"); 
     srv.request.options = buttons;
     gui_service_client->call(srv); 
 
@@ -153,10 +151,6 @@ void ScavTaskFetchObject::hriThread() {
     }
 
     ROS_INFO("fetch_object_service task done"); 
-
-    record = path_to_text;
-    result = SUCCEEDED; 
-
 }
 
 

@@ -25,7 +25,7 @@ class TaskManager {
 public:
 
     TaskManager() {}
-    TaskManager(ros::NodeHandle *nh); 
+    TaskManager(ros::NodeHandle *); 
 
     ros::NodeHandle *nh; 
 
@@ -33,7 +33,7 @@ public:
 
     std::vector<TaskWithStatus> tasks;
 
-    void addTask(TaskWithStatus task); 
+    void addTask(TaskWithStatus* task); 
 
     void executeNextTask(int timeout); 
     void updateStatusGui(); 

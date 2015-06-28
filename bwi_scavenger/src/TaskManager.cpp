@@ -11,16 +11,19 @@ TaskManager::TaskManager (ros::NodeHandle *nh) {
     gui_client = nh->serviceClient <bwi_msgs::QuestionDialog> ("question_dialog");
 }
 
-void TaskManager::addTask(TaskWithStatus task_with_status) {
-    tasks.push_back(task_with_status); 
+void TaskManager::addTask(TaskWithStatus *task_with_status) {
+    tasks.push_back(*task_with_status); 
 }
 
 void TaskManager::executeNextTask(int timeout) {
+    TaskResult result;
+    std::string record(""); 
+
     for (int i=0; i<tasks.size(); i++) {
         if (tasks[i].status == ONGOING)
             return; 
         else if (tasks[i].status == TODO)
-            tasks[i].task->executeTask(timeout); 
+            tasks[i].task->executeTask(timeout, result, record); 
     }
 }
 
@@ -29,24 +32,26 @@ void TaskManager::updateStatusGui() {
     std::string message(""); 
 
     for (int i=0; i<tasks.size(); i++) {
-        if (tasks.status == ONGOING) {
-            message += "->\t" + tasks.task->task_description; 
-        } else if (tasks.status == TODO) {
-            message += "\t" + tasks.task->task_description; 
-        } else if (tasks.status == FINISHED) {
-            message += "done" + tasks.task->task_description; 
+        if (tasks[i].status == ONGOING) {
+            message += "->\t" + tasks[i].task->task_description; 
+        } else if (tasks[i].status == TODO) {
+            message += "\t" + tasks[i].task->task_description; 
+        } else if (tasks[i].status == FINISHED) {
+            message += "done" + tasks[i].task->task_description; 
         }
 
-        for (int j=0; j<tasks.task->task_parameters.size(); j++) {
-            message += " " + tasks.task->task_parameters[j]; 
+        for (int j=0; j<tasks[i].task->task_parameters.size(); j++) {
+            message += " " + tasks[i].task->task_parameters[j]; 
         }
         message += "\n"; 
     }
     
+    bwi_msgs::QuestionDialog srv; 
+
     srv.request.type = 0;
     srv.request.message = message; 
 
-    gui_service_client->call(srv);
+    gui_client.call(srv);
 }
 
 

@@ -15,7 +15,7 @@ public:
     std::string task_description; 
     std::vector<std::string> task_parameters; 
 
-    virtual void executeTask(int timeout, TaskResult &result, std::string &record); 
+    virtual void executeTask(int timeout, TaskResult &result, std::string &record) {}
 
 }; 
 

@@ -3,7 +3,9 @@
 
 #include <string>
 #include <ros/ros.h>
+#include <ros/package.h>
 #include <boost/thread.hpp>
+#include <boost/bind.hpp>
 
 #include "ScavTask.h"
 #include "SearchPlanner.h"
@@ -24,7 +26,11 @@ public:
     void visionThread();
     void motionThread(); 
 
+    void callback_human_detected(const geometry_msgs::PoseStamped::ConstPtr& msg); 
+    void callback_image(const sensor_msgs::ImageConstPtr& msg); 
+
     SearchPlanner *search_planner; 
+    std::string directory;
 
     bool inRectangle(Pose p, Pose top_left, Pose top_right, Pose bottom_left); 
 }; 

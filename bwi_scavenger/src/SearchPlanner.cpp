@@ -17,32 +17,29 @@
 #define SCENE_ANALYZATION_COST (60)
 
 geometry_msgs::PoseWithCovarianceStamped curr_position; 
-bwi_scavenger::VisionTaskGoal *goal; 
+//bwi_scavenger::VisionTaskGoal *goal; 
 
-ros::NodeHandle * nh; 
-
-actionlib::SimpleActionClient <bwi_scavenger::VisionTaskAction> * ac; 
+//actionlib::SimpleActionClient <bwi_scavenger::VisionTaskAction> * ac; 
 
 // callback function that saves robot's current position
 void callbackCurrPos(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg) {
     curr_position = *msg;
 }
 
-SearchPlanner::SearchPlanner(ros::NodeHandle *nh, std::string path_to_yaml, float goal_tolerance) : 
+SearchPlanner::SearchPlanner(ros::NodeHandle *node_handle, std::string path_to_yaml, float goal_tolerance) : 
         tolerance(goal_tolerance) {
 
-    YAML::Node yaml_positions = YAML::LoadFile(yaml_file_positions); 
+    nh = node_handle; 
+
+    YAML::Node yaml_positions = YAML::LoadFile(path_to_yaml); 
 
     belief = std::vector<float> (yaml_positions.size(), 1.0/yaml_positions.size()); 
 
-    ros::ServiceClient client_make_plan = i
-        nh->serviceClient <nav_msgs::GetPlan> ("move_base/NavfnROS/make_plan"); 
+    ros::ServiceClient client_make_plan = nh->serviceClient <nav_msgs::GetPlan> ("move_base/NavfnROS/make_plan"); 
 
-    ros::Publisher pub_simple_goal = 
-        nh->advertise<geometry_msgs::PoseStamped>("/move_base_interruptable_simple/goal", 100);
+    pub_simple_goal = nh->advertise<geometry_msgs::PoseStamped>("/move_base_interruptable_simple/goal", 100);
 
-    ros::Subscriber sub_amcl_pose = 
-        nh->subscribe("amcl_pose", 100, callbackCurrPos); 
+    sub_amcl_pose = nh->subscribe("amcl_pose", 100, callbackCurrPos); 
     
     for (int i=0; i<yaml_positions.size(); i++) {
         geometry_msgs::PoseStamped tmp_pose; 
@@ -73,14 +70,13 @@ geometry_msgs::PoseStamped SearchPlanner::selectNextScene(const std::vector<floa
     
     for (unsigned i=0; i<positions.size(); i++) {
 
-        srv.request.goal.pose.position.x = positions[i][0].as<double>(); 
-        srv.request.goal.pose.position.y = positions[i][1].as<double>(); 
+        srv.request.goal = positions[i]; 
     
         client_make_plan.waitForExistence();
         if (false == client_make_plan.call(srv))
             ROS_ERROR("Failed in calling service for making a path"); 
     
-        distances[i] = srv.response.plan->poses.size();
+        distances[i] = srv.response.plan.poses.size();
     }
     
     next_goal_index = -1; 
@@ -96,11 +92,8 @@ geometry_msgs::PoseStamped SearchPlanner::selectNextScene(const std::vector<floa
         max_value = (fitness[i] >= max_value) ? fitness[i] : max_value;
     }
     
+    nextScene = positions[next_goal_index]; 
     nextScene.header.frame_id = "level_mux/map";
-    nextScene.pose.position.x = positions[next_goal_index][0].as<double>(); 
-    nextScene.pose.position.y = positions[next_goal_index][1].as<double>(); 
-    nextScene.pose.orientation.z = positions[next_goal_index][2].as<double>(); 
-    nextScene.pose.orientation.w = positions[next_goal_index][3].as<double>(); 
     return nextScene; 
 }
 
@@ -119,7 +112,7 @@ void SearchPlanner::moveToNextScene(const geometry_msgs::PoseStamped &msg_goal) 
 
         // sometimes motion plannerg gets aborted for unknown reasons, so here 
         // we periodically re-send the goal
-        pub_move_robot.publish(msg_goal); 
+        pub_simple_goal.publish(msg_goal); 
         ros::Duration(1.0).sleep();
     }
     ROS_INFO("Arrived"); 
@@ -133,12 +126,12 @@ void SearchPlanner::analyzeScene(float angle, float angular_vel) {
     vel.linear.y = 0;
 
     for (int i=0; i<170; i++) {
-        if (i<10 or i>160)
+        if (i<10 or i>160) {
             vel.angular.z = 0;
         } else if (i<60) {
             ROS_INFO("Look to the left..."); 
             vel.angular.z = angular_vel;
-        } else if (i<160)
+        } else if (i<160) {
             ROS_INFO("Look to the right...");
             vel.angular.z = (-1.0) * angular_vel;
         } 
@@ -153,7 +146,8 @@ void SearchPlanner::analyzeScene(float angle, float angular_vel) {
 
 void SearchPlanner::updateBelief(int next_goal_index) {
     
-    float true_positive_rate = true_negative_rate = 0.95; 
+    float true_positive_rate, true_negative_rate;
+    true_positive_rate = true_negative_rate = 0.95; 
 
     std::vector <float> tmp_belief (belief); 
 
