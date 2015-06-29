@@ -13,6 +13,11 @@ TaskManager::TaskManager (ros::NodeHandle *nh) {
 
 void TaskManager::addTask(TaskWithStatus *task_with_status) {
     tasks.push_back(*task_with_status); 
+    std::string str = task_with_status->task->task_name; 
+    for (int i=0; i<task_with_status->task->task_parameters.size(); i++) {
+        str += " " + task_with_status->task->task_parameters[i]; 
+    }
+    ROS_INFO_STREAM("Task added: " << str); 
 }
 
 void TaskManager::executeNextTask(int timeout) {
@@ -20,10 +25,12 @@ void TaskManager::executeNextTask(int timeout) {
     std::string record(""); 
 
     for (int i=0; i<tasks.size(); i++) {
-        if (tasks[i].status == ONGOING)
+        if (tasks[i].status == ONGOING) {
             return; 
-        else if (tasks[i].status == TODO)
+        } else if (tasks[i].status == TODO) {
+            ROS_INFO_STREAM("Start to work on: " << tasks[i].task->task_name); 
             tasks[i].task->executeTask(timeout, result, record); 
+        }
     }
 }
 

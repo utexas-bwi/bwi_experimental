@@ -20,6 +20,7 @@ ScavTaskWhiteBoard::ScavTaskWhiteBoard(ros::NodeHandle *nh, std::string dir) {
     this->nh = nh; 
     directory = dir;
     task_description = "find a person standing near a whiteboard"; 
+    task_name = "White board"; 
 }
 
 
@@ -77,8 +78,8 @@ void ScavTaskWhiteBoard::callback_image(const sensor_msgs::ImageConstPtr& msg) {
 }
 
 void ScavTaskWhiteBoard::motionThread() {
-    std::string path_to_yaml = ros::package::getPath("bwi_scavenger") + "/support/real.yaml";
-    search_planner = new SearchPlanner(nh, path_to_yaml, 0.2);           
+    std::string path_to_yaml = ros::package::getPath("bwi_scavenger") + "/support/simulation.yaml";
+    search_planner = new SearchPlanner(nh, path_to_yaml, tolerance);           
 
     int next_goal_index;                                                        
     while (ros::ok()) {

@@ -89,12 +89,17 @@ ScavTaskColorShirt::ScavTaskColorShirt(ros::NodeHandle *nh, std::string dir, Col
     directory = dir; 
     color = shirt_color; 
     task_description = "find a person wearing a color shirt: "; 
+    task_name = "Color shirt: "; 
+    
+    std::ostringstream stream; 
+    stream << color;       
+    task_parameters.push_back(stream.str()); 
 }
 
 void ScavTaskColorShirt::motionThread() {
 
-    std::string path_to_yaml = ros::package::getPath("bwi_scavenger") + "/support/real.yaml";
-    search_planner = new SearchPlanner(nh, path_to_yaml, 0.2);           
+    std::string path_to_yaml = ros::package::getPath("bwi_scavenger") + "/support/simulation.yaml";
+    search_planner = new SearchPlanner(nh, path_to_yaml, tolerance);           
 
     int next_goal_index;                                                        
     while (ros::ok()) {

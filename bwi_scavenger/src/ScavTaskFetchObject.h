@@ -19,12 +19,13 @@ public:
     ScavTaskFetchObject();
     ~ScavTaskFetchObject() { delete gui_service_client; }
 
-    ScavTaskFetchObject(ros::NodeHandle *node_handle, std::string path_of_dir, 
-        std::string object, std::string room_from, std::string room_to); 
+    ScavTaskFetchObject(ros::NodeHandle *node_handle, std::string path_of_dir); 
 
     void executeTask(int timeout, TaskResult &result, std::string &record); 
     void hriThread();
     void motionThread(); 
+
+    bool random_walk_flag; 
 
     SearchPlanner *search_planner; 
 

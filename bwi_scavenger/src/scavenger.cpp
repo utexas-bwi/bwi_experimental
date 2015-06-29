@@ -2,6 +2,9 @@
 #include <ros/ros.h>
 #include <ros/package.h>
 
+#include <stdlib.h>     /* srand, rand */
+#include <time.h>       /* time */
+
 #include "ScavTask.h"
 #include "TaskManager.h"
 #include "SearchPlanner.h"
@@ -11,23 +14,38 @@
 #include "ScavTaskFetchObject.h"
 
 #define TIMEOUT (600) // return failure if not finished in 10 minutes
-
-
+#define NUM_OF_TASKS (5)
+#define MAX_NUM_OF_TASKS (50)
 
 int main(int argc, char **argv) {
 
     ros::init(argc, argv, "scavenger");
     ros::NodeHandle *nh = new ros::NodeHandle();
-
     TaskManager* task_manager = new TaskManager(nh); 
 
     std::string dir("/home/bwi/shiqi/"); 
-    task_manager->addTask(new TaskWithStatus(new ScavTaskColorShirt(nh, dir, ORANGE), TODO)); 
-    task_manager->addTask(new TaskWithStatus(new ScavTaskWhiteBoard(nh, dir), TODO)); 
-    task_manager->addTask(new TaskWithStatus(new ScavTaskFetchObject(nh, dir, "Coffee", "l3_414b", "l3_420"), TODO)); 
+    
+    int cnt = 0; 
+    srand(time(NULL)); 
+    while (cnt < NUM_OF_TASKS) {
+        cnt++; 
+        ros::Duration(0.1).sleep();       
+        int r = rand() % MAX_NUM_OF_TASKS; 
+        if (r == 0) {
+            Color color = static_cast<Color>(rand() % COLOR_LENGTH);
+            task_manager->addTask(new TaskWithStatus(new ScavTaskColorShirt(nh, dir, color), TODO)); 
+        } else if (r == 1) {
+            task_manager->addTask(new TaskWithStatus(new ScavTaskWhiteBoard(nh, dir), TODO)); 
+        } else if (r == 2) {
+            task_manager->addTask(new TaskWithStatus(new ScavTaskFetchObject(nh, dir), TODO)); 
+        } else {
+            cnt--; 
+        }
+    }
 
+    task_manager->updateStatusGui(); 
     while (task_manager->allFinished() == false) {
-        task_manager->executeNextTask(600); 
+        task_manager->executeNextTask(TIMEOUT); 
         task_manager->updateStatusGui(); 
     }
 

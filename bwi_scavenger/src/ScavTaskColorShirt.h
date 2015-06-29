@@ -20,7 +20,7 @@
 
 typedef pcl::PointCloud<pcl::PointXYZRGB> PointCloud;
 
-enum Color{ RED, GREEN, BLUE, YELLOW, ORANGE }; 
+enum Color{ RED, GREEN, BLUE, YELLOW, ORANGE, COLOR_LENGTH}; 
 
 struct Rgb {
     float r; float g; float b;        

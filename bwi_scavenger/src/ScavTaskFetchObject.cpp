@@ -9,15 +9,11 @@
 
 std::string path_to_text; 
 
-ScavTaskFetchObject::ScavTaskFetchObject(ros::NodeHandle *nh, std::string dir,
-    std::string object, std::string room_from, std::string room_to) {
-
+ScavTaskFetchObject::ScavTaskFetchObject(ros::NodeHandle *nh, std::string dir) {
     this->nh = nh; 
     directory = dir; 
-    object_name = object;
-    room_name_from = room_from;
-    room_name_to = room_to; 
     task_description = "fetch an object from a place to another"; 
+    task_name = "Fetch object"; 
 }
 
 
@@ -33,19 +29,21 @@ void ScavTaskFetchObject::executeTask(int timeout, TaskResult &result, std::stri
 
 }
     
+// motion thread
 void ScavTaskFetchObject::motionThread() {
 
-    std::string path_to_yaml = ros::package::getPath("bwi_scavenger") + "/support/real.yaml";
-    search_planner = new SearchPlanner(nh, path_to_yaml, 0.2);           
+    std::string path_to_yaml = ros::package::getPath("bwi_scavenger") + "/support/simulation.yaml";
+    search_planner = new SearchPlanner(nh, path_to_yaml, tolerance);           
 
     int next_goal_index;                                                        
-    while (ros::ok()) {
+    while (ros::ok() and false == search_planner->getTargetDetection()) {
         search_planner->moveToNextScene( search_planner->selectNextScene(search_planner->belief, next_goal_index) );
         search_planner->analyzeScene(0.25*PI, PI/10.0);
         search_planner->updateBelief(next_goal_index);
     }
 }
 
+// human-robot interaction thread
 void ScavTaskFetchObject::hriThread() {
     gui_service_client = new ros::ServiceClient(nh->serviceClient <bwi_msgs::QuestionDialog> ("question_dialog")); 
 

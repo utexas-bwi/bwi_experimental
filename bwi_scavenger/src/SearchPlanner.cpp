@@ -35,11 +35,12 @@ SearchPlanner::SearchPlanner(ros::NodeHandle *node_handle, std::string path_to_y
 
     belief = std::vector<float> (yaml_positions.size(), 1.0/yaml_positions.size()); 
 
-    ros::ServiceClient client_make_plan = nh->serviceClient <nav_msgs::GetPlan> ("move_base/NavfnROS/make_plan"); 
+    client_make_plan = nh->serviceClient <nav_msgs::GetPlan> ("move_base/NavfnROS/make_plan"); 
 
     pub_simple_goal = nh->advertise<geometry_msgs::PoseStamped>("/move_base_interruptable_simple/goal", 100);
 
     sub_amcl_pose = nh->subscribe("amcl_pose", 100, callbackCurrPos); 
+    ros::Duration(1.0).sleep(); 
     
     for (int i=0; i<yaml_positions.size(); i++) {
         geometry_msgs::PoseStamped tmp_pose; 
@@ -52,6 +53,7 @@ SearchPlanner::SearchPlanner(ros::NodeHandle *node_handle, std::string path_to_y
     }        
 
     setTargetDetection(false); 
+    ros::spinOnce(); 
 
 }
 
@@ -61,16 +63,19 @@ geometry_msgs::PoseStamped SearchPlanner::selectNextScene(const std::vector<floa
 
     nav_msgs::GetPlan srv; 
 
-    srv.request.start.header.frame_id = "level_mux/map"; 
-    srv.request.start.pose = curr_position.pose.pose; 
-    srv.request.goal.header.frame_id = "level_mux/map"; 
-
     std::vector<float> distances(belief.size(), 0.0); 
     std::vector<float> fitness(belief.size(), 0.0); 
     
     for (unsigned i=0; i<positions.size(); i++) {
 
-        srv.request.goal = positions[i]; 
+        srv.request.tolerance = tolerance; 
+        srv.request.start.header.frame_id = "level_mux/map"; 
+        srv.request.start.pose.position.x = curr_position.pose.pose.position.x; 
+        srv.request.start.pose.position.y = curr_position.pose.pose.position.y; 
+
+        srv.request.goal.header.frame_id = "level_mux/map"; 
+        srv.request.goal.pose.position.x = positions[i].pose.position.x; 
+        srv.request.goal.pose.position.y = positions[i].pose.position.y; 
     
         client_make_plan.waitForExistence();
         if (false == client_make_plan.call(srv))
@@ -100,14 +105,17 @@ geometry_msgs::PoseStamped SearchPlanner::selectNextScene(const std::vector<floa
 void SearchPlanner::moveToNextScene(const geometry_msgs::PoseStamped &msg_goal) {
 
     bool hasArrived = false; 
+    ROS_INFO("Moving to next scene"); 
 
-    while (ros::ok() and !hasArrived and !getTargetDetection()) {
+    while (ros::ok() and !hasArrived and false == getTargetDetection()) {
 
+        ros::spinOnce(); 
         float x = msg_goal.pose.position.x - curr_position.pose.pose.position.x;
         float y = msg_goal.pose.position.y - curr_position.pose.pose.position.y;
         float dis = pow(x*x + y*y, 0.5); 
 
-        ROS_INFO("distance to next goal: %f", dis); 
+        // ROS_INFO("distance to next goal: %f", dis); 
+        // ROS_INFO("tolerance: %f", tolerance); 
         hasArrived = dis < tolerance;
 
         // sometimes motion plannerg gets aborted for unknown reasons, so here 
@@ -129,10 +137,10 @@ void SearchPlanner::analyzeScene(float angle, float angular_vel) {
         if (i<10 or i>160) {
             vel.angular.z = 0;
         } else if (i<60) {
-            ROS_INFO("Look to the left..."); 
+            //ROS_INFO("Look to the left..."); 
             vel.angular.z = angular_vel;
         } else if (i<160) {
-            ROS_INFO("Look to the right...");
+            //ROS_INFO("Look to the right...");
             vel.angular.z = (-1.0) * angular_vel;
         } 
         ros::spinOnce();
