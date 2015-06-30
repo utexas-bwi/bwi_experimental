@@ -3,15 +3,8 @@
     <arg name="sim_positions" default="$(find bwi_scavenger)/support/simulation.yaml" />
     <arg name="real_positions" default="$(find bwi_scavenger)/support/real.yaml" />
 
-    <arg name="sim_tolerance" default="0.5" />
-    <arg name="real_tolerance" default="0.5" />
+    <param name="path_to_search_points" value="$(arg sim_positions)" />
 
-    <!-- assuming 1m/s speed, this cost represents how many seconds needed -->
-    <arg name="analyzing_scene_cost" default="8.0" />
-
-    <node name="target_search" pkg="bwi_scavenger" type="target_search" output="screen">
-        <param name="positions" value="$(arg sim_positions)" />
-        <param name="tolerance" value="$(arg sim_tolerance)" />
-    </node>
+    <node name="bwi_scavenger" pkg="bwi_scavenger" type="scavenger" output="screen"/>
 
 </launch>

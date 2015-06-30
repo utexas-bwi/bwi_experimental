@@ -15,7 +15,7 @@
 
 #define TIMEOUT (600) // return failure if not finished in 10 minutes
 #define NUM_OF_TASKS (8)
-#define NUM_OF_TASK_TYPES (2)
+#define NUM_OF_TASK_TYPES (3)
 
 int main(int argc, char **argv) {
 
@@ -23,7 +23,7 @@ int main(int argc, char **argv) {
     ros::NodeHandle *nh = new ros::NodeHandle();
     TaskManager* task_manager = new TaskManager(nh); 
 
-    std::string dir("/home/bwi/shiqi/"); 
+    std::string dir(ros::package::getPath("bwi_logging") + "/log_files/"); 
     
     int cnt = 0; 
     srand(time(NULL)); 
@@ -38,9 +38,9 @@ int main(int argc, char **argv) {
         else if (r == 1) {
             task_manager->addTask(new TaskWithStatus(new ScavTaskWhiteBoard(nh, dir), TODO)); 
         } 
-        // else if (r == 2) {
-        //     task_manager->addTask(new TaskWithStatus(new ScavTaskFetchObject(nh, dir), TODO)); 
-        // } 
+        else if (r == 2) {
+            task_manager->addTask(new TaskWithStatus(new ScavTaskFetchObject(nh, dir), TODO)); 
+        } 
         else {
             cnt--; 
         }
@@ -48,7 +48,10 @@ int main(int argc, char **argv) {
 
     task_manager->updateStatusGui(); 
     while (task_manager->allFinished() == false) {
-        task_manager->executeNextTask(TIMEOUT); 
+        TaskWithStatus *task_status; 
+        task_status = task_manager->selectNextTask();
+        task_manager->updateStatusGui(); 
+        task_manager->executeNextTask(TIMEOUT, task_status); 
         task_manager->updateStatusGui(); 
     }
 

@@ -35,7 +35,8 @@ public:
 
     void addTask(TaskWithStatus* task); 
 
-    void executeNextTask(int timeout); 
+    void executeNextTask(int timeout, TaskWithStatus *task); 
+    TaskWithStatus *selectNextTask(); 
     void updateStatusGui(); 
     bool allFinished(); 
 

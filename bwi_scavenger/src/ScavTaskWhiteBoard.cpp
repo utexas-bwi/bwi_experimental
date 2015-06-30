@@ -78,7 +78,13 @@ void ScavTaskWhiteBoard::callback_image(const sensor_msgs::ImageConstPtr& msg) {
 }
 
 void ScavTaskWhiteBoard::motionThread() {
-    std::string path_to_yaml = ros::package::getPath("bwi_scavenger") + "/support/simulation.yaml";
+
+    std::string path_to_yaml; 
+
+    if (false == nh->hasParam("path_to_search_points"))
+        ROS_ERROR("path to yaml file of search points not set"); 
+    ros::param::get("path_to_search_points", path_to_yaml); 
+
     search_planner = new SearchPlanner(nh, path_to_yaml, tolerance);           
 
     int next_goal_index;                                                        

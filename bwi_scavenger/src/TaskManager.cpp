@@ -20,18 +20,25 @@ void TaskManager::addTask(TaskWithStatus *task_with_status) {
     ROS_INFO_STREAM("Task added: " << str); 
 }
 
-void TaskManager::executeNextTask(int timeout) {
-    TaskResult result;
-    std::string record(""); 
+TaskWithStatus* TaskManager::selectNextTask() {
 
     for (int i=0; i<tasks.size(); i++) {
         if (tasks[i].status == ONGOING) {
-            return; 
+            return NULL; // robot works on one task at a time
         } else if (tasks[i].status == TODO) {
             ROS_INFO_STREAM("Start to work on: " << tasks[i].task->task_name); 
-            tasks[i].task->executeTask(timeout, result, record); 
+            tasks[i].status = ONGOING; 
+            return & (tasks[i]); 
         }
     }
+}
+
+void TaskManager::executeNextTask(int timeout, TaskWithStatus *task_with_status) {
+    TaskResult result;
+    std::string record(""); 
+
+    task_with_status->task->executeTask(timeout, result, record); 
+    task_with_status->status = FINISHED; 
 }
 
 void TaskManager::updateStatusGui() {
@@ -40,11 +47,11 @@ void TaskManager::updateStatusGui() {
 
     for (int i=0; i<tasks.size(); i++) {
         if (tasks[i].status == ONGOING) {
-            message += "->\t" + tasks[i].task->task_description; 
+            message += "-->\t\t" + tasks[i].task->task_description; 
         } else if (tasks[i].status == TODO) {
-            message += "\t" + tasks[i].task->task_description; 
+            message += "\t\t" + tasks[i].task->task_description; 
         } else if (tasks[i].status == FINISHED) {
-            message += "done" + tasks[i].task->task_description; 
+            message += "done\t" + tasks[i].task->task_description; 
         }
 
         for (int j=0; j<tasks[i].task->task_parameters.size(); j++) {
