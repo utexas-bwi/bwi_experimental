@@ -14,8 +14,8 @@
 #include "ScavTaskFetchObject.h"
 
 #define TIMEOUT (600) // return failure if not finished in 10 minutes
-#define NUM_OF_TASKS (5)
-#define MAX_NUM_OF_TASKS (50)
+#define NUM_OF_TASKS (8)
+#define NUM_OF_TASK_TYPES (2)
 
 int main(int argc, char **argv) {
 
@@ -30,15 +30,18 @@ int main(int argc, char **argv) {
     while (cnt < NUM_OF_TASKS) {
         cnt++; 
         ros::Duration(0.1).sleep();       
-        int r = rand() % MAX_NUM_OF_TASKS; 
+        int r = rand() % NUM_OF_TASK_TYPES; 
         if (r == 0) {
             Color color = static_cast<Color>(rand() % COLOR_LENGTH);
             task_manager->addTask(new TaskWithStatus(new ScavTaskColorShirt(nh, dir, color), TODO)); 
-        } else if (r == 1) {
+        } 
+        else if (r == 1) {
             task_manager->addTask(new TaskWithStatus(new ScavTaskWhiteBoard(nh, dir), TODO)); 
-        } else if (r == 2) {
-            task_manager->addTask(new TaskWithStatus(new ScavTaskFetchObject(nh, dir), TODO)); 
-        } else {
+        } 
+        // else if (r == 2) {
+        //     task_manager->addTask(new TaskWithStatus(new ScavTaskFetchObject(nh, dir), TODO)); 
+        // } 
+        else {
             cnt--; 
         }
     }
