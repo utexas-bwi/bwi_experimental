@@ -2,8 +2,8 @@
 #define NAVMDP_H
 
 #include "bwi_rl/planning/PredictiveModel.h"
-#include "bwi_nav_reasoning/StateAction.h"
-#include "bwi_nav_reasoning/DomainParser.h"
+#include "StateAction.h"
+#include "DomainParser.h"
 #include <string>
 #include <vector>
 
@@ -117,6 +117,7 @@ NavMdp::NavMdp (std::string static_obs, std::string dynamic_obs,
     
     std::string zoidberg_plog("/home/shiqi/software/p-log/plog/install/plog");
     std::string sony_laptop_plog("/home/szhang/software/p-log/plog/src/plog");
+
     if (boost::filesystem::exists(zoidberg_plog))
         path_to_plog = "cd /tmp && " + zoidberg_plog + " -t "; 
     else if (boost::filesystem::exists(sony_laptop_plog))
@@ -224,10 +225,14 @@ void NavMdp::getTransitionDynamics(const State &s, const Action &a,
     float sum = 0; 
     for (int i=0; i<ns.size(); i++)
         sum += probs[i]; 
+
     if (sum > 1.0 + EPSILON or sum < 1.0 - EPSILON) {
         std::cout << "Error: probabilities do not sum to 1" << std::endl;
         std::cout << "state index: " << s.index << " " << s << "; action: " 
             << a << std::endl; 
+        std::cout << "size of rewards: " << rewards.size() << std::endl; 
+        std::cout << "size of probs: " << probs.size() << std::endl; 
+        std::cout << "size of next-state set: " << ns.size() << std::endl; 
         for (int i=0; i<ns.size(); i++) {
             std::cout << "ns: " << ns[i] << " reward: " << rewards[i] 
                 << " prob: " << probs[i] << std::endl;
@@ -235,6 +240,7 @@ void NavMdp::getTransitionDynamics(const State &s, const Action &a,
     }
     
 }
+
 void NavMdp::getTransitionDynamicsSlow(const State &s, const Action &a, 
     std::vector<State> &ns, std::vector<float> &reward, 
     std::vector<float> &probs) {

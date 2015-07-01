@@ -1,4 +1,4 @@
-#include "bwi_nav_reasoning/DomainParser.h"
+#include "DomainParser.h"
 #include <fstream>
 #include <iostream>
 #include <boost/lexical_cast.hpp>
@@ -137,16 +137,5 @@ void DomainParser::writeToFile(const std::string filename) {
     output_file.close(); 
 
 }
-
-
-
-
-
-
-
-
-
-
-
 
 

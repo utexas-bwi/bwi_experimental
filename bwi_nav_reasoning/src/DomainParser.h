@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 #include <map>
-#include "bwi_nav_reasoning/StateAction.h"
+#include "StateAction.h"
 
 class DomainParser {
 
