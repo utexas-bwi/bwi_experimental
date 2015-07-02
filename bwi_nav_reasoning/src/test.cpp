@@ -29,10 +29,8 @@ int main(int argc, char **argv) {
     start.col = 4; 
 
     std::cout << "creating nav model..." << std::endl; 
-    boost::shared_ptr<NavMdp> model(new NavMdp(
-        "gdc_atrium/static_map_small.txt", "gdc_atrium/dynamic_map_small.txt", 
-        "gdc_atrium/sunny_map_small.txt", "tmp/rl_domain/facts.plog", 
-        term.row, term.col)); 
+    boost::shared_ptr<NavMdp> model(new NavMdp("gdc_atrium/static_map_small.txt", "gdc_atrium/dynamic_map_small.txt", 
+        "gdc_atrium/sunny_map_small.txt", "tmp/rl_domain/facts.plog", term.row, term.col)); 
 
     std::cout << "creating vi estimator..." << std::endl; 
     boost::shared_ptr<VIEstimator<State, Action> > estimator(new VITabularEstimator<State, Action>); 
@@ -44,8 +42,7 @@ int main(int argc, char **argv) {
     vi.computePolicy(); 
 
 
-    std::cout << "best action at state " << start << ", terminal " << term
-        << " is " << vi.getBestAction(start) << std::endl; 
+    std::cout << "best action at state " << start << ", terminal " << term << " is " << vi.getBestAction(start) << std::endl; 
 
     return 0; 
 }

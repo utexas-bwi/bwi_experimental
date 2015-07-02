@@ -28,6 +28,7 @@ struct TransKey {
     Action action; 
 }; 
 
+
 std::ostream& operator<<(std::ostream& stream, const Action& action) {          
   if (action == UP) {                                                           
     stream << "Up";                                                             
@@ -46,18 +47,36 @@ std::ostream& operator<<(std::ostream& stream, const State& s) {
   return stream;                                                                
 }                                                                               
 
+std::ostream& operator<<(std::ostream& stream, const TransKey& key) {
+    stream << key.state;
+    stream << " ";
+    stream << key.action; 
+    return stream; 
+}
+
 
 bool operator<(const TransKey& l, const TransKey& r) {
-    if (l.state.index < r.state.index) return true;
-    if (l.state.index > r.state.index) return false;
+    if (l.state.row < r.state.row) return true;
+    else if (l.state.row > r.state.row) return false;
+    if (l.state.col < r.state.col) return true;
+    else if (l.state.col > r.state.col) return false; 
 
-    int la = l.action, ra = r.action; 
-    if (la < ra) return true;
-    if (la > ra) return false;
+    int lact, ract; 
+    if (l.action == UP) lact = 0;
+    else if (l.action == DOWN) lact = 1;
+    else if (l.action == LEFT) lact = 2;
+    else lact = 3;
+
+    if (r.action == UP) ract = 0;
+    else if (r.action == DOWN) ract = 1;
+    else if (r.action == LEFT) ract = 2;
+    else ract = 3;
+
+    return lact < ract;
 }
 
 bool operator==(const TransKey& l, const TransKey& r) {
-    return (l.state.index == r.state.index && l.action == r.action); 
+    return (l.state.row == r.state.row and l.state.col == r.state.col and l.action == r.action); 
 }
 
 typedef std::map<TransKey, TransValue> TransMap; 
@@ -181,8 +200,7 @@ NavMdp::NavMdp (std::string static_obs, std::string dynamic_obs,
 
             std::cout << "\t" << all_actions[j] << std::endl;
             for (int ii = 0; ii < tmp_next_states.size(); ii++) {
-                std::cout << "\t\tns: " << v.ns[ii] << " reward: " << 
-                    v.rewards[ii] << " prob: " << v.probs[ii] << std::endl; 
+                std::cout << "\t\tns: " << v.ns[ii] << " reward: " << v.rewards[ii] << " prob: " << v.probs[ii] << std::endl; 
             }
             
         }
@@ -217,6 +235,10 @@ void NavMdp::getTransitionDynamics(const State &s, const Action &a,
 
     k.state = s; 
     k.action = a;
+    if (trans_map.find(k) == trans_map.end()) {
+        std::cout << "cannot find key in trans_map" << k << std::endl; 
+    } 
+
     v = trans_map[k]; 
     ns = v.ns;
     rewards = v.rewards;
@@ -228,26 +250,25 @@ void NavMdp::getTransitionDynamics(const State &s, const Action &a,
 
     if (sum > 1.0 + EPSILON or sum < 1.0 - EPSILON) {
         std::cout << "Error: probabilities do not sum to 1" << std::endl;
-        std::cout << "state index: " << s.index << " " << s << "; action: " 
-            << a << std::endl; 
-        std::cout << "size of rewards: " << rewards.size() << std::endl; 
-        std::cout << "size of probs: " << probs.size() << std::endl; 
-        std::cout << "size of next-state set: " << ns.size() << std::endl; 
-        for (int i=0; i<ns.size(); i++) {
-            std::cout << "ns: " << ns[i] << " reward: " << rewards[i] 
-                << " prob: " << probs[i] << std::endl;
-        }
+        // std::cout << "state: " << s << std::endl; 
+        // std::cout << "action: " << a << std::endl; 
+        // std::cout << "state index: " << s.index << " " << s << "; action: " << a << std::endl; 
+        // std::cout << "size of rewards: " << rewards.size() << std::endl; 
+        // std::cout << "size of probs: " << probs.size() << std::endl; 
+        // std::cout << "size of next-state set: " << ns.size() << std::endl; 
+        // for (int i=0; i<ns.size(); i++) {
+        //     std::cout << "ns: " << ns[i] << " reward: " << rewards[i] << " prob: " << probs[i] << std::endl;
+        // }
     }
-    
 }
 
 void NavMdp::getTransitionDynamicsSlow(const State &s, const Action &a, 
     std::vector<State> &ns, std::vector<float> &reward, 
     std::vector<float> &probs) {
 
+    ns.clear();
     // if terminal state, identify the end of this episode
     if (s.row == -1 and s.col == -1) {
-        ns.clear();
         ns.push_back(s);
         reward = std::vector<float>(1, 0.0);
         probs = std::vector<float>(1, 1.0); 
@@ -256,7 +277,6 @@ void NavMdp::getTransitionDynamicsSlow(const State &s, const Action &a,
 
     int r = s.row, c = s.col; 
 
-    ns.clear();
     reward.clear(); 
     probs.clear(); 
 
@@ -268,6 +288,7 @@ void NavMdp::getTransitionDynamicsSlow(const State &s, const Action &a,
     std::vector<int> row_col = std::vector<int>(2, 0); 
     std::map<std::vector<int>, State>::iterator it; 
 
+    // moving down
     row_col[0] = r-1; 
     row_col[1] = c; 
     it = dparser.states_map.find(row_col); 
@@ -277,6 +298,7 @@ void NavMdp::getTransitionDynamicsSlow(const State &s, const Action &a,
         probs.push_back(getProbability(s, a, it->second)); 
     }
 
+    // moving up
     row_col[0] = r+1;
     it = dparser.states_map.find(row_col); 
     if (it != dparser.states_map.end()) {
@@ -284,6 +306,8 @@ void NavMdp::getTransitionDynamicsSlow(const State &s, const Action &a,
         reward.push_back(isTerminalState(it->second) ? success_reward : action_cost);
         probs.push_back(getProbability(s, a, it->second)); 
     }
+
+    // left
     row_col[0] = r; 
     row_col[1] = c-1; 
     it = dparser.states_map.find(row_col); 
@@ -292,6 +316,8 @@ void NavMdp::getTransitionDynamicsSlow(const State &s, const Action &a,
         reward.push_back(isTerminalState(it->second) ? success_reward : action_cost);
         probs.push_back(getProbability(s, a, it->second)); 
     }
+
+    // right
     row_col[1] = c+1; 
     it = dparser.states_map.find(row_col); 
     if (it != dparser.states_map.end()) {
