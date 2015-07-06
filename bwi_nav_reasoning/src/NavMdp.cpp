@@ -124,18 +124,13 @@ void NavMdp::getTransitionDynamics(const State &s, const Action &a,
     for (int i=0; i<ns.size(); i++)
         sum += probs[i]; 
 
-    if (sum > 1.0 + EPSILON or sum < 1.0 - EPSILON) {
+    if (sum > 1.0 + EPSILON or sum < 1.0 - EPSILON)
         std::cout << "Error: probabilities do not sum to 1" << std::endl;
-        // std::cout << "state: " << s << std::endl; 
-        // std::cout << "action: " << a << std::endl; 
-        // std::cout << "state index: " << s.index << " " << s << "; action: " << a << std::endl; 
-        // std::cout << "size of rewards: " << rewards.size() << std::endl; 
-        // std::cout << "size of probs: " << probs.size() << std::endl; 
-        // std::cout << "size of next-state set: " << ns.size() << std::endl; 
-        // for (int i=0; i<ns.size(); i++) {
-        //     std::cout << "ns: " << ns[i] << " reward: " << rewards[i] << " prob: " << probs[i] << std::endl;
-        // }
-    }
+
+    /* for debugging */
+    // std::cout << "state: " << s << " action: " << a << std::endl; 
+    // for (int i=0; i<ns.size(); i++)
+    //     std::cout << "\tns: " << ns[i] << " reward: " << rewards[i] << " prob: " << probs[i] << std::endl;
 }
 
 void NavMdp::getTransitionDynamicsSlow(const State &s, const Action &a, 

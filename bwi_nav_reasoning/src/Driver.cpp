@@ -6,19 +6,20 @@
 #define MAX_INDEX (1000)
 #define GRID_WIDTH (1.0)
 
-Driver::Driver(std::string file_yaml) {
+Driver::Driver(ros::NodeHandle *node_handle, std::string file_yaml) {
 
+    nh = node_handle; 
     std::string path = ros::package::getPath("bwi_nav_reasoning") + "/maps/"; 
     file_coordinates = path + file_yaml; 
     
     ynode = YAML::LoadFile(file_coordinates); 
 
-    nh = new ros::NodeHandle(); 
-    sub_amcl_pose = nh->subscribe("amcl_pose", 100, &Driver::callbackUpdatePosition, this); 
-
+    sub_amcl_pose = nh->subscribe("/amcl_pose", 100, &Driver::callbackUpdatePosition, this); 
     pub_simple_goal = nh->advertise<geometry_msgs::PoseStamped>("/move_base_interruptable_simple/goal", 100);
+    ros::Duration(2.0).sleep(); // give sometime for setting up publishers
 
     curr_row = curr_col = MAX_INDEX; 
+    ros::spinOnce(); 
 }
 
 void Driver::callbackUpdatePosition(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg) {
@@ -27,16 +28,25 @@ void Driver::callbackUpdatePosition(const geometry_msgs::PoseWithCovarianceStamp
     int row, col, min_row = MAX_INDEX, min_col = MAX_INDEX; 
     float min_distance = MAX_FLOAT; 
 
-    for (YAML::const_iterator row_pt = ynode["row_y"].begin(); row_pt != ynode["row_y"].end(); row_pt++) {
+    float x = msg->pose.pose.position.x;
+    float y = msg->pose.pose.position.y;
 
-        float y = msg->pose.pose.position.y;
+    // std::cout << "float x: " << x << std::endl; 
+    // std::cout << "float y: " << y << std::endl; 
 
-        for (YAML::const_iterator col_pt = ynode["col_x"].begin(); col_pt != ynode["col_x"].end(); col_pt++) {
+    for (YAML::const_iterator row_pt = ynode["row_y"].begin(); 
+            row_pt != ynode["row_y"].end(); row_pt++) {
 
-            float x = msg->pose.pose.position.x;
-            float dis = pow(pow(x - col_pt->second.as<float>(), 2.0) + pow(y - row_pt->second.as<float>(), 2.0), 0.5);
+        for (YAML::const_iterator col_pt = ynode["col_x"].begin(); 
+                col_pt != ynode["col_x"].end(); col_pt++) {
 
-            if (dis < GRID_WIDTH / 2.0) {
+            float dis = pow(pow(x - col_pt->second.as<float>(), 2.0) + 
+                            pow(y - row_pt->second.as<float>(), 2.0), 0.5);
+            // std::cout << "row_pt: " << row_pt->second.as<float>() 
+            //     << " col_pt: " << col_pt->second.as<float>() << std::endl; 
+            // std::cout << "dis: " << dis << std::endl; 
+
+            if (dis < GRID_WIDTH) {
                 min_row = row_pt->first.as<int>();
                 min_col = col_pt->first.as<int>(); 
                 min_distance = dis; 
@@ -52,6 +62,7 @@ void Driver::callbackUpdatePosition(const geometry_msgs::PoseWithCovarianceStamp
 
 void Driver::updateCurrentState(State &state) {
 
+    ros::spinOnce(); 
     if (curr_row == MAX_INDEX or curr_col == MAX_INDEX) {
         ROS_ERROR("bwi_nav_reasoning cannot get current position"); 
     } else {
@@ -62,10 +73,15 @@ void Driver::updateCurrentState(State &state) {
 
 bool Driver::moveToGoalState(const State &state) {
 
-    geometry_msgs::PoseStamped msg_goal; 
     float goal_x, goal_y; 
+
+    geometry_msgs::PoseStamped msg_goal; 
+    
+    msg_goal.header.frame_id = "level_mux/map"; 
     msg_goal.pose.position.x = goal_x = ynode["col_x"][state.col].as<float>();
-    msg_goal.pose.position.y = goal_y = ynode["row_y"][state.col].as<float>();
+    msg_goal.pose.position.y = goal_y = ynode["row_y"][state.row].as<float>();
+    msg_goal.pose.orientation.z = 0.0;
+    msg_goal.pose.orientation.w = 1.0;
         
     bool has_arrived = false;
 

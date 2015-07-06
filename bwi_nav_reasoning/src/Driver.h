@@ -13,7 +13,7 @@
 class Driver {
 public:
     Driver() {}
-    Driver(std::string); 
+    Driver(ros::NodeHandle *, std::string); 
 
     std::string file_coordinates; 
     YAML::Node ynode; 
