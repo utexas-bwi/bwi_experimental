@@ -1,4 +1,3 @@
-
 #ifndef STATEACTION_H
 #define STATEACTION_H
 

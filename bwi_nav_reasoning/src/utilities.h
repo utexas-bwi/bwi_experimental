@@ -1,5 +1,5 @@
-#ifndef GETSTDOUTFROMCOMMAND
-#define GETSTDOUTFROMCOMMAND
+#ifndef UTILITIES_H
+#define UTILITIES_H
 
 #include <iostream>
 #include <stdio.h>
