@@ -5,11 +5,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-using namespace std;
+std::string getStdoutFromCommand(std::string cmd) {
 
-string getStdoutFromCommand(string cmd) {
-
-    string data;
+    std::string data;
     FILE * stream;
     const int max_buffer = 256;
     char buffer[max_buffer];
@@ -24,6 +22,5 @@ string getStdoutFromCommand(string cmd) {
     }
     return data;
 }
-
 
 #endif

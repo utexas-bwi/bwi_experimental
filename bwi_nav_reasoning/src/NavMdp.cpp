@@ -1,4 +1,7 @@
 
+#ifndef NAVMDP_CPP
+#define NAVMDP_CPP
+
 NavMdp::NavMdp (std::string static_obs, std::string dynamic_obs, 
         std::string sunny, std::string facts, int term_row, int term_col) {
 
@@ -252,7 +255,7 @@ float NavMdp::getProbability(const State &s, const Action &a, const State &ns) {
 
     int prob_start, prob_end; 
     
-    if (output.find("probability: ") != string::npos) {
+    if (output.find("probability: ") != std::string::npos) {
         prob_start = output.find("probability: ") + 13; 
         prob_end = output.find(" ", prob_start); 
     } else {
@@ -267,3 +270,5 @@ float NavMdp::getProbability(const State &s, const Action &a, const State &ns) {
 std::string NavMdp::generateDescription(unsigned int indentation) {
     return std::string(""); 
 }
+
+#endif

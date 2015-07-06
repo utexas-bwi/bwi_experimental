@@ -16,9 +16,15 @@ include_directories(
     ${Boost_INCLUDE_DIRS}
 )
 
-add_executable(bwi_nav_reasoning_test src/test.cpp src/DomainParser.cpp)
+add_executable(bwi_nav_reasoning_test 
+    src/test.cpp 
+    src/DomainParser.cpp 
+    src/Driver.cpp
+    src/StateAction.cpp
+)
 
 target_link_libraries(bwi_nav_reasoning_test
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
+  yaml-cpp
 )

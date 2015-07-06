@@ -30,7 +30,7 @@ int main(int argc, char **argv) {
 
     Driver *driver = new Driver("gdc_atrium/coordinates_real.yaml"); 
 
-    while (curr != term) {
+    while (false == (curr == term)) {
         driver->updateCurrentState(curr); 
         Action action = vi.getBestAction(curr); 
         std::cout << "best action at state " << curr << ", terminal " << term 
@@ -40,7 +40,7 @@ int main(int argc, char **argv) {
         if (action == UP) next.row += 1;
         else if (action == DOWN) next.row -= 1;
         else if (action == LEFT) next.col -= 1;
-        else (action == RIGHT) next.col += 1; 
+        else if (action == RIGHT) next.col += 1; 
 
         driver->moveToGoalState(next); 
     }

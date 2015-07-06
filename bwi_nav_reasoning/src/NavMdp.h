@@ -29,23 +29,6 @@ struct TransKey {
 
 typedef std::map<TransKey, TransValue> TransMap; 
 
-std::ostream& operator<<(std::ostream& stream, const Action& action) {          
-  if (action == UP) {                                                           
-    stream << "Up";                                                             
-  } else if (action == DOWN) {                                                  
-    stream << "Down";                                                           
-  } else if (action == LEFT) {                                                  
-    stream << "Left";                                                           
-  } else {                                                                      
-    stream << "Right";                                                          
-  }                                                                             
-  return stream;                                                                
-}                                                                               
- 
-std::ostream& operator<<(std::ostream& stream, const State& s) {                
-  stream << "(" << s.row << "," << s.col << ")";
-  return stream;                                                                
-}                                                                               
 
 std::ostream& operator<<(std::ostream& stream, const TransKey& key) {
     stream << key.state;
@@ -77,18 +60,6 @@ bool operator<(const TransKey& l, const TransKey& r) {
 bool operator==(const TransKey& l, const TransKey& r) {
     return (l.state.row == r.state.row and l.state.col == r.state.col and l.action == r.action); 
 }
-
-bool operator<(const State& l, const State& r) {
-    if (l.row < r.row) return true;
-    if (l.row > r.row) return false;
-
-    if (l.col < r.col) return true;
-    if (l.col > r.col) return false;
-}
-                                                                                
-bool operator==(const State& l, const State& r) {                               
-    return (l.row == r.row && l.col == r.col);                                            
-}                                                                               
 
 
 class NavMdp : public PredictiveModel<State, Action> {
@@ -135,6 +106,6 @@ public:
     float getProbability(const State &s, const Action &a, const State &ns); 
 }; 
 
-#include "NavMdp.cpp"
-
 #endif
+
+#include "NavMdp.cpp"

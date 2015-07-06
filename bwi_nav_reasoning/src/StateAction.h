@@ -2,6 +2,7 @@
 #define STATEACTION_H
 
 #include <boost/serialization/access.hpp>
+#include <iostream>
 
 enum Action {UP, DOWN, LEFT, RIGHT}; 
 
@@ -24,5 +25,13 @@ struct State {
 struct TerminalState : State {
     bool success; 
 }; 
+
+std::ostream& operator<<(std::ostream& stream, const Action& action); 
+ 
+std::ostream& operator<<(std::ostream& stream, const State& s); 
+
+bool operator<(const State& l, const State& r);
+                                                                                
+bool operator==(const State& l, const State& r); 
 
 #endif
