@@ -12,11 +12,14 @@ NavMdp::NavMdp (std::string static_obs, std::string dynamic_obs,
     
     std::string zoidberg_plog("/home/shiqi/software/p-log/plog/install/plog");
     std::string sony_laptop_plog("/home/szhang/software/p-log/plog/src/plog");
+    std::string segbot_plog("/home/bwi/Downloads/plog/install/plog"); 
 
     if (boost::filesystem::exists(zoidberg_plog))
         path_to_plog = "cd /tmp && " + zoidberg_plog + " -t "; 
     else if (boost::filesystem::exists(sony_laptop_plog))
         path_to_plog = "cd /tmp && " + sony_laptop_plog + " -t "; 
+    else if (boost::filesystem::exists(segbot_plog))
+        path_to_plog = "cd /tmp && " + segbot_plog + " -t "; 
     else
         std::cout << "cannot find plog installed" << std::endl; 
 
