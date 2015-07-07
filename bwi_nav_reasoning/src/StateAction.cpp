@@ -24,6 +24,7 @@ bool operator<(const State& l, const State& r) {
 
     if (l.col < r.col) return true;
     if (l.col > r.col) return false;
+    return false; 
 }
                                                                                 
 bool operator==(const State& l, const State& r) {                               

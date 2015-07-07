@@ -16,7 +16,7 @@ NavMdp::NavMdp (std::string static_obs, std::string dynamic_obs,
     if (boost::filesystem::exists(zoidberg_plog))
         path_to_plog = "cd /tmp && " + zoidberg_plog + " -t "; 
     else if (boost::filesystem::exists(sony_laptop_plog))
-        path_to_plog + "cd /tmp && " + sony_laptop_plog + " -t "; 
+        path_to_plog = "cd /tmp && " + sony_laptop_plog + " -t "; 
     else
         std::cout << "cannot find plog installed" << std::endl; 
 
@@ -249,7 +249,7 @@ float NavMdp::getProbability(const State &s, const Action &a, const State &ns) {
     std::string output = getStdoutFromCommand(cmd); 
 
     int prob_start, prob_end; 
-    
+
     if (output.find("probability: ") != std::string::npos) {
         prob_start = output.find("probability: ") + 13; 
         prob_end = output.find(" ", prob_start); 
