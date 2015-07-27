@@ -1,9 +1,0 @@
-int32 RED = 1
-int32 BLUE = 2
-int32 GREEN = 3
-int32 YELLOW = 4
-
-int32 color
----
-
-string path_to_image
