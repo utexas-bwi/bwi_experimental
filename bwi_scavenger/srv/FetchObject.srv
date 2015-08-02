@@ -1,9 +1,0 @@
-
-string room_from
-string object_name
-string room_to
-
----
-
-string path_to_log
-
