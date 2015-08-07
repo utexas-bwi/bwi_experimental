@@ -1,0 +1,15 @@
+<launch>
+
+    <arg name="static" default="gdc_atrium/map_static.txt" />
+    <arg name="dynamic" default="gdc_atrium/map_dynamic.txt" />
+    <arg name="sunny" default="gdc_atrium/map_sunny.txt" />
+    <arg name="coord" default="gdc_atrium/coordinates_real.yaml" />
+
+    <param name="path_static" value="$(arg static)" />
+    <param name="path_dynamic" value="$(arg dynamic)" />
+    <param name="path_sunny" value="$(arg sunny)" />
+    <param name="path_coord" value="$(arg coord)" />
+
+    <node name="bwi_nav_reasoning_test" pkg="bwi_nav_reasoning" type="bwi_nav_reasoning_test" output="screen" />
+
+</launch>
