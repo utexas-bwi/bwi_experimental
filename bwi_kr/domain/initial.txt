@@ -1,9 +1,0 @@
-
-open(D,0) :- not -open(D,0), door(D).
-
-% -facing(D,0) :- door(D).
-% -beside(D,0) :- door(D).
--facing(D,0) :- door(D), door(D1), facing(D1,0), D!=D1.
--facing(D,0) :- not facing(D,0), door(D). 
--beside(D,0) :- door(D), door(D1), beside(D1,0), D!=D1.
--beside(D,0) :- not beside(D,0), door(D).

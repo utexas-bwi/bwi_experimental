@@ -1,0 +1,27 @@
+
+state={0..44}. 
+terminal(44). 
+
+leftof(0,1). 
+leftof(3,4). leftof(4,5). leftof(5,6). leftof(6,7). leftof(7,8). leftof(8,9). 
+leftof(10,11). leftof(11,12). leftof(12,13). leftof(13,14). leftof(14,15). leftof(15,16). 
+leftof(17,18). leftof(18,19). leftof(19,20). leftof(20,21). leftof(21,22). leftof(22,23). 
+leftof(24,25). leftof(25,26). leftof(26,27). 
+leftof(29,30). leftof(30,31). leftof(31,32). leftof(32,33). leftof(33,34). leftof(34,35). 
+leftof(40,41). leftof(41,42). leftof(42,43). 
+
+belowof(3,0). belowof(10,3). belowof(17,10). belowof(24,17). belowof(29,24). 
+    belowof(36,29). belowof(38,36). belowof(40,38). 
+belowof(4,1). belowof(11,4). belowof(18,11). belowof(25,18). belowof(30,25). 
+belowof(12,5). belowof(19,12). belowof(26,19). belowof(31,26). 
+belowof(6,2). belowof(13,6). belowof(20,13). belowof(27,20). belowof(32,27). 
+    belowof(37,32). belowof(39,37). belowof(43,39). 
+belowof(14,7). belowof(21,14). 
+belowof(15,8). belowof(22,15). 
+belowof(16,9). belowof(23,16). belowof(28,23). belowof(35,28). 
+
+sunny(3). sunny(4). sunny(10). sunny(11). sunny(17). sunny(18). sunny(24). 
+sunny(25). sunny(29). sunny(30). sunny(36). sunny(38). sunny(40). 
+
+human(28). human(35). human(42).
+

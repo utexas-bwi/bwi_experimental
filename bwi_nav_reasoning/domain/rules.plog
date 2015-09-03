@@ -1,0 +1,36 @@
+#domain state(S;S1;S2). 
+
+action={up,down,left,right}. 
+
+nextto(S,S). 
+nextto(S1,S2) :- nextto(S2,S1), S1<>S2. 
+nextto(S1,S2) :- leftof(S1,S2). 
+nextto(S1,S2) :- belowof(S1,S2). 
+nextto(S1,S2)=false :- not nextto(S1,S2). 
+
+valid(S1,S2) :- nextto(S1,S2). 
+valid(S1,S2) :- terminal(S2). 
+
+sunny(S)=false :- not sunny(S). 
+human(S)=false :- not human(S). 
+
+curr_a: action. 
+[rca] random(curr_a). 
+
+curr_s:state. 
+[rcl] random(curr_s). 
+
+next_s:state. 
+[rnl] random(next_s:{S_: valid(S,S_)}) :- curr_s=S. 
+[rnl] pr(next_s=S1 | sunny(S2)=false, human(S1)=false, curr_a=up,    curr_s=S2, belowof(S2,S1)) = 8/10. 
+[rnl] pr(next_s=S1 | sunny(S2)=false, human(S1)=false, curr_a=down,  curr_s=S2, belowof(S1,S2)) = 8/10. 
+[rnl] pr(next_s=S1 | sunny(S2)=false, human(S1)=false, curr_a=left,  curr_s=S2, leftof(S1,S2)) = 8/10. 
+[rnl] pr(next_s=S1 | sunny(S2)=false, human(S1)=false, curr_a=right, curr_s=S2, leftof(S2,S1)) = 8/10. 
+
+[rnl] pr(next_s=S2 | sunny(S2)=false, human(S1), curr_a=up,    curr_s=S2, belowof(S2,S1)) = 8/10. 
+[rnl] pr(next_s=S2 | sunny(S2)=false, human(S1), curr_a=down,  curr_s=S2, belowof(S1,S2)) = 8/10. 
+[rnl] pr(next_s=S2 | sunny(S2)=false, human(S1), curr_a=left,  curr_s=S2, leftof(S1,S2)) = 8/10. 
+[rnl] pr(next_s=S2 | sunny(S2)=false, human(S1), curr_a=right, curr_s=S2, leftof(S2,S1)) = 8/10. 
+
+[rnl] pr(next_s=S1 | terminal(S1), sunny(S2), curr_s=S2) = 9/10. 
+[rnl] pr(next_s=S1 | terminal(S1), sunny(S2)=false, curr_s=S2) = 1/10. 
