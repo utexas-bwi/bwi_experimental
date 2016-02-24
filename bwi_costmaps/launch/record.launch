@@ -1,7 +1,7 @@
 <launch>
-  <node name="record" pkg="bwi_logging" type="record">
+  <node name="costmap_record" pkg="bwi_logging" type="record">
     <param name="topics"    value="/move_base/global_costmap/costmap /move_base/global_costmap/costmap_updates"/>
-    <param name="directory" value="" />
+    <param name="directory" value="~/costmaps" />
     <param name="prefix"    value="costmap" />
   </node>
 </launch>
