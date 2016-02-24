@@ -5,6 +5,7 @@ License: BSD
 """
 from __future__ import print_function
 from nav_msgs.msg import OccupancyGrid
+from map_msgs.msg import OccupancyGridUpdate
 import rospy
 import sys
 import rosbag
@@ -15,12 +16,46 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 
 """
+Display a costmap
+"""
+def viewCostmap(costmap1, costmap2):
+    fig = plt.figure(1, figsize=(16,6))
+
+    ax = fig.add_subplot(1,1,1)
+    ax.set_title("Costmap Heatmap")
+    ax.set_aspect('equal')
+    plt.imshow(costmap1)
+
+    cax = fig.add_axes([0.1, 0.1, 0.96, 0.8])
+    cax.get_xaxis().set_visible(False)
+    cax.get_yaxis().set_visible(False)
+    cax.patch.set_alpha(0)
+    cax.set_frame_on(False)
+    plt.colorbar(orientation='vertical',drawedges=False)
+
+    fig = plt.figure(2, figsize=(16,6))
+
+    ax = fig.add_subplot(1,1,1)
+    ax.set_title("Costmap Heatmap")
+    ax.set_aspect('equal')
+    plt.imshow(costmap2)
+
+    cax = fig.add_axes([0.1, 0.1, 0.96, 0.8])
+    cax.get_xaxis().set_visible(False)
+    cax.get_yaxis().set_visible(False)
+    cax.patch.set_alpha(0)
+    cax.set_frame_on(False)
+    plt.colorbar(orientation='vertical',drawedges=False)
+
+    plt.show()
+
+"""
 Return a numpy matrix containing the costmap
 """
 def constructCostmap(costmap_msg):
-    hdr  = costmap.header
-    info = costmap.info
-    data = costmap.data
+    hdr  = costmap_msg.header
+    info = costmap_msg.info
+    data = costmap_msg.data
 
     width  = info.width
     height = info.height
@@ -31,7 +66,32 @@ def constructCostmap(costmap_msg):
 Takes a costmap and a update message and applies the patch
 """
 def applyPatch(costmap, updateMsg):
-    return
+    updateData   = updateMsg.data
+    updateWidth  = updateMsg.width
+    updateHeight = updateMsg.height
+    updateX      = updateMsg.x
+    updateY      = updateMsg.y
+
+    costmapHeight, costmapWidth = costmap.shape
+
+#    costmapFlat = costmap.reshape(-1)
+#
+#    data = np.array(updateData)
+#    index = updateX + updateY * updateWidth
+#    indeces = range(index, index + updateWidth * updateHeight)
+#
+#    np.put(costmapFlat, indeces, data)
+#
+#    costmap = costmapFlat.reshape((costmapHeight, costmapWidth))
+    
+    print("uW:%d\tuH:%d\tcmW:%d\tcmH:%d\n" % (updateWidth, updateHeight, costmapWidth, costmapHeight))
+
+    for i in xrange(len(updateData)):
+        #if i%updateWidth < costmapWidth and i/updateWidth < costmapHeight:
+        # THIS IS WHERE THE ERROR IS
+        if updateWidth == 1857 and i == 573:
+            print(i)
+        costmap[i%updateWidth, i/updateWidth] = 1#updateData[i]
 
 def get_costmaps():
     # Init ros node
@@ -58,16 +118,20 @@ def get_costmaps():
 
     # Read the bag
     costmap = None
+    originalCostmap = None
     for topic, msg, time in bag.read_messages():
         if topic == "/move_base/global_costmap/costmap":
-            costmap = constructCostmap
+            costmap = constructCostmap(msg)
+            originalCostmap = np.copy(costmap)
         else:
             if costmap == None:
                 rospy.logerror("Found a costmap update without first finding a costmap")
                 return 8
             else:
                 applyPatch(costmap, msg)
-                continue
+
+    # View original vs final costmap
+    viewCostmap(originalCostmap, costmap)
 
     # Close the bag
     bag.close()
