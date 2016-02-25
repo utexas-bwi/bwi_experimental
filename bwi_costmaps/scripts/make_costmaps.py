@@ -74,24 +74,14 @@ def applyPatch(costmap, updateMsg):
 
     costmapHeight, costmapWidth = costmap.shape
 
-#    costmapFlat = costmap.reshape(-1)
-#
-#    data = np.array(updateData)
-#    index = updateX + updateY * updateWidth
-#    indeces = range(index, index + updateWidth * updateHeight)
-#
-#    np.put(costmapFlat, indeces, data)
-#
-#    costmap = costmapFlat.reshape((costmapHeight, costmapWidth))
-    
-    print("uW:%d\tuH:%d\tcmW:%d\tcmH:%d\n" % (updateWidth, updateHeight, costmapWidth, costmapHeight))
+    # skip map resets
+    if updateWidth == costmapWidth and updateHeight == costmapHeight:
+        print("skipping map reset")
+        return
 
+    # apply the patch
     for i in xrange(len(updateData)):
-        #if i%updateWidth < costmapWidth and i/updateWidth < costmapHeight:
-        # THIS IS WHERE THE ERROR IS
-        if updateWidth == 1857 and i == 573:
-            print(i)
-        costmap[i%updateWidth, i/updateWidth] = 1#updateData[i]
+        costmap[i/updateWidth+updateY, i%updateWidth+updateX] = updateData[i]
 
 def get_costmaps():
     # Init ros node
