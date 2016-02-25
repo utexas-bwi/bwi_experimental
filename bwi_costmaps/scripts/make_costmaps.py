@@ -16,38 +16,28 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 
 """
-Display a costmap
+Display all views
 """
-def viewCostmap(costmap1, costmap2):
-    fig = plt.figure(1, figsize=(16,6))
-
-    ax = fig.add_subplot(1,1,1)
-    ax.set_title("Costmap Heatmap")
-    ax.set_aspect('equal')
-    plt.imshow(costmap1)
-
-    cax = fig.add_axes([0.1, 0.1, 0.96, 0.8])
-    cax.get_xaxis().set_visible(False)
-    cax.get_yaxis().set_visible(False)
-    cax.patch.set_alpha(0)
-    cax.set_frame_on(False)
-    plt.colorbar(orientation='vertical',drawedges=False)
-
-    fig = plt.figure(2, figsize=(16,6))
-
-    ax = fig.add_subplot(1,1,1)
-    ax.set_title("Costmap Heatmap")
-    ax.set_aspect('equal')
-    plt.imshow(costmap2)
-
-    cax = fig.add_axes([0.1, 0.1, 0.96, 0.8])
-    cax.get_xaxis().set_visible(False)
-    cax.get_yaxis().set_visible(False)
-    cax.patch.set_alpha(0)
-    cax.set_frame_on(False)
-    plt.colorbar(orientation='vertical',drawedges=False)
-
+def displayViews():
     plt.show()
+
+"""
+Create a costmap view
+"""
+def viewCostmap(costmap, title, num):
+    fig = plt.figure(num, figsize=(16,6))
+
+    ax = fig.add_subplot(1,1,1)
+    ax.set_title(title)
+    ax.set_aspect('equal')
+    plt.imshow(costmap)
+
+    cax = fig.add_axes([0.1, 0.1, 0.96, 0.8])
+    cax.get_xaxis().set_visible(False)
+    cax.get_yaxis().set_visible(False)
+    cax.patch.set_alpha(0)
+    cax.set_frame_on(False)
+    plt.colorbar(orientation='vertical',drawedges=False)
 
 """
 Return a numpy matrix containing the costmap
@@ -61,6 +51,13 @@ def constructCostmap(costmap_msg):
     height = info.height
     
     return np.array(data).reshape((height,width))
+
+"""
+Calculate the difference between two costmaps and
+return a costmap with the diff
+"""
+def costmapDiff(costmap1, costmap2):
+    return np.subtract(costmap2, costmap1)
 
 """
 Takes a costmap and a update message and applies the patch
@@ -116,16 +113,25 @@ def get_costmaps():
         else:
             if costmap == None:
                 rospy.logerror("Found a costmap update without first finding a costmap")
-                return 8
+                return -1
             else:
                 applyPatch(costmap, msg)
 
-    # View original vs final costmap
-    viewCostmap(originalCostmap, costmap)
+    # Create views for the original and patched costmaps
+    viewCostmap(originalCostmap, "Original Costmap", 1)
+    viewCostmap(costmap, "Patched Costmap", 2)
+
+    # Calculate Diff and create a view for it
+    diffmap = costmapDiff(originalCostmap, costmap)
+    viewCostmap(diffmap, "Difference", 3)
+
+    # Display the views
+    displayViews()
 
     # Close the bag
     bag.close()
 
+    # Exit
     return 0
 
 if __name__ == '__main__':
