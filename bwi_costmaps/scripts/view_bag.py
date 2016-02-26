@@ -14,7 +14,7 @@ import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
-def view(costmap, old):
+def view(costmap):
     hdr  = costmap.header
     info = costmap.info
     data = costmap.data
@@ -29,7 +29,7 @@ def view(costmap, old):
     # TODO: will need to reconstruct the matrix from the 1D array
     matrix = np.array(data).reshape((height,width))
 
-    fig = plt.figure(1, figsize=(16,6))
+    fig = plt.figure(figsize=(16,6))
 
     ax = fig.add_subplot(1,1,1)
     ax.set_title("Costmap Heatmap")
@@ -41,7 +41,6 @@ def view(costmap, old):
     cax.get_yaxis().set_visible(False)
     cax.patch.set_alpha(0)
     cax.set_frame_on(False)
-
     plt.colorbar(orientation='vertical',drawedges=False)
 
     plt.show()
@@ -71,6 +70,7 @@ def get_costmaps():
 
     # Read the bag
     for topic, msg, time in bag.read_messages():
+      if topic == "/move_base/global_costmap/costmap":
         view(msg)
 
     # Close the bag
