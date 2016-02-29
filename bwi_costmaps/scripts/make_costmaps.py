@@ -156,7 +156,7 @@ def get_costmaps():
     viewCostmap(diffmap, "Difference (red is added, blue is removed)", 3)
 
     # Create a view for the entropy map
-    viewCostmap(entropymap, "Entropy", 4)
+    viewCostmap(entropymap, "Entropy (highe means more uncertainty)", 4)
 
     # Display the views
     displayViews()
