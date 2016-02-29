@@ -73,7 +73,8 @@ def applyPatch(costmap, updateMsg):
 
     # skip map resets
     if updateWidth == costmapWidth and updateHeight == costmapHeight:
-        print("skipping map reset")
+        sys.stdout.write(".")
+        sys.stdout.flush()
         return
 
     # apply the patch
@@ -111,11 +112,12 @@ def get_costmaps():
             costmap = constructCostmap(msg)
             originalCostmap = np.copy(costmap)
         else:
-            if costmap == None:
+            if costmap is None:
                 rospy.logerror("Found a costmap update without first finding a costmap")
                 return -1
             else:
                 applyPatch(costmap, msg)
+    print("Done")
 
     # Create views for the original and patched costmaps
     viewCostmap(originalCostmap, "Original Costmap", 1)
@@ -123,7 +125,7 @@ def get_costmaps():
 
     # Calculate Diff and create a view for it
     diffmap = costmapDiff(originalCostmap, costmap)
-    viewCostmap(diffmap, "Difference", 3)
+    viewCostmap(diffmap, "Difference (red is added, blue is removed)", 3)
 
     # Display the views
     displayViews()
