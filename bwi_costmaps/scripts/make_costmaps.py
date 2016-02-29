@@ -53,6 +53,20 @@ def constructCostmap(costmap_msg):
     return np.array(data).reshape((height,width))
 
 """
+Construct an entropy map that is the
+same size as the costmap
+"""
+def constructEntropymap(costmap_msg):
+    hdr  = costmap_msg.header
+    info = costmap_msg.info
+    data = costmap_msg.data
+
+    width  = info.width
+    height = info.height
+    
+    return np.zeros((height,width),dtype=np.int)
+
+"""
 Calculate the difference between two costmaps and
 return a costmap with the diff
 """
@@ -61,8 +75,9 @@ def costmapDiff(costmap1, costmap2):
 
 """
 Takes a costmap and a update message and applies the patch
+as well as calculates the entropy
 """
-def applyPatch(costmap, updateMsg):
+def applyPatch(entropymap, costmap, updateMsg):
     updateData   = updateMsg.data
     updateWidth  = updateMsg.width
     updateHeight = updateMsg.height
@@ -79,7 +94,18 @@ def applyPatch(costmap, updateMsg):
 
     # apply the patch
     for i in xrange(len(updateData)):
-        costmap[i/updateWidth+updateY, i%updateWidth+updateX] = updateData[i]
+        # indexes
+        xindex = i/updateWidth + updateY
+        yindex = i%updateWidth + updateX
+
+        # calculate entropy
+        old = costmap[i/updateWidth+updateY, i%updateWidth+updateX] 
+        new = updateData[i]
+        diff = 1 if (old != new) else 0
+        entropymap[xindex, yindex] += diff
+
+        # apply patch
+        costmap[xindex, yindex] = updateData[i]
 
 def get_costmaps():
     # Init ros node
@@ -93,7 +119,7 @@ def get_costmaps():
 
     # Ensure the bag was specified
     if whichBag == None:
-        print("No bag specified", file=sys.stderr)
+        rospy.logerror("No bag specified")
         return 9
     rospy.loginfo("Bag to view: " + whichBag)
 
@@ -106,17 +132,19 @@ def get_costmaps():
 
     # Read the bag
     costmap = None
+    entropymap = None
     originalCostmap = None
     for topic, msg, time in bag.read_messages():
         if topic == "/move_base/global_costmap/costmap":
             costmap = constructCostmap(msg)
             originalCostmap = np.copy(costmap)
+            entropymap = constructEntropymap(msg)
         else:
             if costmap is None:
                 rospy.logerror("Found a costmap update without first finding a costmap")
                 return -1
             else:
-                applyPatch(costmap, msg)
+                applyPatch(entropymap, costmap, msg)
     print("Done")
 
     # Create views for the original and patched costmaps
@@ -126,6 +154,9 @@ def get_costmaps():
     # Calculate Diff and create a view for it
     diffmap = costmapDiff(originalCostmap, costmap)
     viewCostmap(diffmap, "Difference (red is added, blue is removed)", 3)
+
+    # Create a view for the entropy map
+    viewCostmap(entropymap, "Entropy", 4)
 
     # Display the views
     displayViews()
