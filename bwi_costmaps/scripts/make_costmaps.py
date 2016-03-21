@@ -6,6 +6,7 @@ License: BSD
 from __future__ import print_function
 from nav_msgs.msg import OccupancyGrid
 from map_msgs.msg import OccupancyGridUpdate
+from scipy.misc import imread
 import rospy
 import sys
 import rosbag
@@ -14,6 +15,7 @@ import pprint
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import copy
 
 """
 Display all views
@@ -27,10 +29,17 @@ Create a costmap view
 def viewCostmap(costmap, title, num):
     fig = plt.figure(num, figsize=(16,6))
 
+    img = imread("3ne.png")
+    plt.imshow(img, cmap="gray", zorder=0)
+
+    cmap = copy.copy(plt.cm.get_cmap("brg"))
+    cmap.set_bad(alpha=0)
+    cmap.set_under(alpha=0)
+
     ax = fig.add_subplot(1,1,1)
     ax.set_title(title)
     ax.set_aspect('equal')
-    plt.imshow(costmap)
+    plt.imshow(costmap, interpolation='none', vmin=0.0000001, cmap=cmap, zorder=1, alpha=0.9)
 
     cax = fig.add_axes([0.1, 0.1, 0.96, 0.8])
     cax.get_xaxis().set_visible(False)
@@ -67,6 +76,21 @@ def constructEntropymap(costmap_msg):
     return np.zeros((height,width),dtype=np.int)
 
 """
+Normalize an entropy map based on where the most updates happened
+"""
+def correctEntropy(entropymap, updatemap):
+    height, width = entropymap.shape
+    corrected = np.zeros((height, width), dtype=np.float64)
+    #np.divide(entropymap, updatemap, corrected)
+    for x in xrange(height):
+        for y in xrange(width):
+            e = float(entropymap[x,y])
+            u = float(updatemap[x,y])
+            corrected[x,y] = 0 if u == 0 else e / u
+    return corrected
+
+
+"""
 Calculate the difference between two costmaps and
 return a costmap with the diff
 """
@@ -77,7 +101,7 @@ def costmapDiff(costmap1, costmap2):
 Takes a costmap and a update message and applies the patch
 as well as calculates the entropy
 """
-def applyPatch(entropymap, costmap, updateMsg):
+def applyPatch(entropymap, updatemap, costmap, updateMsg):
     updateData   = updateMsg.data
     updateWidth  = updateMsg.width
     updateHeight = updateMsg.height
@@ -103,6 +127,9 @@ def applyPatch(entropymap, costmap, updateMsg):
         new = updateData[i]
         diff = 1 if (old != new) else 0
         entropymap[xindex, yindex] += diff
+
+        # add to updatemap
+        updatemap[xindex, yindex] += 1
 
         # apply patch
         costmap[xindex, yindex] = updateData[i]
@@ -131,24 +158,27 @@ def get_costmaps():
     pp.pprint(info)
 
     # Read the bag
-    costmap = None
+    costmap    = None
     entropymap = None
+    updatemap  = None
     originalCostmap = None
     for topic, msg, time in bag.read_messages():
         if topic == "/move_base/global_costmap/costmap":
             costmap = constructCostmap(msg)
             originalCostmap = np.copy(costmap)
             entropymap = constructEntropymap(msg)
+            updatemap  = constructEntropymap(msg)
         else:
             if costmap is None:
                 rospy.logerror("Found a costmap update without first finding a costmap")
                 return -1
             else:
-                applyPatch(entropymap, costmap, msg)
+                applyPatch(entropymap, updatemap, costmap, msg)
     print("Done")
 
+
     # Create views for the original and patched costmaps
-    viewCostmap(originalCostmap, "Original Costmap", 1)
+    #viewCostmap(originalCostmap, "Original Costmap", 1)
     viewCostmap(costmap, "Patched Costmap", 2)
 
     # Calculate Diff and create a view for it
@@ -156,7 +186,14 @@ def get_costmaps():
     viewCostmap(diffmap, "Difference (red is added, blue is removed)", 3)
 
     # Create a view for the entropy map
-    viewCostmap(entropymap, "Entropy (highe means more uncertainty)", 4)
+    viewCostmap(entropymap, "Entropy (higher means more uncertainty)", 4)
+
+    # Create a view for the update map
+    viewCostmap(updatemap, "Updatemap (which areas had the most updates)", 5)
+
+    # Create a corrected entropy map
+    correctedEntropy = correctEntropy(entropymap, updatemap)
+    viewCostmap(correctedEntropy, "Corrected entropy map", 6)
 
     # Display the views
     displayViews()
