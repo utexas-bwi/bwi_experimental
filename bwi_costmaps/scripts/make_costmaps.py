@@ -49,6 +49,61 @@ def viewCostmap(costmap, title, num):
     plt.colorbar(orientation='vertical',drawedges=False)
 
 """
+Deflate an inflated costmap
+"""
+def deflateMap(costmap):
+    height, width = costmap.shape
+    edgemap = np.zeros((height, width))
+    wallmap = np.zeros((height, width))
+
+    # generate the edgemap
+    for x in xrange(height):
+        for y in xrange(width):
+            # if the current pixel is on
+            if costmap[x,y] > 0:
+                u = costmap[x,y+1]
+                d = costmap[x,y-1]
+                l = costmap[x-1,y]
+                r = costmap[x+1,y]
+                tl = costmap[x-1,y+1]
+                tr = costmap[x+1,y+1]
+                bl = costmap[x-1,y-1]
+                br = costmap[x+1,y-1]
+                # and one of the neighboring pixels is off
+                if u == 0 or d == 0 or l == 0 or r == 0 or tl == 0 or tr == 0 or bl == 0 or br == 0:
+                    # turn on the pixel
+                    edgemap[x,y] = 1
+
+    # generate the wallmap
+    # iterate through all the edges, and if they are manhattan distance =
+    # radius of robot away from an on pixel in the original costmap (and every
+    # point in the path to that pixel is on) then turn on the center in the
+    # wallmap
+
+    return edgemap
+    
+"""
+Return a static map
+"""
+def staticMap(costmap, entropymap):
+    return np.subtract(costmap, entropymap)
+
+"""
+Return average map
+"""
+def averageMap(averagemap, updatemap):
+    #return np.divide(averagemap, updatemap)
+
+    height, width = averagemap.shape
+    corrected = np.zeros((height, width), dtype=np.float64)
+    for x in xrange(height):
+        for y in xrange(width):
+            e = float(averagemap[x,y])
+            u = float(updatemap[x,y])
+            corrected[x,y] = 0 if u == 0 else e / u
+    return corrected
+
+"""
 Return a numpy matrix containing the costmap
 """
 def constructCostmap(costmap_msg):
@@ -101,7 +156,7 @@ def costmapDiff(costmap1, costmap2):
 Takes a costmap and a update message and applies the patch
 as well as calculates the entropy
 """
-def applyPatch(entropymap, updatemap, costmap, updateMsg):
+def applyPatch(entropymap, updatemap, costmap, averagemap, updateMsg):
     updateData   = updateMsg.data
     updateWidth  = updateMsg.width
     updateHeight = updateMsg.height
@@ -131,8 +186,50 @@ def applyPatch(entropymap, updatemap, costmap, updateMsg):
         # add to updatemap
         updatemap[xindex, yindex] += 1
 
+        # add to averageMap
+        averagemap[xindex, yindex] += 1 if (new > 50) else 0
+
         # apply patch
         costmap[xindex, yindex] = updateData[i]
+
+def deflate():
+    # Init ros node
+    rospy.init_node('bag_viewer')
+
+    # Get the bag to view
+    whichBag = rospy.get_param("~bag", None)
+
+    # Ensure the bag was specified
+    if whichBag == None:
+        rospy.logerror("No bag specified")
+        return 9
+    rospy.loginfo("Bag to view: " + whichBag)
+
+    # Load the bag
+    bag = rosbag.Bag(whichBag)
+
+    # Get bag information
+    info = yaml.load(bag._get_yaml_info())
+
+    # Read the bag
+    costmap    = None
+    originalCostmap = None
+    for topic, msg, time in bag.read_messages():
+        if topic == "/move_base/global_costmap/costmap":
+            costmap = constructCostmap(msg)
+            originalCostmap = np.copy(costmap)
+    print("Done")
+
+    dmap = deflateMap(costmap)
+
+    viewCostmap(originalCostmap, "Original Costmap", 1)
+    viewCostmap(dmap, "Deflated Costmap", 2)
+
+    # Display the views
+    displayViews()
+
+    return
+
 
 def get_costmaps():
     # Init ros node
@@ -168,12 +265,13 @@ def get_costmaps():
             originalCostmap = np.copy(costmap)
             entropymap = constructEntropymap(msg)
             updatemap  = constructEntropymap(msg)
+            averagemap = constructEntropymap(msg)
         else:
             if costmap is None:
                 rospy.logerror("Found a costmap update without first finding a costmap")
                 return -1
             else:
-                applyPatch(entropymap, updatemap, costmap, msg)
+                applyPatch(entropymap, updatemap, costmap, averagemap, msg)
     print("Done")
 
 
@@ -183,10 +281,10 @@ def get_costmaps():
 
     # Calculate Diff and create a view for it
     diffmap = costmapDiff(originalCostmap, costmap)
-    viewCostmap(diffmap, "Difference (red is added, blue is removed)", 3)
+    #viewCostmap(diffmap, "Difference (red is added, blue is removed)", 3)
 
     # Create a view for the entropy map
-    viewCostmap(entropymap, "Entropy (higher means more uncertainty)", 4)
+    #viewCostmap(entropymap, "Entropy (higher means more uncertainty)", 4)
 
     # Create a view for the update map
     viewCostmap(updatemap, "Updatemap (which areas had the most updates)", 5)
@@ -194,6 +292,16 @@ def get_costmaps():
     # Create a corrected entropy map
     correctedEntropy = correctEntropy(entropymap, updatemap)
     viewCostmap(correctedEntropy, "Corrected entropy map", 6)
+
+
+    # Create average map
+    averageM = averageMap(averagemap, updatemap)
+    viewCostmap(averagemap, "Average costmap", 8)
+    viewCostmap(averageM, "Average costmap 2", 9)
+
+    # Create negative map
+    staticM = staticMap(averageM, entropymap)
+    viewCostmap(staticM, "Map of static objects", 10)
 
     # Display the views
     displayViews()
@@ -206,6 +314,7 @@ def get_costmaps():
 
 if __name__ == '__main__':
     try:
-        get_costmaps()
+        deflate()
+        #get_costmaps()
     except rospy.ROSInterruptException:
         pass
