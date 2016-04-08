@@ -1,0 +1,4 @@
+inflation: 1.0m (segbot_navigation/config/eband/costmap_common_params.yaml)
+resolution: 0.05m/px (bwi_common/utexas_gdc/maps/real/3ne/3ne.yaml)
+
+inflation = 20px
