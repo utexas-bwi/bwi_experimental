@@ -17,6 +17,8 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import copy
 
+secondFloor = False
+
 """
 Display all views
 """
@@ -29,8 +31,13 @@ Create a costmap view
 def viewCostmap(costmap, title, num):
     fig = plt.figure(num, figsize=(16,6))
 
-    img = imread("3ne.png")
-    plt.imshow(img, cmap="gray", zorder=0)
+    if secondFloor:
+        img = imread("2b.png")
+        plt.imshow(img, cmap="gray", zorder=0, aspect="equal")
+    else:
+        img = imread("3ne.png")
+        plt.imshow(img, cmap="gray", zorder=0)
+
 
     cmap = copy.copy(plt.cm.get_cmap("brg"))
     cmap.set_bad(alpha=0)
@@ -39,7 +46,14 @@ def viewCostmap(costmap, title, num):
     ax = fig.add_subplot(1,1,1)
     ax.set_title(title)
     ax.set_aspect('equal')
-    plt.imshow(costmap, interpolation='none', vmin=0.0000001, cmap=cmap, zorder=1, alpha=0.9)
+
+    if secondFloor:
+        c = np.copy(costmap)
+        c = np.roll(costmap,10,axis=1)
+        c = np.roll(costmap,200,axis=0)
+        plt.imshow(c, interpolation='none', vmin=0.0000001, cmap=cmap, zorder=1, alpha=0.9)
+    else:
+        plt.imshow(costmap, interpolation='none', vmin=0.0000001, cmap=cmap, zorder=1, alpha=0.9)
 
     cax = fig.add_axes([0.1, 0.1, 0.96, 0.8])
     cax.get_xaxis().set_visible(False)
@@ -79,8 +93,12 @@ def deflateMap(costmap):
     # radius of robot away from an on pixel in the original costmap (and every
     # point in the path to that pixel is on) then turn on the center in the
     # wallmap
+#    for x in xrange(height):
+#        for y in xrange(width):
+#            if edgemap[x,y] == 1:
 
     return edgemap
+
     
 """
 Return a static map
@@ -314,7 +332,7 @@ def get_costmaps():
 
 if __name__ == '__main__':
     try:
-        deflate()
-        #get_costmaps()
+        #deflate()
+        get_costmaps()
     except rospy.ROSInterruptException:
         pass
