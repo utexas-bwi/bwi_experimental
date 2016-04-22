@@ -72,7 +72,7 @@ def deflatemap_sq(costmap, r):
     return dmap
 def deflatemap_circ(costmap, r):
     structure = circular_structure(r)
-    dmap = ndi.binary_erosion(costmap, structure=structure)
+    dmap = ndi.binary_erosion(costmap, structure=structure, iterations=0)
     return dmap
 
 """
