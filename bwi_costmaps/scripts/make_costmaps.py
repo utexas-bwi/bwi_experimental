@@ -4,19 +4,19 @@ Author: Pato Lankenau (plankenau@gmail.com)
 License: BSD
 """
 from __future__ import print_function
-from nav_msgs.msg import OccupancyGrid
 from map_msgs.msg import OccupancyGridUpdate
+from nav_msgs.msg import OccupancyGrid
 from scipy.misc import imread
-import rospy
-import sys
-import rosbag
-import yaml
-import pprint
-import numpy as np
-import matplotlib as mpl
 import matplotlib.pyplot as plt
 import scipy.ndimage as ndi
+import matplotlib as mpl
+import numpy as np
+import pprint
+import rosbag
+import rospy
+import yaml
 import copy
+import sys
 
 secondFloor = False
 
@@ -64,7 +64,30 @@ def viewCostmap(costmap, title, num):
     plt.colorbar(orientation='vertical',drawedges=False)
 
 """
-Deflate an inflated costmap
+Deflate a map using morphological erosion
+"""
+def deflatemap_sq(costmap, r):
+    structure = np.ones((r,r))
+    dmap = ndi.binary_erosion(costmap, structure=structure)
+    return dmap
+def deflatemap_circ(costmap, r):
+    structure = circular_structure(r)
+    dmap = ndi.binary_erosion(costmap, structure=structure)
+    return dmap
+
+"""
+Return a circular structure of radius
+"""
+def circular_structure(radius):
+    size = radius*2+1
+    i,j = np.mgrid[0:size, 0:size]
+    i -= (size/2)
+    j -= (size/2)
+    return np.sqrt(i**2+j**2) <= radius
+
+
+"""
+Get the edges of an  inflated costmap
 """
 def edgemap(costmap):
     height, width = costmap.shape
@@ -254,10 +277,17 @@ def deflate():
     viewCostmap(originalCostmap, "Original Costmap", 1)
 
     binarymap = thresholdmap(originalCostmap, 90)
-    viewCostmap(binarymap, "Binary Thresholded Costmap", 2)
+#    viewCostmap(binarymap, "Binary Thresholded Costmap", 2)
 
-    emap = edgemap(binarymap)
-    viewCostmap(emap, "Edges of Binary Costmap", 3)
+#    emap = edgemap(binarymap)
+#    viewCostmap(emap, "Edges of Binary Costmap", 3)
+
+    dmap1 = deflatemap_sq(binarymap, 12)
+    viewCostmap(dmap1, "Deflated (Square) Map", 4)
+
+    dmap2 = deflatemap_circ(binarymap, 7)
+    viewCostmap(dmap2, "Deflated (Circle) Map", 5)
+
 
 
     # Display the views
