@@ -15,6 +15,7 @@ import pprint
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import scipy.ndimage as ndi
 import copy
 
 secondFloor = False
@@ -65,7 +66,7 @@ def viewCostmap(costmap, title, num):
 """
 Deflate an inflated costmap
 """
-def deflateMap(costmap):
+def edgemap(costmap):
     height, width = costmap.shape
     edgemap = np.zeros((height, width))
     wallmap = np.zeros((height, width))
@@ -99,6 +100,18 @@ def deflateMap(costmap):
 
     return edgemap
 
+"""
+Return a thresholded binary version of the map
+"""
+def thresholdmap(costmap, threshold):
+
+    height, width = costmap.shape
+    binary = np.zeros((height, width), dtype=np.float64)
+    for x in xrange(height):
+        for y in xrange(width):
+            if costmap[x,y] > threshold:
+                binary[x,y] = 1
+    return binary 
     
 """
 Return a static map
@@ -238,10 +251,14 @@ def deflate():
             originalCostmap = np.copy(costmap)
     print("Done")
 
-    dmap = deflateMap(costmap)
-
     viewCostmap(originalCostmap, "Original Costmap", 1)
-    viewCostmap(dmap, "Deflated Costmap", 2)
+
+    binarymap = thresholdmap(originalCostmap, 90)
+    viewCostmap(binarymap, "Binary Thresholded Costmap", 2)
+
+    emap = edgemap(binarymap)
+    viewCostmap(emap, "Edges of Binary Costmap", 3)
+
 
     # Display the views
     displayViews()
@@ -297,6 +314,7 @@ def get_costmaps():
     #viewCostmap(originalCostmap, "Original Costmap", 1)
     viewCostmap(costmap, "Patched Costmap", 2)
 
+
     # Calculate Diff and create a view for it
     diffmap = costmapDiff(originalCostmap, costmap)
     #viewCostmap(diffmap, "Difference (red is added, blue is removed)", 3)
@@ -332,7 +350,7 @@ def get_costmaps():
 
 if __name__ == '__main__':
     try:
-        #deflate()
-        get_costmaps()
+        deflate()
+        #get_costmaps()
     except rospy.ROSInterruptException:
         pass
