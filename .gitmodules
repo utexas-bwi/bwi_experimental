@@ -1,0 +1,3 @@
+[submodule "twitter"]
+	path = twitter
+	url = https://github.com/rdelfin/utexas-bwi-twitter-coms
