@@ -1,0 +1,14 @@
+To set up virtour demo
+
+
+Kinect:
+roslaunch segbot_bringup segbot_kinect.launch
+
+Camera servo:
+roslaunch segbot_sensors usbcam.launch
+
+Then:
+rostopic pub /listener std_msgs/String "hello world from calculon"
+rosrun mjpeg_server mjpeg_server __image_transport:=compressed
+roslaunch rosbridge_server rosbridge_websocket.launch 
+./catkin_ws/src/bwi_experimental/pololu_maestro/scripts/polulu_maestro_node
