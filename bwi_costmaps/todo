@@ -1,16 +1,12 @@
-* Deflating
-  - Get ScyPy erode function to work on the costmap
-  - If not work: Implement edge detection + tangent binarization
-  - If not work: Implement manhattan distance to edge
+* Saving the results
 * Collecting data
   - Collect data in atrium
-  - Collect data in lab
-    + need to make a task to navigate waypoints
-    + need to add waypoints to map
 * Detecting static objects
   - Try subtracting entropy from costmap
   - Average costmap
   - Normalized costmap?
 * How to update the map
+  - Save the map file
+  - Need to differentiate between no data or no obstacle
 * Writing
   - Write some sort of summary
