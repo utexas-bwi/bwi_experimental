@@ -10,6 +10,7 @@ from scipy.misc import imread
 from datetime import datetime
 import matplotlib.pyplot as plt
 import scipy.ndimage as ndi
+import scipy.misc
 import matplotlib as mpl
 import numpy as np
 import pprint
@@ -73,6 +74,8 @@ def viewCostmap(costmap, title, num):
     if saveFiles:
         fileName = title.replace(' ', '_') + ".png"
         plt.savefig(dirName + "/" + fileName)
+        scipy.misc.imsave(dirName + "/raw_" + fileName, costmap)
+
 
 """
 Deflate a map using morphological erosion
@@ -167,6 +170,33 @@ def staticMap(costmap, entropymap):
         for y in xrange(width):
             static[x,y] = costmap[x,y] #- entropymap[x,y]
     return static
+
+"""
+Invert a binary costmap element-wise
+"""
+def invertMap(costmap):
+    height, width = costmap.shape
+    inverted = np.zeros((height, width), dtype=np.int)
+    for x in xrange(height):
+        for y in xrange(width):
+            c = costmap[x,y]
+            if c == 0:
+                inverted[x,y] = 1
+    return inverted
+
+"""
+Substract entropy
+"""
+def subtractEntropy(costmap, entropymap):
+    height, width = costmap.shape
+    res = np.zeros((height, width), dtype=np.int)
+    for x in xrange(height):
+        for y in xrange(width):
+            c = costmap[x,y]
+            e = entropymap[x,y]
+            d = c - e
+            res[x,y] = 0 if d < 0 else d
+    return res
 
 #"""
 #Combine an average map with another map
@@ -438,8 +468,14 @@ def get_costmaps():
     # Now subtract the entropy
     thresholdEntropy = thresholdmap(correctedEntropy, 0.3)
     viewCostmap(thresholdEntropy, "Threshold entropy", 15)
-    minusEntropy = np.subtract(staticDeflated, thresholdEntropy)
+    #minusEntropy = np.subtract(staticDeflated, thresholdEntropy)
+    minusEntropy = subtractEntropy(staticDeflated, thresholdEntropy)
     viewCostmap(minusEntropy, "Deflated minus thresholded entropy", 16)
+
+    # Invert the minusEntropy so we can generate the map
+    inverted = invertMap(minusEntropy)
+    # Save the deflated result
+    scipy.misc.imsave(dirName + "/result.png", inverted)
 
     # Display the views
     displayViews()
