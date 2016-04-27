@@ -7,6 +7,7 @@ from __future__ import print_function
 from map_msgs.msg import OccupancyGridUpdate
 from nav_msgs.msg import OccupancyGrid
 from scipy.misc import imread
+from datetime import datetime
 import matplotlib.pyplot as plt
 import scipy.ndimage as ndi
 import matplotlib as mpl
@@ -17,8 +18,12 @@ import rospy
 import yaml
 import copy
 import sys
+import os
 
 secondFloor = False
+saveFiles = True
+resultsDir = os.path.expanduser('~') + "/costmap_results"
+dirName = ""
 
 """
 Display all views
@@ -30,6 +35,8 @@ def displayViews():
 Create a costmap view
 """
 def viewCostmap(costmap, title, num):
+    global dirName
+
     fig = plt.figure(num, figsize=(16,6))
 
     if secondFloor:
@@ -63,16 +70,28 @@ def viewCostmap(costmap, title, num):
     cax.set_frame_on(False)
     plt.colorbar(orientation='vertical',drawedges=False)
 
+    if saveFiles:
+        fileName = title.replace(' ', '_') + ".png"
+        plt.savefig(dirName + "/" + fileName)
+
 """
 Deflate a map using morphological erosion
+r - radius
+i - iterations
 """
-def deflatemap_sq(costmap, r):
+def deflatemap_sq(costmap, r, i):
     structure = np.ones((r,r))
-    dmap = ndi.binary_erosion(costmap, structure=structure)
+    dmap = ndi.binary_erosion(costmap, structure=structure, iterations=i)
     return dmap
-def deflatemap_circ(costmap, r):
+
+"""
+Deflate a map using morphological erosion with a circle structure
+r - radius
+i - iterations
+"""
+def deflatemap_circ(costmap, r, i):
     structure = circular_structure(r)
-    dmap = ndi.binary_erosion(costmap, structure=structure, iterations=0)
+    dmap = ndi.binary_erosion(costmap, structure=structure, iterations=i)
     return dmap
 
 """
@@ -129,7 +148,7 @@ Return a thresholded binary version of the map
 def thresholdmap(costmap, threshold):
 
     height, width = costmap.shape
-    binary = np.zeros((height, width), dtype=np.float64)
+    binary = np.zeros((height, width), dtype=np.int)
     for x in xrange(height):
         for y in xrange(width):
             if costmap[x,y] > threshold:
@@ -140,7 +159,28 @@ def thresholdmap(costmap, threshold):
 Return a static map
 """
 def staticMap(costmap, entropymap):
-    return np.subtract(costmap, entropymap)
+    #return np.subtract(costmap, entropymap)
+
+    height, width = costmap.shape
+    static = np.zeros((height, width), dtype=np.float64)
+    for x in xrange(height):
+        for y in xrange(width):
+            static[x,y] = costmap[x,y] #- entropymap[x,y]
+    return static
+
+#"""
+#Combine an average map with another map
+#ie: use the average map where available, otherwise use other mpa
+#"""
+#def combineMap(primary, secondary):
+#    height, width = primary.shape
+#    combined = np.zeros((height, width), dtype=np.float64)
+#    for x in xrange(height):
+#        for y in xrange(width):
+#            combined[x,y] = 
+#    return combined
+
+
 
 """
 Return average map
@@ -282,11 +322,14 @@ def deflate():
 #    emap = edgemap(binarymap)
 #    viewCostmap(emap, "Edges of Binary Costmap", 3)
 
-    dmap1 = deflatemap_sq(binarymap, 12)
-    viewCostmap(dmap1, "Deflated (Square) Map", 4)
+    dmap1 = deflatemap_sq(binarymap, 12, 1)
+    viewCostmap(dmap1, "Deflated (Square) Map [12,1]", 4)
 
-    dmap2 = deflatemap_circ(binarymap, 7)
-    viewCostmap(dmap2, "Deflated (Circle) Map", 5)
+    dmap2 = deflatemap_circ(binarymap, 2, 4)
+    viewCostmap(dmap2, "Deflated (Circle) Map [2,4]", 5)
+
+    dmap3 = deflatemap_circ(binarymap, 7, 1)
+    viewCostmap(dmap3, "Deflated (Circle) Map [7,1]", 6)
 
 
 
@@ -297,6 +340,7 @@ def deflate():
 
 
 def get_costmaps():
+    global dirName
     # Init ros node
     rospy.init_node('bag_viewer')
 
@@ -319,6 +363,10 @@ def get_costmaps():
     info = yaml.load(bag._get_yaml_info())
     pp.pprint(info)
 
+    # Create the results dir if it doesn't exist
+    if not os.path.exists(resultsDir):
+        os.makedirs(resultsDir)
+
     # Read the bag
     costmap    = None
     entropymap = None
@@ -339,10 +387,16 @@ def get_costmaps():
                 applyPatch(entropymap, updatemap, costmap, averagemap, msg)
     print("Done")
 
+    # Create results dir if needed
+    if saveFiles:
+        dirName = resultsDir + "/" + datetime.today().strftime("%m-%d-%Y(%H:%M:%S)") + "[" + whichBag + "]"
+        if not os.path.exists(dirName):
+            os.makedirs(dirName)
+
 
     # Create views for the original and patched costmaps
     #viewCostmap(originalCostmap, "Original Costmap", 1)
-    viewCostmap(costmap, "Patched Costmap", 2)
+    #viewCostmap(costmap, "Patched Costmap", 2)
 
 
     # Calculate Diff and create a view for it
@@ -353,7 +407,7 @@ def get_costmaps():
     #viewCostmap(entropymap, "Entropy (higher means more uncertainty)", 4)
 
     # Create a view for the update map
-    viewCostmap(updatemap, "Updatemap (which areas had the most updates)", 5)
+    #viewCostmap(updatemap, "Updatemap (which areas had the most updates)", 5)
 
     # Create a corrected entropy map
     correctedEntropy = correctEntropy(entropymap, updatemap)
@@ -362,12 +416,30 @@ def get_costmaps():
 
     # Create average map
     averageM = averageMap(averagemap, updatemap)
-    viewCostmap(averagemap, "Average costmap", 8)
+    #viewCostmap(averagemap, "Average costmap", 8)
     viewCostmap(averageM, "Average costmap 2", 9)
 
-    # Create negative map
-    staticM = staticMap(averageM, entropymap)
-    viewCostmap(staticM, "Map of static objects", 10)
+#    # Create filled average map
+#    averageFilled = combineMaps(averageM, costmap)
+#    viewCostmap(averageFilled, "Average costmap (filled with costmap)", 11)
+
+    # Threshold the average map
+    tmap = thresholdmap(averageM, 0.7)
+    viewCostmap(tmap, "Threshold Average Map", 17)
+
+    # Create static map
+    #staticM = staticMap(averageM, entropymap)
+    #viewCostmap(staticM, "Map of static objects", 10)
+
+    # Create a deflated static map
+    staticDeflated = deflatemap_sq(tmap, 12, 1)
+    viewCostmap(staticDeflated, "Deflated Average Map", 14)
+
+    # Now subtract the entropy
+    thresholdEntropy = thresholdmap(correctedEntropy, 0.3)
+    viewCostmap(thresholdEntropy, "Threshold entropy", 15)
+    minusEntropy = np.subtract(staticDeflated, thresholdEntropy)
+    viewCostmap(minusEntropy, "Deflated minus thresholded entropy", 16)
 
     # Display the views
     displayViews()
@@ -380,7 +452,7 @@ def get_costmaps():
 
 if __name__ == '__main__':
     try:
-        deflate()
-        #get_costmaps()
+        #deflate()
+        get_costmaps()
     except rospy.ROSInterruptException:
         pass
