@@ -184,6 +184,7 @@ def invertMap(costmap):
                 inverted[x,y] = 1
     return inverted
 
+
 """
 Substract entropy
 """
@@ -200,7 +201,7 @@ def subtractEntropy(costmap, entropymap):
 
 #"""
 #Combine an average map with another map
-#ie: use the average map where available, otherwise use other mpa
+#ie: use the average map where available, otherwise use other map
 #"""
 #def combineMap(primary, secondary):
 #    height, width = primary.shape
@@ -214,17 +215,20 @@ def subtractEntropy(costmap, entropymap):
 
 """
 Return average map
+where every slot has either a normalize float represnting costmap value
+or -1 if there were no updates for it
 """
 def averageMap(averagemap, updatemap):
     #return np.divide(averagemap, updatemap)
 
     height, width = averagemap.shape
     corrected = np.zeros((height, width), dtype=np.float64)
+    #corrected = np.full((height, width), -1, dtype=np.int)
     for x in xrange(height):
         for y in xrange(width):
             e = float(averagemap[x,y])
             u = float(updatemap[x,y])
-            corrected[x,y] = 0 if u == 0 else e / u
+            corrected[x,y] = -1 if u == 0 else e / u
     return corrected
 
 """
