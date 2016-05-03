@@ -4,7 +4,9 @@
   <node name="mjpeg_server" pkg="mjpeg_server" type="mjpeg_server">
     <param name="__image_transport" value="compressed" />
   </node>
-  <node name="tour_manager" pkg="bwi_virtour" type="tour_manager" />
+  <node name="tour_manager" pkg="bwi_virtour" type="tour_manager">
+     <param name="tour_enabled" value="true" />
+  </node>
   <node name="go_to_location_service_node" pkg="bwi_virtour" type="go_to_location_service_node" />
   <node name="rotate_service_node" pkg="bwi_virtour" type="rotate_service_node" />
   <node name="broadcastTour" pkg="bwi_virtour" type="broadcastTour.sh" />

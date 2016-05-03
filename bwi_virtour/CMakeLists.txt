@@ -116,7 +116,7 @@ add_executable(rotate_service_node src/rotateService.cpp)
 add_dependencies(rotate_service_node ${catkin_EXPORTED_TARGETS})
 target_link_libraries(rotate_service_node ${catkin_LIBRARIES})
 
-add_executable(tour_manager src/tourManager.cpp)
+add_executable(tour_manager src/tour_manager.cpp)
 add_dependencies(tour_manager ${catkin_EXPORTED_TARGETS})
 target_link_libraries(tour_manager ${catkin_LIBRARIES})
 

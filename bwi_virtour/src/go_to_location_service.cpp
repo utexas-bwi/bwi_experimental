@@ -20,7 +20,7 @@ bool goToLocation(bwi_virtour::GoToLocation::Request &req,
   auth_req.user = req.user;
   bwi_virtour::Authenticate::Response auth_res;
 
-  if (ros::service::call("/tourManager/authenticate", auth_req, auth_res)) {
+  if (ros::service::call("/tour_manager/authenticate", auth_req, auth_res)) {
     if (auth_res.result < 0) {
       res.result = -5;
       ROS_INFO("Authentication failed!");

@@ -571,28 +571,28 @@ $(".robot").click(function() {
   // set up service client for requesting tours
   requestTourClient = new ROSLIB.Service({
     ros : segbot.ros,
-    name : '/tourManager/request_tour',
+    name : '/tour_manager/request_tour',
     serviceType : 'bwi_virtour/RequestTour'
   });
 
   // set up service client for getting tour state
   getTourStateClient = new ROSLIB.Service({
     ros : segbot.ros,
-    name : '/tourManager/get_tour_state',
+    name : '/tour_manager/get_tour_state',
     serviceType : 'bwi_virtour/GetTourState'
   });
 
   // set up service client for pinging the tour
   pingTourClient = new ROSLIB.Service({
     ros : segbot.ros,
-    name : '/tourManager/ping_tour',
+    name : '/tour_manager/ping_tour',
     serviceType : 'bwi_virtour/PingTour'
   });
 
   // set up service client for leaving the tour
   leaveTourClient = new ROSLIB.Service({
     ros : segbot.ros,
-    name : '/tourManager/leave_tour',
+    name : '/tour_manager/leave_tour',
     serviceType : 'bwi_virtour/LeaveTour'
   });
 
