@@ -37,28 +37,22 @@ On server:
 
 ## Launch Files
 
-There are two types of launch files, passive and active, each with two variants.
+There are two types of launch files, passive and full.
 
-Before executing the virtour launch files make sure that the segbot launch files
-were executed (either `segbot_v1.launch` or `segbot_v2.launch`). And for the
-active variants make sure that the `kr_execution` node is up.
+Before executing the virtour launch files make sure that the segbot launch
+files were executed (either `segbot_v1.launch` or `segbot_v2.launch`).
 
 The passive launch files brings up the tour manager, rosbridge and mjpeg
 servers. Allows people to view the robot's position, camera feed, and scavenger
 hunt status.
 
-The active launch files (requires the passive one to be running as well),
-allows people to become tour leaders, control rotation, request navigation,
-and move the camera servos (if available).
+The full (active) launch files (no longer requires the passive one to be
+running), allows people to become tour leaders, control rotation, request
+navigation, as well all the features of passive.
 
-The kinect variant is for robots that only have the kinect as camera feed.
-
-The servocam variant is for the robots that pointgrey cameras on 2-axis servos.
-
-Note: if you are running on a kinect-based segbot, there is an optional third type
-of launch file (namely `virtour_full.launch`) that will run absolutely everything
-it needs (including the `mjpeg_server`, `kr_execution`, and `rosbridge`).
-
+Note that at the launch files assume you are running on a kinect powered robot.
+Comments in the launch file will provide a working launch file if servo or
+point-grey camera support is needed.
 
 ## ROS Nodes
 
