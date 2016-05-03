@@ -69,11 +69,11 @@ tours are allowed, and authentication.
 
 #### Exposed Services
 
-* `/tourManager/authenticate` - used to authenticate users and check if they are leader
-* `/tourManager/get_tour_state` - get the state of the current tour (excluding leader hash)
-* `/tourManager/leave_tour` - used to demote leaders
-* `/tourManager/ping_tour` - used to keep the tour leader alive
-* `/tourManager/request_tour` - used to request tours
+* `/tour_manager/authenticate` - used to authenticate users and check if they are leader
+* `/tour_manager/get_tour_state` - get the state of the current tour (excluding leader hash)
+* `/tour_manager/leave_tour` - used to demote leaders
+* `/tour_manager/ping_tour` - used to keep the tour leader alive
+* `/tour_manager/request_tour` - used to request tours
 
 ### Logical Navigation
 
