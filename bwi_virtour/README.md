@@ -55,6 +55,10 @@ The kinect variant is for robots that only have the kinect as camera feed.
 
 The servocam variant is for the robots that pointgrey cameras on 2-axis servos.
 
+Note: if you are running on a kinect-based segbot, there is an optional third type
+of launch file (namely `virtour_full.launch`) that will run absolutely everything
+it needs (including the `mjpeg_server`, `kr_execution`, and `rosbridge`).
+
 
 ## ROS Nodes
 
