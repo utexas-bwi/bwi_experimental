@@ -7,3 +7,11 @@
      <param name="tour_enabled" value="false" />
   </node>
 </launch>
+
+<!-- for pointgrey and servo camera -->
+
+<!-- <include file="$(find pointgrey_camera_driver)/launch/camera.launch"></include> -->
+<!-- <include file="$(find segbot_sensors)/launch/ptgrey/usbcam.launch"></include> -->
+<!-- <node name="polulu_maestro_node" pkg="pololu_maestro" type="polulu_maestro_node"> -->
+<!--   <param name="~num_servos" value="2" /> -->
+<!-- </node> -->

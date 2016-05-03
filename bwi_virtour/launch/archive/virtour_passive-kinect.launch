@@ -1,7 +1,0 @@
-<launch>
-  <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch"></include>
-  <node name="mjpeg_server" pkg="mjpeg_server" type="mjpeg_server">
-    <param name="__image_transport" value="compressed" />
-  </node>
-  <node name="tour_manager" pkg="bwi_virtour" type="tour_manager" />
-</launch>
