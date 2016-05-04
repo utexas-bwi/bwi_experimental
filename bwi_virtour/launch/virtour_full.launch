@@ -9,8 +9,6 @@
   </node>
   <node name="go_to_location_service_node" pkg="bwi_virtour" type="go_to_location_service_node" />
   <node name="rotate_service_node" pkg="bwi_virtour" type="rotate_service_node" />
-  <node name="broadcastTour" pkg="bwi_virtour" type="broadcastTour.sh" />
-
 </launch>
 <!-- for pointgrey and servo camera -->
 
@@ -19,3 +17,4 @@
 <!-- <node name="polulu_maestro_node" pkg="pololu_maestro" type="polulu_maestro_node"> -->
 <!--   <param name="~num_servos" value="2" /> -->
 <!-- </node> -->
+<!-- <node name="broadcastTour" pkg="bwi_virtour" type="broadcastTour.sh" /> -->
