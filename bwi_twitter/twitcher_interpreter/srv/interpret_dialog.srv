@@ -1,0 +1,13 @@
+# Response fields
+string message
+string user_id
+string datetime
+---
+# Response constants
+uint32 GO_TO_ACTION = 1
+uint32 GO_TO_AND_SAY = 2
+uint32 NONE = 0
+
+# Response fields
+uint32 action
+string[] string_args

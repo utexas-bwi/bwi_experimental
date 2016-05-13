@@ -1,0 +1,6 @@
+#goal
+string message
+---
+bool success
+---
+bool began

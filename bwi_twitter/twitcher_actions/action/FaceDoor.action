@@ -1,0 +1,7 @@
+#goal
+string door_name
+---
+#result
+bool success
+---
+#feedback

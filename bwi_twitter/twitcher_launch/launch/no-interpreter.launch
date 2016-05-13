@@ -1,0 +1,7 @@
+<launch>
+    <rosparam command="load" file="$(find twitcher_launch)/config/config.yaml" />
+    <rosparam command="load" file="$(find twitcher_launch)/config/rooms.yaml" />
+    <rosparam>
+        /twitter/useapi: false
+    </rosparam>
+</launch>

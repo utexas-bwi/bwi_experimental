@@ -1,0 +1,7 @@
+#goal
+string location_name
+---
+#result
+bool success
+---
+#feedback
