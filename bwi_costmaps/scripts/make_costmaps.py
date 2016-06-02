@@ -411,6 +411,7 @@ def get_costmaps():
             costmap = constructCostmap(msg)
             originalCostmap = np.copy(costmap)
             entropymap = constructEntropymap(msg)
+            entropymap.fill(-1);
             updatemap  = constructEntropymap(msg)
             averagemap = constructEntropymap(msg)
         else:
@@ -446,7 +447,6 @@ def get_costmaps():
     # Create a corrected entropy map
     correctedEntropy = correctEntropy(entropymap, updatemap)
     viewCostmap(correctedEntropy, "Corrected entropy map", 6)
-
 
     # Create average map
     averageM = averageMap(averagemap, updatemap)
