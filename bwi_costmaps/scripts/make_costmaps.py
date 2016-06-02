@@ -199,24 +199,26 @@ def subtractEntropy(costmap, entropymap):
             res[x,y] = 0 if d < 0 else d
     return res
 
-#"""
-#Combine an average map with another map
-#ie: use the average map where available, otherwise use other map
-#"""
-#def combineMap(primary, secondary):
-#    height, width = primary.shape
-#    combined = np.zeros((height, width), dtype=np.float64)
-#    for x in xrange(height):
-#        for y in xrange(width):
-#            combined[x,y] = 
-#    return combined
+"""
+Combine an average map with another map
+ie: use the average map where available, otherwise use other map
+"""
+def combineMaps(primary, secondary):
+    height, width = primary.shape
+    combined = np.zeros((height, width), dtype=np.float64)
+    for x in xrange(height):
+        for y in xrange(width):
+            p = primary[x,y]
+            s = secondary[x,y]
+            combined[x,y] = p if p >= 0 else s
+    return combined
 
 
 
 """
 Return average map
-where every slot has either a normalize float represnting costmap value
-or -1 if there were no updates for it
+where every slot has either a normalized float representing costmap value or -1
+if there were no updates for it
 """
 def averageMap(averagemap, updatemap):
     #return np.divide(averagemap, updatemap)
@@ -230,6 +232,17 @@ def averageMap(averagemap, updatemap):
             u = float(updatemap[x,y])
             corrected[x,y] = -1 if u == 0 else e / u
     return corrected
+
+"""
+Return a normalized map
+"""
+def normalize(costmap):
+    height, width = costmap.shape
+    norm = np.zeros((height, width), dtype=np.float64)
+    for x in xrange(height):
+        for y in xrange(width):
+            norm[x,y] = costmap[x,y] / 100
+    return norm
 
 """
 Return a numpy matrix containing the costmap
@@ -256,7 +269,8 @@ def constructEntropymap(costmap_msg):
     width  = info.width
     height = info.height
     
-    return np.zeros((height,width),dtype=np.int)
+    zeros = np.zeros((height,width),dtype=np.int)
+    return zeros
 
 """
 Normalize an entropy map based on where the most updates happened
@@ -411,7 +425,6 @@ def get_costmaps():
             costmap = constructCostmap(msg)
             originalCostmap = np.copy(costmap)
             entropymap = constructEntropymap(msg)
-            entropymap.fill(-1);
             updatemap  = constructEntropymap(msg)
             averagemap = constructEntropymap(msg)
         else:
@@ -446,24 +459,25 @@ def get_costmaps():
 
     # Create a corrected entropy map
     correctedEntropy = correctEntropy(entropymap, updatemap)
-    viewCostmap(correctedEntropy, "Corrected entropy map", 6)
+    #viewCostmap(correctedEntropy, "Corrected entropy map", 6)
 
     # Create average map
     averageM = averageMap(averagemap, updatemap)
     #viewCostmap(averagemap, "Average costmap", 8)
-    viewCostmap(averageM, "Average costmap 2", 9)
+    #viewCostmap(averageM, "Average costmap 2", 9)
 
-#    # Create filled average map
-#    averageFilled = combineMaps(averageM, costmap)
-#    viewCostmap(averageFilled, "Average costmap (filled with costmap)", 11)
+    # Combine average with full costmap
+    ncostmap  = thresholdmap(costmap, 90)
+    combined  = combineMaps(averageM, ncostmap)
+    #viewCostmap(combined, "Combined average with full", 25)
 
     # Threshold the average map
-    tmap = thresholdmap(averageM, 0.7)
-    viewCostmap(tmap, "Threshold Average Map", 17)
+    tmap = thresholdmap(combined, 0.8)
+    #viewCostmap(tmap, "Threshold Average Map", 17)
 
     # Create static map
-    #staticM = staticMap(averageM, entropymap)
-    #viewCostmap(staticM, "Map of static objects", 10)
+    staticM = staticMap(averageM, entropymap)
+    viewCostmap(staticM, "Map of static objects", 10)
 
     # Create a deflated static map
     staticDeflated = deflatemap_sq(tmap, 12, 1)
@@ -471,10 +485,9 @@ def get_costmaps():
 
     # Now subtract the entropy
     thresholdEntropy = thresholdmap(correctedEntropy, 0.3)
-    viewCostmap(thresholdEntropy, "Threshold entropy", 15)
-    #minusEntropy = np.subtract(staticDeflated, thresholdEntropy)
+    #viewCostmap(thresholdEntropy, "Threshold entropy", 15)
     minusEntropy = subtractEntropy(staticDeflated, thresholdEntropy)
-    viewCostmap(minusEntropy, "Deflated minus thresholded entropy", 16)
+    #viewCostmap(minusEntropy, "Deflated minus thresholded entropy", 16)
 
     # Invert the minusEntropy so we can generate the map
     inverted = invertMap(minusEntropy)
