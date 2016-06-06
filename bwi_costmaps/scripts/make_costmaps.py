@@ -370,8 +370,8 @@ def deflate():
 #    emap = edgemap(binarymap)
 #    viewCostmap(emap, "Edges of Binary Costmap", 3)
 
-    dmap1 = deflatemap_sq(binarymap, 12, 1)
-    viewCostmap(dmap1, "Deflated (Square) Map [12,1]", 4)
+    dmap1 = deflatemap_sq(binarymap, 14, 1)
+    viewCostmap(dmap1, "Deflated (Square) Map [14,1]", 4)
 
     dmap2 = deflatemap_circ(binarymap, 2, 4)
     viewCostmap(dmap2, "Deflated (Circle) Map [2,4]", 5)
@@ -471,6 +471,13 @@ def get_costmaps():
     combined  = combineMaps(averageM, ncostmap)
     #viewCostmap(combined, "Combined average with full", 25)
 
+    # Test
+    tt = thresholdmap(ncostmap, 0.8)
+    ts = normalize(ncostmap)
+    viewCostmap(ncostmap, "NCOSTMAP", 30)
+    viewCostmap(ts, "TS", 32)
+    viewCostmap(tt, "tt", 31)
+
     # Threshold the average map
     tmap = thresholdmap(combined, 0.8)
     #viewCostmap(tmap, "Threshold Average Map", 17)
@@ -480,7 +487,7 @@ def get_costmaps():
     viewCostmap(staticM, "Map of static objects", 10)
 
     # Create a deflated static map
-    staticDeflated = deflatemap_sq(tmap, 12, 1)
+    staticDeflated = deflatemap_sq(tmap, 14, 1)
     viewCostmap(staticDeflated, "Deflated Average Map", 14)
 
     # Now subtract the entropy
@@ -491,8 +498,10 @@ def get_costmaps():
 
     # Invert the minusEntropy so we can generate the map
     inverted = invertMap(minusEntropy)
+
     # Save the deflated result
-    scipy.misc.imsave(dirName + "/result.png", inverted)
+    if saveFiles:
+        scipy.misc.imsave(dirName + "/result.png", inverted)
 
     # Display the views
     displayViews()
