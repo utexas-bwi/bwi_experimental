@@ -286,6 +286,44 @@ def correctEntropy(entropymap, updatemap):
             corrected[x,y] = 0 if u == 0 else e / u
     return corrected
 
+"""
+floodfill the outside region of an image
+much like the paint bucket tool in paint
+"""
+def floodfill(costmap):
+  copy = np.copy(costmap)
+  start = (1,1)
+  value = 0.3
+  floodfill_helper(copy, start, value)
+  return copy
+
+def wall_check(costmap, px):
+    check = lambda px: costmap[px] < 0.9
+    # TODO: need to figure this out
+    return costmap[px] < 0.9
+
+
+"""
+helper function
+"""
+def floodfill_helper(costmap, start, value):
+    visited, queue = set(), [start]
+    h,w = costmap.shape
+    while queue:
+        pixel = queue.pop(0)
+        if pixel not in visited:
+            visited.add(pixel)
+            costmap[pixel] = value
+            bound_check = lambda (x,y): x > 0 and y > 0 and x < h and y < w
+            #wall_check = lambda (x,y): costmap[x,y] < 0.9
+            check = lambda px: bound_check(px) and wall_check(px)
+            (x,y) = pixel
+            if check((x+1,y+1)): queue.append((x+1,y+1))
+            if check((x+1,y  )): queue.append((x+1,y  ))
+            if check((x  ,y+1)): queue.append((x  ,y+1))
+            if check((x-1,y-1)): queue.append((x-1,y-1))
+            if check((x  ,y-1)): queue.append((x  ,y-1))
+            if check((x-1,y  )): queue.append((x-1,y  ))
 
 """
 Calculate the difference between two costmaps and
@@ -471,12 +509,9 @@ def get_costmaps():
     combined  = combineMaps(averageM, ncostmap)
     #viewCostmap(combined, "Combined average with full", 25)
 
-    # Test
-    tt = thresholdmap(ncostmap, 0.8)
-    ts = normalize(ncostmap)
-    viewCostmap(ncostmap, "NCOSTMAP", 30)
-    viewCostmap(ts, "TS", 32)
-    viewCostmap(tt, "tt", 31)
+    # This seems to work best
+    ccostmap = np.copy(costmap)
+    nccostmap = normalize(ccostmap)
 
     # Threshold the average map
     tmap = thresholdmap(combined, 0.8)
@@ -496,12 +531,18 @@ def get_costmaps():
     minusEntropy = subtractEntropy(staticDeflated, thresholdEntropy)
     #viewCostmap(minusEntropy, "Deflated minus thresholded entropy", 16)
 
-    # Invert the minusEntropy so we can generate the map
-    inverted = invertMap(minusEntropy)
+    # floodfill the outside
+    fill = floodfill(nccostmap)
+    viewCostmap(fill, "Floodfilled", 37)
+
+    # Result
+    result = fill #nccostmap
+    viewCostmap(result, "Result", 60)
 
     # Save the deflated result
     if saveFiles:
-        scipy.misc.imsave(dirName + "/result.png", inverted)
+        #scipy.misc.imsave(dirName + "/result.png", np.flipud(invertMap(minusEntropy)))
+        scipy.misc.imsave(dirName + "/result.png", np.flipud(invertMap(result)))
 
     # Display the views
     displayViews()
