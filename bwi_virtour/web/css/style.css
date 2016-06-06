@@ -1,7 +1,7 @@
 body {
     padding-top: 40px;
     padding-bottom: 40px;
-    background: url("../image/gdc_blur.jpg") no-repeat center center fixed; 
+    background: url("../image/gdc_blur.jpg") no-repeat center center fixed;
       -webkit-background-size: cover;
       -moz-background-size: cover;
       -o-background-size: cover;
@@ -196,10 +196,10 @@ body {
 }
 .yellow{
   color:white;
-  background-color: #FFFF00;
-  -moz-box-shadow: 5px 5px 0px 0px #D6D600;
-  -webkit-box-shadow: 5px 5px 0px 0px #D6D600;
-  box-shadow: 5px 5px 0px 0px #D6D600;
+  background-color: #D6D600;
+  -moz-box-shadow: 5px 5px 0px 0px #C2C200;
+  -webkit-box-shadow: 5px 5px 0px 0px #C2C200;
+  box-shadow: 5px 5px 0px 0px #C2C200;
 }
 .green:hover{
   color:white;
@@ -228,8 +228,8 @@ body {
 .yellow:hover{
   color:white;
   cursor:pointer;
-  background-color: #A4A400;
-  -moz-box-shadow: 5px 5px 0px 0px #A4A400;
-  -webkit-box-shadow: 5px 5px 0px 0px #A4A400;
-  box-shadow: 5px 5px 0px 0px #A4A400;
+  background-color: #F2F230;
+  -moz-box-shadow: 5px 5px 0px 0px #D6D600;
+  -webkit-box-shadow: 5px 5px 0px 0px #D6D600;
+  box-shadow: 5px 5px 0px 0px #D6D600;
 }
