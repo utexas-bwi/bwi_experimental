@@ -175,7 +175,7 @@ function subscribeScavengerHuntListener(ros) {
   var listener = new ROSLIB.Topic({
     ros : ros,
     name : '/scav_hunt_status',
-    messageType : 'bwi_scavenger/ScavStatus'
+    messageType : 'bwi_msgs/ScavStatus'
   });
   log("Added scavenger hunt listener");
 
