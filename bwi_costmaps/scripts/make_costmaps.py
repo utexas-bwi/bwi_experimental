@@ -300,6 +300,7 @@ def floodfill(costmap):
 def wall_check(costmap, px):
     check = lambda px: costmap[px] < 0.9
     # TODO: need to figure this out
+    # MAYBE: just floodfill before you normalize
     return costmap[px] < 0.9
 
 
