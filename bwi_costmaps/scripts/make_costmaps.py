@@ -180,7 +180,9 @@ def invertMap(costmap):
     for x in xrange(height):
         for y in xrange(width):
             c = costmap[x,y]
-            if c == 0:
+            if c == 0.5:
+                inverted[x,y] = 0.2
+            elif c == 0:
                 inverted[x,y] = 1
     return inverted
 
@@ -293,16 +295,9 @@ much like the paint bucket tool in paint
 def floodfill(costmap):
   copy = np.copy(costmap)
   start = (1,1)
-  value = 0.3
+  value = 50
   floodfill_helper(copy, start, value)
   return copy
-
-def wall_check(costmap, px):
-    check = lambda px: costmap[px] < 0.9
-    # TODO: need to figure this out
-    # MAYBE: just floodfill before you normalize
-    return costmap[px] < 0.9
-
 
 """
 helper function
@@ -316,7 +311,7 @@ def floodfill_helper(costmap, start, value):
             visited.add(pixel)
             costmap[pixel] = value
             bound_check = lambda (x,y): x > 0 and y > 0 and x < h and y < w
-            #wall_check = lambda (x,y): costmap[x,y] < 0.9
+            wall_check = lambda (x,y): costmap[x,y] < 0.9
             check = lambda px: bound_check(px) and wall_check(px)
             (x,y) = pixel
             if check((x+1,y+1)): queue.append((x+1,y+1))
@@ -512,7 +507,14 @@ def get_costmaps():
 
     # This seems to work best
     ccostmap = np.copy(costmap)
+
+    # Floodfill
+    fill = floodfill(ccostmap)
+    viewCostmap(fill, "Floodfilled", 37)
+
+    # Normalize
     nccostmap = normalize(ccostmap)
+    viewCostmap(nccostmap, "NCCOSTMAP", 485)
 
     # Threshold the average map
     tmap = thresholdmap(combined, 0.8)
@@ -533,11 +535,11 @@ def get_costmaps():
     #viewCostmap(minusEntropy, "Deflated minus thresholded entropy", 16)
 
     # floodfill the outside
-    fill = floodfill(nccostmap)
-    viewCostmap(fill, "Floodfilled", 37)
+    #fill = floodfill(nccostmap)
+    #viewCostmap(fill, "Floodfilled", 37)
 
     # Result
-    result = fill #nccostmap
+    result = nccostmap #fill #nccostmap
     viewCostmap(result, "Result", 60)
 
     # Save the deflated result
