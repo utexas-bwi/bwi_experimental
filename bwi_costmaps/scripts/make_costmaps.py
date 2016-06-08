@@ -151,7 +151,7 @@ Return a thresholded binary version of the map
 def thresholdmap(costmap, threshold):
 
     height, width = costmap.shape
-    binary = np.zeros((height, width), dtype=np.int)
+    binary = np.zeros((height, width), dtype=np.float64)
     for x in xrange(height):
         for y in xrange(width):
             if costmap[x,y] > threshold:
@@ -176,14 +176,11 @@ Invert a binary costmap element-wise
 """
 def invertMap(costmap):
     height, width = costmap.shape
-    inverted = np.zeros((height, width), dtype=np.int)
+    inverted = np.zeros((height, width), dtype=np.float64)
     for x in xrange(height):
         for y in xrange(width):
             c = costmap[x,y]
-            if c == 0.5:
-                inverted[x,y] = 0.2
-            elif c == 0:
-                inverted[x,y] = 1
+            inverted[x,y] = 1 - c
     return inverted
 
 
@@ -192,7 +189,7 @@ Substract entropy
 """
 def subtractEntropy(costmap, entropymap):
     height, width = costmap.shape
-    res = np.zeros((height, width), dtype=np.int)
+    res = np.zeros((height, width), dtype=np.float64)
     for x in xrange(height):
         for y in xrange(width):
             c = costmap[x,y]
@@ -227,7 +224,7 @@ def averageMap(averagemap, updatemap):
 
     height, width = averagemap.shape
     corrected = np.zeros((height, width), dtype=np.float64)
-    #corrected = np.full((height, width), -1, dtype=np.int)
+    #corrected = np.full((height, width), -1, dtype=np.float64)
     for x in xrange(height):
         for y in xrange(width):
             e = float(averagemap[x,y])
@@ -244,7 +241,22 @@ def normalize(costmap):
     for x in xrange(height):
         for y in xrange(width):
             norm[x,y] = costmap[x,y] / 100
+            #norm[x,y] = (1.0 * costmap[x,y]) / 100.0
     return norm
+
+"""
+Deflate shorten
+"""
+def deflateshorten(costmap):
+    height, width = costmap.shape
+    norm = np.zeros((height, width), dtype=np.int8)
+    for x in xrange(height):
+        for y in xrange(width):
+            c = costmap[x,y]
+            if c == 100:
+                norm[x,y] = 255
+    return norm
+
 
 """
 Return a numpy matrix containing the costmap
@@ -271,7 +283,7 @@ def constructEntropymap(costmap_msg):
     width  = info.width
     height = info.height
     
-    zeros = np.zeros((height,width),dtype=np.int)
+    zeros = np.zeros((height,width),dtype=np.float64)
     return zeros
 
 """
@@ -295,7 +307,7 @@ much like the paint bucket tool in paint
 def floodfill(costmap):
   copy = np.copy(costmap)
   start = (1,1)
-  value = 50
+  value = 200
   floodfill_helper(copy, start, value)
   return copy
 
@@ -368,57 +380,14 @@ def applyPatch(entropymap, updatemap, costmap, averagemap, updateMsg):
         # apply patch
         costmap[xindex, yindex] = updateData[i]
 
-def deflate():
-    # Init ros node
-    rospy.init_node('bag_viewer')
-
-    # Get the bag to view
-    whichBag = rospy.get_param("~bag", None)
-
-    # Ensure the bag was specified
-    if whichBag == None:
-        rospy.logerror("No bag specified")
-        return 9
-    rospy.loginfo("Bag to view: " + whichBag)
-
-    # Load the bag
-    bag = rosbag.Bag(whichBag)
-
-    # Get bag information
-    info = yaml.load(bag._get_yaml_info())
-
-    # Read the bag
-    costmap    = None
-    originalCostmap = None
-    for topic, msg, time in bag.read_messages():
-        if topic == "/move_base/global_costmap/costmap":
-            costmap = constructCostmap(msg)
-            originalCostmap = np.copy(costmap)
-    print("Done")
-
-    viewCostmap(originalCostmap, "Original Costmap", 1)
-
-    binarymap = thresholdmap(originalCostmap, 90)
-#    viewCostmap(binarymap, "Binary Thresholded Costmap", 2)
-
-#    emap = edgemap(binarymap)
-#    viewCostmap(emap, "Edges of Binary Costmap", 3)
-
-    dmap1 = deflatemap_sq(binarymap, 14, 1)
-    viewCostmap(dmap1, "Deflated (Square) Map [14,1]", 4)
-
-    dmap2 = deflatemap_circ(binarymap, 2, 4)
-    viewCostmap(dmap2, "Deflated (Circle) Map [2,4]", 5)
-
-    dmap3 = deflatemap_circ(binarymap, 7, 1)
-    viewCostmap(dmap3, "Deflated (Circle) Map [7,1]", 6)
-
-
-
-    # Display the views
-    displayViews()
-
-    return
+def gradientMap(cmap):
+    height, width = cmap.shape
+    res = np.zeros((height, width), dtype=np.int8)
+    for x in xrange(height):
+        for y in xrange(width):
+            c = cmap[x,y]
+            res[x,y] = c * 255
+    return res
 
 
 def get_costmaps():
@@ -445,10 +414,6 @@ def get_costmaps():
     info = yaml.load(bag._get_yaml_info())
     pp.pprint(info)
 
-    # Create the results dir if it doesn't exist
-    if not os.path.exists(resultsDir):
-        os.makedirs(resultsDir)
-
     # Read the bag
     costmap    = None
     entropymap = None
@@ -467,85 +432,72 @@ def get_costmaps():
                 return -1
             else:
                 applyPatch(entropymap, updatemap, costmap, averagemap, msg)
-    print("Done")
+                break
+    print("Done processing bag data")
 
     # Create results dir if needed
     if saveFiles:
+        if not os.path.exists(resultsDir):
+            os.makedirs(resultsDir)
         dirName = resultsDir + "/" + datetime.today().strftime("%m-%d-%Y(%H:%M:%S)") + "[" + whichBag + "]"
         if not os.path.exists(dirName):
             os.makedirs(dirName)
 
-
-    # Create views for the original and patched costmaps
-    #viewCostmap(originalCostmap, "Original Costmap", 1)
-    #viewCostmap(costmap, "Patched Costmap", 2)
-
-
-    # Calculate Diff and create a view for it
-    diffmap = costmapDiff(originalCostmap, costmap)
-    #viewCostmap(diffmap, "Difference (red is added, blue is removed)", 3)
-
-    # Create a view for the entropy map
-    #viewCostmap(entropymap, "Entropy (higher means more uncertainty)", 4)
-
-    # Create a view for the update map
-    #viewCostmap(updatemap, "Updatemap (which areas had the most updates)", 5)
-
-    # Create a corrected entropy map
-    correctedEntropy = correctEntropy(entropymap, updatemap)
-    #viewCostmap(correctedEntropy, "Corrected entropy map", 6)
+    # Function for saving costmaps to disc
+    save = lambda title, cmap: scipy.misc.imsave(dirName + "/raw_" + title + ".png", scipy.misc.bytescale(cmap))
 
     # Create average map
     averageM = averageMap(averagemap, updatemap)
-    #viewCostmap(averagemap, "Average costmap", 8)
-    #viewCostmap(averageM, "Average costmap 2", 9)
+    save("averageM", averageM)
+
+    # Create thresholded global costmap
+    globalmap = thresholdmap(costmap, 90)
+    save("globalmap", globalmap)
 
     # Combine average with full costmap
-    ncostmap  = thresholdmap(costmap, 90)
-    combined  = combineMaps(averageM, ncostmap)
-    #viewCostmap(combined, "Combined average with full", 25)
+    combined  = combineMaps(averageM, globalmap)
+    save("combined", combined)
 
     # This seems to work best
     ccostmap = np.copy(costmap)
+    save("ccostmap", ccostmap)
+
+
+    # Deflate
+    deflated = deflateshorten(ccostmap)
+    save("deflated", deflated)
 
     # Floodfill
-    fill = floodfill(ccostmap)
-    viewCostmap(fill, "Floodfilled", 37)
+    fill = floodfill(deflated)
+    save("floodfill", fill)
 
+    """
     # Normalize
-    nccostmap = normalize(ccostmap)
-    viewCostmap(nccostmap, "NCCOSTMAP", 485)
+    normalized = normalize(fill)
+    save("normalized", normalized)
 
-    # Threshold the average map
-    tmap = thresholdmap(combined, 0.8)
-    #viewCostmap(tmap, "Threshold Average Map", 17)
+    # Invert
+    inverted = invertMap(normalized)
+    save("inverted", inverted)
 
-    # Create static map
-    staticM = staticMap(averageM, entropymap)
-    viewCostmap(staticM, "Map of static objects", 10)
+    # Flip map
+    flipped = np.flipud(inverted)
+    save("flipped", flipped)
 
-    # Create a deflated static map
-    staticDeflated = deflatemap_sq(tmap, 14, 1)
-    viewCostmap(staticDeflated, "Deflated Average Map", 14)
+    # Regradient
+    gradient = gradientMap(flipped)
+    #save("gradient", gradient)
 
-    # Now subtract the entropy
-    thresholdEntropy = thresholdmap(correctedEntropy, 0.3)
-    #viewCostmap(thresholdEntropy, "Threshold entropy", 15)
-    minusEntropy = subtractEntropy(staticDeflated, thresholdEntropy)
-    #viewCostmap(minusEntropy, "Deflated minus thresholded entropy", 16)
-
-    # floodfill the outside
-    #fill = floodfill(nccostmap)
-    #viewCostmap(fill, "Floodfilled", 37)
+    """
 
     # Result
-    result = nccostmap #fill #nccostmap
-    viewCostmap(result, "Result", 60)
+    result = deflated
+
+    print("Done post-processing")
 
     # Save the deflated result
     if saveFiles:
-        #scipy.misc.imsave(dirName + "/result.png", np.flipud(invertMap(minusEntropy)))
-        scipy.misc.imsave(dirName + "/result.png", np.flipud(invertMap(result)))
+        scipy.misc.imsave(dirName + "/result.png", result)
 
     # Display the views
     displayViews()
