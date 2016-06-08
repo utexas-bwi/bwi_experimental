@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
   actionlib
   roscpp
   message_generation
+  bwi_kr_execution
 )
 
 ## System dependencies are found with CMake's conventions
