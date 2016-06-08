@@ -130,15 +130,18 @@ include_directories(
 
 ## Declare a C++ executable
 # add_executable(bwi_dyncostmap_node src/bwi_dyncostmap_node.cpp)
+add_executable(map_generator src/map_generator.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(bwi_dyncostmap_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(map_generator nav_msgs map_msgs roscpp)
 
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(bwi_dyncostmap_node
 #   ${catkin_LIBRARIES}
 # )
+target_link_librarieS(map_generator ${catkin_LIBRARIES})
 
 #############
 ## Install ##
