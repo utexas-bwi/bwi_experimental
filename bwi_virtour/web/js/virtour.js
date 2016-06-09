@@ -351,6 +351,11 @@ function getTopics() {
   var request = new ROSLIB.ServiceRequest();
   topicsClient.callService(request, function(result) {
     topics = result.topics;
+
+    // enable or disable scavenger hunt
+    if (!topicAvailable("/scav_hunt_status")) {
+      $(".scavengerHunt").hide();
+    }
   });
 }
 
@@ -530,10 +535,6 @@ $(".robot").click(function() {
   // get topics
   getTopics();
 
-  // enable or disable scavenger hunt
-  if (!topicAvailable("/scav_hunt_status")) {
-    $(".scavengerHunt").hide();
-  }
 
   // set up topic for controlling servo
   servo1Cmd = new ROSLIB.Topic({
