@@ -31,6 +31,18 @@ void copy_int8_vector_to_int32_array(const std::vector<int8_t> int8vector, const
   }
 }
 
+void map_to_img(const map _map, const std::string filename) {
+  // rows, columns, image type, data, params
+  cv::Mat img(global_height, global_width, CV_32SC1, _map, cv::Mat::AUTO_STEP);
+
+  std::vector<int> compression_params;
+  compression_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
+  compression_params.push_back(9);
+
+  cv::imwrite(filename, img, compression_params);
+  //cv::imshow(filename, img);
+}
+
 void global_costmap_handler(const nav_msgs::OccupancyGrid& msg) {
   if (global_set) return;
   ROS_INFO("Received global costmap");
@@ -45,6 +57,13 @@ void global_costmap_handler(const nav_msgs::OccupancyGrid& msg) {
 
   copy_int8_vector_to_int32_array(msg.data, global_costmap);
   global_set = true;
+
+  for (size_t i = px(500,500); i < px(550,500); i++) {
+    printf("%u ",global_costmap[i]);
+  }
+  printf("\n");
+
+  map_to_img(global_costmap, "test.png");
 }
 
 void costmap_update_handler(const map_msgs::OccupancyGridUpdate& update) {
