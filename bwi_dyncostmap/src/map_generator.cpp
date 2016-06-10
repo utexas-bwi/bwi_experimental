@@ -48,15 +48,6 @@ void global_costmap_handler(const nav_msgs::OccupancyGrid& msg) {
 
   copy_int8_vector_to_int16_array(msg.data, global_costmap);
 
-  /* debug 
-  for (size_t i = px(500,500); i < px(550,500); i++) {
-    printf("%u ",global_costmap[i]);
-    global_costmap[i] = 255;
-  }
-  printf("\n");
-  */
-
-  map_to_img(global_costmap, "test.png");
   global_set = true;
 }
 
@@ -96,11 +87,26 @@ void costmap_update_handler(const map_msgs::OccupancyGridUpdate& update) {
   }
 }
 
-//void apply_patch(int8_t[]& patch, 
+void ctrlc(int s){
+  ROS_INFO("Caugth Ctrl-C. Saving image files");
+
+  map_to_img(global_costmap, "global_costmap.png");
+  map_to_img(update_heat_map, "update_heat_map.png");
+  map_to_img(sum_map, "sum_map.png");
+
+  ROS_INFO("Saved!");
+
+  ros::shutdown();
+  exit(51);
+}
 
 int main(int argc, char **argv){
   ros::init(argc, argv, "map_generator");
   ros::NodeHandle n;
+
+  signal(SIGINT, ctrlc);
+  signal(SIGTERM, ctrlc);
+  signal(SIGKILL, ctrlc);
 
   ros::Subscriber global_sub = n.subscribe("/move_base/global_costmap/costmap", 5, global_costmap_handler);
 
