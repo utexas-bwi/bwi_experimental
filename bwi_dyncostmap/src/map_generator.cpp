@@ -71,8 +71,8 @@ void costmap_update_handler(const map_msgs::OccupancyGridUpdate& update) {
   // apply the patch
   size_t i = 0;
   for(std::vector<int8_t>::const_iterator it = u_data.begin(); it != u_data.end(); ++it) {
-    uint32_t x_index = i/u_width + u_y;
-    uint32_t y_index = i%u_width + u_x;
+    uint32_t x_index = i%u_width + u_x;
+    uint32_t y_index = i/u_width + u_y;
 
     // update the update heat map
     update_heat_map[px(x_index,y_index)] += 1;
