@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
   nav_msgs
   roscpp
   std_msgs
+  OpenCV
 )
 
 ## System dependencies are found with CMake's conventions
@@ -141,7 +142,7 @@ add_dependencies(map_generator nav_msgs map_msgs roscpp)
 # target_link_libraries(bwi_dyncostmap_node
 #   ${catkin_LIBRARIES}
 # )
-target_link_librarieS(map_generator ${catkin_LIBRARIES})
+target_link_librarieS(map_generator ${catkin_LIBRARIES} ${OpenCV_LIBS})
 
 #############
 ## Install ##
