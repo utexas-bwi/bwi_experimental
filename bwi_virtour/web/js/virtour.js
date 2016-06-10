@@ -99,7 +99,7 @@ function createIdentity() {
 function createSegbots() {
   segbots["localhost"] = createSegbot("localhost", "127.0.0.1", ROSBRIDGEPORT, MJPEGSERVERPORT);
 
-  var server = "http://nixons-head.csres.utexas.edu:7979/hostsjson";
+  var server = "http://nixons-head.csres.utexas.edu:7978/hostsalivejson";
   if (server == "") {
     error("Will not be able to dynamically load robot's IP addresses","Error: No DNS server set");
     return;
@@ -107,6 +107,7 @@ function createSegbots() {
   log("Pinging dns server");
   $.getJSON(server, function(data) {
     $.each(data, function(key, val) {
+      log(key);
       segbots[key] = createSegbot(key, val, ROSBRIDGEPORT, MJPEGSERVERPORT);
     });
   }).error(function(err) { error("Failed to ping DNS server"); });
@@ -191,7 +192,7 @@ function viewScavengerHunt() {
 
 function updateScavengerHuntStatus(msg) {
   log("updated scavengerHuntStatus");
-  
+
   for (var i = 0; i < msg.names.length; i++) {
     name = msg.names[i];
     switch (msg.statuses[i]) {
@@ -501,7 +502,7 @@ $(".robot").click(function() {
   segbot = segbots[botname];
   //segbot = segbots['localhost']; /* TODO: DEBUG ONLY */
 
-  log("Selected: " + botname); 
+  log("Selected: " + botname);
   segbot.connect();
 
   log("Subscribing listeners");
@@ -520,7 +521,7 @@ $(".robot").click(function() {
   // set up title
   $(".controllingText").text("Viewing " + botname);
 
-  // set up service client for getting list of topics 
+  // set up service client for getting list of topics
   topicsClient = new ROSLIB.Service({
     ros : segbot.ros,
     name : '/rosapi/topics',
