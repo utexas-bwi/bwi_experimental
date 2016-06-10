@@ -23,7 +23,7 @@ void copy_int8_vector_to_int16_array(const std::vector<int8_t> int8vector, const
   }
 }
 
-void map_to_img(const map _map, const std::string filename) {
+void map_to_img(const map _map, const std::string filename, const std::string time_str) {
   // rows, columns, image type (16 bit, signed, 1-chan), data, params
   cv::Mat img(global_height, global_width, CV_16SC1, _map, cv::Mat::AUTO_STEP);
 
@@ -31,7 +31,7 @@ void map_to_img(const map _map, const std::string filename) {
   compression_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
   compression_params.push_back(9);
 
-  cv::imwrite(filename, img, compression_params);
+  cv::imwrite(time_str + filename, img, compression_params);
 }
 
 void global_costmap_handler(const nav_msgs::OccupancyGrid& msg) {
@@ -90,9 +90,17 @@ void costmap_update_handler(const map_msgs::OccupancyGridUpdate& update) {
 void ctrlc(int s){
   ROS_INFO("Caugth Ctrl-C. Saving image files");
 
-  map_to_img(global_costmap, "global_costmap.png");
-  map_to_img(update_heat_map, "update_heat_map.png");
-  map_to_img(sum_map, "sum_map.png");
+  time_t theTime = time(NULL);
+  struct tm *aTime = localtime(&theTime);
+
+  std::ostringstream oss;
+  oss << "[" << (aTime->tm_mday) << "-" << (aTime->tm_mon + 1) << "-" << (aTime->tm_year + 1900)
+      << " " << (aTime->tm_hour) << ":" << (aTime->tm_min) << ":" << (aTime->tm_sec) << "] ";
+  std::string time_str = oss.str();
+
+  map_to_img(global_costmap, "global_costmap.png", time_str);
+  map_to_img(update_heat_map, "update_heat_map.png", time_str);
+  map_to_img(sum_map, "sum_map.png", time_str);
 
   ROS_INFO("Saved!");
 
