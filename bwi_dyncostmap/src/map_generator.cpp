@@ -3,7 +3,7 @@
 #define MAPSIZE (global_height * global_width)
 #define px(X,Y) ((X) + global_width * (Y))
 
-typedef int32_t* map;
+typedef int16_t* map;
 
 /* Global variables */
 uint32_t global_height;
@@ -16,31 +16,22 @@ map sum_map;
 map update_heat_map;
 map entropy_map;
 
-/*
-void copy_int8_to_int32(const map int8map, const map int32map) {
-  for (size_t i = 0; i < sizeof(int8map) / sizeof(int8_t); i++) {
-    int32map[i] = int8map[i];
-  }
-}
-*/
-
-void copy_int8_vector_to_int32_array(const std::vector<int8_t> int8vector, const map int32map) {
+void copy_int8_vector_to_int16_array(const std::vector<int8_t> int8vector, const map int16map) {
   size_t i = 0;
   for(std::vector<int8_t>::const_iterator it = int8vector.begin(); it != int8vector.end(); ++it) {
-      int32map[i++] = *it;
+      int16map[i++] = *it;
   }
 }
 
 void map_to_img(const map _map, const std::string filename) {
-  // rows, columns, image type, data, params
-  cv::Mat img(global_height, global_width, CV_32SC1, _map, cv::Mat::AUTO_STEP);
+  // rows, columns, image type (16 bit, signed, 1-chan), data, params
+  cv::Mat img(global_height, global_width, CV_16SC1, _map, cv::Mat::AUTO_STEP);
 
   std::vector<int> compression_params;
   compression_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
   compression_params.push_back(9);
 
   cv::imwrite(filename, img, compression_params);
-  //cv::imshow(filename, img);
 }
 
 void global_costmap_handler(const nav_msgs::OccupancyGrid& msg) {
@@ -50,20 +41,23 @@ void global_costmap_handler(const nav_msgs::OccupancyGrid& msg) {
   global_height = msg.info.height;
   global_width  = msg.info.width;
 
-  global_costmap  = new int32_t[MAPSIZE];
-  sum_map         = new int32_t[MAPSIZE];
-  update_heat_map = new int32_t[MAPSIZE];
-  entropy_map     = new int32_t[MAPSIZE];
+  global_costmap  = new int16_t[MAPSIZE];
+  sum_map         = new int16_t[MAPSIZE];
+  update_heat_map = new int16_t[MAPSIZE];
+  entropy_map     = new int16_t[MAPSIZE];
 
-  copy_int8_vector_to_int32_array(msg.data, global_costmap);
-  global_set = true;
+  copy_int8_vector_to_int16_array(msg.data, global_costmap);
 
+  /* debug 
   for (size_t i = px(500,500); i < px(550,500); i++) {
     printf("%u ",global_costmap[i]);
+    global_costmap[i] = 255;
   }
   printf("\n");
+  */
 
   map_to_img(global_costmap, "test.png");
+  global_set = true;
 }
 
 void costmap_update_handler(const map_msgs::OccupancyGridUpdate& update) {
