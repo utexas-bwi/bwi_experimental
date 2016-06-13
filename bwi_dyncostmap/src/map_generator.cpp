@@ -55,8 +55,6 @@ void costmap_update_handler(const map_msgs::OccupancyGridUpdate& update) {
   if (!global_set) {
     ROS_INFO("Update received without global set");
     return;
-  } else {
-    ROS_INFO("Received update");
   }
 
   uint32_t u_width  = update.width;
@@ -87,9 +85,8 @@ void costmap_update_handler(const map_msgs::OccupancyGridUpdate& update) {
   }
 }
 
-void ctrlc(int s){
-  ROS_INFO("Caugth Ctrl-C. Saving image files");
-
+void generate_results() {
+  ROS_INFO("Saving results...");
   time_t theTime = time(NULL);
   struct tm *aTime = localtime(&theTime);
 
@@ -106,10 +103,14 @@ void ctrlc(int s){
   map_to_img(update_heat_map, path_str + "update_heat_map.png");
   map_to_img(sum_map,         path_str + "sum_map.png");
 
-  ROS_INFO("Saved!");
+  ROS_INFO("Results saved!");
+}
 
+
+void ctrlc(int s){
+  generate_results();
   ros::shutdown();
-  exit(51);
+  exit(0);
 }
 
 int main(int argc, char **argv){
