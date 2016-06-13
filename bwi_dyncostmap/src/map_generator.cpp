@@ -1,9 +1,12 @@
 #include "map_generator.h"
 
+#define NEWMAP16 new int16_t[MAPSIZE]
+#define NEWMAP64 new int64_t[MAPSIZE]
 #define MAPSIZE (global_height * global_width)
 #define px(X,Y) ((X) + global_width * (Y))
 
-typedef int16_t* map;
+typedef int16_t* map16;
+typedef int64_t* map64;
 
 /* Global variables */
 uint32_t global_height;
@@ -11,19 +14,19 @@ uint32_t global_width;
 bool global_set = false;
 
 /* Global maps */
-map global_costmap;
-map sum_map;
-map update_heat_map;
-map entropy_map;
+map16 global_costmap;
+map64 sum_map;
+map16 update_heat_map;
+map16 entropy_map;
 
-void copy_int8_vector_to_int16_array(const std::vector<int8_t> int8vector, const map int16map) {
+void copy_int8_vector_to_int16_array(const std::vector<int8_t> int8vector, const map16 int16map) {
   size_t i = 0;
   for(std::vector<int8_t>::const_iterator it = int8vector.begin(); it != int8vector.end(); ++it) {
       int16map[i++] = *it;
   }
 }
 
-void map_to_img(const map _map, const std::string filename) {
+void map_to_img(const map16 _map, const std::string filename) {
   // rows, columns, image type (16 bit, signed, 1-chan), data, params
   cv::Mat img(global_height, global_width, CV_16SC1, _map, cv::Mat::AUTO_STEP);
 
@@ -41,10 +44,10 @@ void global_costmap_handler(const nav_msgs::OccupancyGrid& msg) {
   global_height = msg.info.height;
   global_width  = msg.info.width;
 
-  global_costmap  = new int16_t[MAPSIZE];
-  sum_map         = new int16_t[MAPSIZE];
-  update_heat_map = new int16_t[MAPSIZE];
-  entropy_map     = new int16_t[MAPSIZE];
+  global_costmap  = NEWMAP16;
+  sum_map         = NEWMAP64;
+  update_heat_map = NEWMAP16;
+  entropy_map     = NEWMAP16;
 
   copy_int8_vector_to_int16_array(msg.data, global_costmap);
 
@@ -76,13 +79,89 @@ void costmap_update_handler(const map_msgs::OccupancyGridUpdate& update) {
     update_heat_map[px(x_index,y_index)] += 1;
 
     // update the sum map
-    sum_map[px(x_index,y_index)] += 1 ? *it > 50 : 0;
+    //sum_map[px(x_index,y_index)] += *it > 50 ? 1 : 0;
+    sum_map[px(x_index,y_index)] += *it;
 
     // TODO: calculate entropy and apply the patch
     // TODO: ensure this actually works and all index calculations are right
     // TODO: find way of displaying matrices as an image
     i++;
   }
+}
+
+map16 generate_average_map(const map64 sum, const map16 heat) {
+  map16 average = NEWMAP16;
+
+  for (size_t x = 0; x < global_width; x++) {
+    for (size_t y = 0; y < global_height; y++) {
+      int64_t s = sum[px(x,y)];
+      int64_t h = heat[px(x,y)] * 100;
+      if (h > 0) {
+        float avg = ((float)s) / ((float)h);
+        average[px(x,y)] = avg * 100;
+      } else {
+        average[px(x,y)] = -1;
+      }
+    }
+  }
+  return average;
+}
+
+map16 deflate(const map16 cmap) {
+  map16 deflated = NEWMAP16;
+
+  for (size_t x = 0; x < global_width; x++) {
+    for (size_t y = 0; y < global_height; y++) {
+      deflated[px(x,y)] = cmap[px(x,y)] == 100 ? 255 : 0;
+    }
+  }
+
+  return deflated;
+}
+
+map16 combine_maps(map16 primary, map16 secondary) {
+  map16 combined = NEWMAP16;
+
+  for (size_t x = 0; x < global_width; x++) {
+    for (size_t y = 0; y < global_height; y++) {
+      int64 p = primary[px(x,y)];
+      int64 s = secondary[px(x,y)];
+      combined[px(x,y)] = p >= 0 ? p : s;
+    }
+  }
+  return combined;
+}
+
+map16 invert(map16 cmap) {
+  map16 inverted = NEWMAP16;
+
+  for (size_t x = 0; x < global_width; x++) {
+    for (size_t y = 0; y < global_height; y++) {
+      int64 c = cmap[px(x,y)];
+      inverted[px(x,y)] = c == 255 ? 0 : 255;
+    }
+  }
+  return inverted;
+}
+
+void generate_costmap() {
+  map16 res = NEWMAP16;
+
+  map16 average  = generate_average_map(sum_map, update_heat_map);
+  map16 combined = combine_maps(average, global_costmap);
+  map16 deflated = deflate(combined);
+  map16 inverted = invert(deflated);
+
+  map_to_img(average, "!average_map.png");
+  map_to_img(combined, "!combined.png");
+  map_to_img(deflated, "!deflated_map.png");
+  map_to_img(inverted, "!inverted.png");
+
+  ROS_INFO("generated costmaps");
+  delete average;
+  delete deflated;
+  delete combined;
+  delete inverted;
 }
 
 void generate_results() {
@@ -101,8 +180,9 @@ void generate_results() {
 
   map_to_img(global_costmap,  path_str + "global_costmap.png");
   map_to_img(update_heat_map, path_str + "update_heat_map.png");
-  map_to_img(sum_map,         path_str + "sum_map.png");
+  //map_to_img(sum_map,         path_str + "sum_map.png");
 
+  generate_costmap();
   ROS_INFO("Results saved!");
 }
 
