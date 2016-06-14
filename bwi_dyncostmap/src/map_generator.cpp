@@ -112,7 +112,17 @@ map16 deflate(const map16 cmap) {
 
   for (size_t x = 0; x < global_width; x++) {
     for (size_t y = 0; y < global_height; y++) {
-      deflated[px(x,y)] = cmap[px(x,y)] == 100 ? 255 : 0;
+      int64 c  = cmap[px(x,y)];
+      //int64 cn = cmap[px(x,y+1)];
+      //int64 cs = cmap[px(x,y-1)];
+      //int64 cw = cmap[px(x-1,y)];
+      //int64 ce = cmap[px(x+1,y)];
+      
+      bool hundred = c == 99;
+      //bool edge = (x == 0) || (x == global_width-1) || (y == 0) || (y == global_height-1);
+      //bool neighbors = (c == 99) && (cn == 99);// && (cs == 99) && (cw == 99) && (ce == 99);
+      //bool check = hundred || (!edge && neighbors);
+      deflated[px(x,y)] = hundred ? 255 : 0;
     }
   }
 
@@ -144,7 +154,7 @@ map16 invert(map16 cmap) {
   return inverted;
 }
 
-void generate_costmap() {
+map16 generate_costmap() {
   map16 res = NEWMAP16;
 
   map16 average  = generate_average_map(sum_map, update_heat_map);
@@ -152,16 +162,14 @@ void generate_costmap() {
   map16 deflated = deflate(combined);
   map16 inverted = invert(deflated);
 
-  map_to_img(average, "!average_map.png");
-  map_to_img(combined, "!combined.png");
-  map_to_img(deflated, "!deflated_map.png");
-  map_to_img(inverted, "!inverted.png");
+  map_to_img(combined, "combined.png");
+  map_to_img(deflated, "deflated.png");
 
-  ROS_INFO("generated costmaps");
   delete average;
   delete deflated;
   delete combined;
-  delete inverted;
+
+  return inverted;
 }
 
 void generate_results() {
@@ -178,12 +186,15 @@ void generate_results() {
 
   boost::filesystem::create_directory(path_str);
 
+  map16 result = generate_costmap();
+
   map_to_img(global_costmap,  path_str + "global_costmap.png");
   map_to_img(update_heat_map, path_str + "update_heat_map.png");
-  //map_to_img(sum_map,         path_str + "sum_map.png");
+  map_to_img(result, path_str + "result.png");
 
-  generate_costmap();
   ROS_INFO("Results saved!");
+
+  delete result;
 }
 
 
