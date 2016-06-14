@@ -118,7 +118,7 @@ map16 deflate(const map16 cmap) {
       //int64 cw = cmap[px(x-1,y)];
       //int64 ce = cmap[px(x+1,y)];
       
-      bool hundred = c == 99;
+      bool hundred = c == 100;
       //bool edge = (x == 0) || (x == global_width-1) || (y == 0) || (y == global_height-1);
       //bool neighbors = (c == 99) && (cn == 99);// && (cs == 99) && (cw == 99) && (ce == 99);
       //bool check = hundred || (!edge && neighbors);
@@ -164,6 +164,7 @@ map16 generate_costmap() {
 
   map_to_img(combined, "combined.png");
   map_to_img(deflated, "deflated.png");
+  map_to_img(deflate(global_costmap), "deflated_global.png");
 
   delete average;
   delete deflated;
@@ -191,6 +192,7 @@ void generate_results() {
   map_to_img(global_costmap,  path_str + "global_costmap.png");
   map_to_img(update_heat_map, path_str + "update_heat_map.png");
   map_to_img(result, path_str + "result.png");
+
 
   ROS_INFO("Results saved!");
 
