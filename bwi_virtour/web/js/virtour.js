@@ -192,6 +192,8 @@ function viewScavengerHunt() {
 
 function updateScavengerHuntStatus(msg) {
   log("updated scavengerHuntStatus");
+
+  $(".scavengerhunt-table tbody").html("");
   
   for (var i = 0; i < msg.names.length; i++) {
     name = msg.names[i];
@@ -203,7 +205,6 @@ function updateScavengerHuntStatus(msg) {
       case 3:
         stat = TODO;break;
     }
-    $(".scavengerhunt-table tbody").html("");
     $(".scavengerhunt-table > tbody:last").append('<tr><td>' + name + '</td><td>' + stat + '</td></tr>');
   }
 }
