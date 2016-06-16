@@ -56,6 +56,7 @@ find_package(catkin REQUIRED COMPONENTS
 add_service_files(
   FILES
   GoToLocation.srv
+  GoBesideLocation.srv
   Rotate.srv
   RequestTour.srv
   PingTour.srv
