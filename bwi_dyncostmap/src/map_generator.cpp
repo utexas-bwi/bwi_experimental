@@ -16,6 +16,7 @@ bool global_set = false;
 /* Global maps */
 map16 global_costmap;
 map64 sum_map;
+map64 dsum_map;
 map16 update_heat_map;
 map16 entropy_map;
 
@@ -46,6 +47,7 @@ void global_costmap_handler(const nav_msgs::OccupancyGrid& msg) {
 
   global_costmap  = NEWMAP16;
   sum_map         = NEWMAP64;
+  dsum_map        = NEWMAP64;
   update_heat_map = NEWMAP16;
   entropy_map     = NEWMAP16;
 
@@ -81,6 +83,8 @@ void costmap_update_handler(const map_msgs::OccupancyGridUpdate& update) {
     // update the sum map
     //sum_map[px(x_index,y_index)] += *it > 50 ? 1 : 0;
     sum_map[px(x_index,y_index)] += *it;
+
+    dsum_map[px(x_index,y_index)] += (*it == 100) ? 255 : 0;
 
     // TODO: calculate entropy and apply the patch
     // TODO: ensure this actually works and all index calculations are right
@@ -142,13 +146,27 @@ map16 combine_maps(map16 primary, map16 secondary) {
   return combined;
 }
 
+map16 threshold(map16 cmap, int64 threshold) {
+  map16 result = NEWMAP16;
+
+  for (size_t x = 0; x < global_width; x++) {
+    for (size_t y = 0; y < global_height; y++) {
+      int64 c = cmap[px(x,y)];
+      result[px(x,y)] = (c >= threshold) ? 255 : 0;
+    }
+  }
+
+  return result;
+}
+
 map16 invert(map16 cmap) {
   map16 inverted = NEWMAP16;
 
   for (size_t x = 0; x < global_width; x++) {
     for (size_t y = 0; y < global_height; y++) {
       int64 c = cmap[px(x,y)];
-      inverted[px(x,y)] = c == 255 ? 0 : 255;
+      //inverted[px(x,y)] = c == 255 ? 0 : 255;
+      inverted[px(x,y)] = 255 - c;
     }
   }
   return inverted;
@@ -157,18 +175,19 @@ map16 invert(map16 cmap) {
 map16 generate_costmap() {
   map16 res = NEWMAP16;
 
-  map16 average  = generate_average_map(sum_map, update_heat_map);
-  map16 combined = combine_maps(average, global_costmap);
-  map16 deflated = deflate(combined);
-  map16 inverted = invert(deflated);
+  map16 average         = generate_average_map(dsum_map, update_heat_map);
+  map16 global_deflated = deflate(global_costmap);
+  map16 combined        = combine_maps(average, global_deflated);
+  map16 thresholded     = threshold(combined, 100);
+  map16 inverted        = invert(thresholded);
 
-  map_to_img(combined, "combined.png");
-  map_to_img(deflated, "deflated.png");
-  map_to_img(deflate(global_costmap), "deflated_global.png");
+  map_to_img(combined   , "combined.png");
+  map_to_img(thresholded, "thresholded.png");
 
   delete average;
-  delete deflated;
+  delete global_deflated;
   delete combined;
+  delete thresholded;
 
   return inverted;
 }
