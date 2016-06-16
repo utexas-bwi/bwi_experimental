@@ -21,6 +21,7 @@ var pingInterval = 5000; // ms
 var moveBaseAction = null;
 var topicsClient = null;
 var goToLocationClient = null;
+var goBesideLocationClient = null;
 var rotateClient = null;
 var requestTourClient = null;
 var getTourStateClient = null;
@@ -330,6 +331,25 @@ function requestLocation(locationStr) {
   });
 }
 
+function requestBesideLocation(locationStr) {
+  log('requesting goBesideLocation: ' + locationStr);
+  var request = new ROSLIB.ServiceRequest({ location: locationStr, user: identity});
+  goBesideLocationClient.callService(request, function(result) {
+    log('Result for requesBesidetLocation service call on '
+      + goToLocationClient.name + ': ' + result.result);
+    if (result.result == 1) { //success
+      alert("success");
+    } else if (result.result == -1) { // terminated
+      alert("terminated");
+    } else if (result.result == -2) { // preempted
+      alert("preempted");
+    } else if (result.result == -3) { // aborted
+      alert("aborted");
+    } else {
+    }
+  });
+}
+
 function requestRotate(rotateDelta) {
   log('requesting rotate: ' + rotateDelta);
   var request = new ROSLIB.ServiceRequest({ rotateDelta: rotateDelta, user: identity});
@@ -560,6 +580,11 @@ $(".robot").click(function() {
     ros : segbot.ros,
     name : '/go_to_location',
     serviceType : 'bwi_virtour/GoToLocation'
+  });
+  goBesideLocationClient = new ROSLIB.Service({
+    ros : segbot.ros,
+    name : '/go_beside_location',
+    serviceType : 'bwi_virtour/GoBesideLocation'
   });
 
   // set up service client for sending location commands
