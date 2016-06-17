@@ -32,6 +32,7 @@ var tourState = { tourAllowed: false, tourInProgress: false, tourDuration: 0,
 var tourStateFresh = false;
 var topics = null;
 var servosEnabled = false;
+var curr_color = 0;
 
 // Scavenger Hunt Statuses
 var FINISHED = "<span class=\"glyphicon glyphicon-ok\"></span> Done";
@@ -120,6 +121,22 @@ function createSegbot(name, ipaddr, rosbridgeport, mjpegserverport) {
   bot.rosbridgeport = rosbridgeport;
   bot.mjpegserverport = mjpegserverport;
   log("Created segbot: " + name + "(" + ipaddr + ":" + rosbridgeport + ")");
+
+  var colors = ["orange", "green", "yellow", "red"];
+  var color = colors[curr_color];
+  curr_color = (curr_color + 1) % colors.length;
+
+  var rf = '<div class="col-md-3">';
+  var rm = '<div class="robot module ' + color + '" robot="' + name + '">';
+  //var im = '<img class="img-circle" src="./image/' + name + '.jpg"/>';
+  var im = '<img class="img-circle" src="./image/calculon_square.jpg"/>';
+  var nm = '<h2>' + name + '</h2>';
+  var ed = '</div>';
+
+  var robotdiv = rf + rm + im + nm + ed + ed;
+
+  $(".robot_links").append(robotdiv);
+
   return bot;
 }
 

@@ -24,6 +24,12 @@ body {
   color: white;
   text-shadow: 1px 1px 0px #000;
 }
+.robots .robot h2 {
+  font-size: 1.5em;
+  text-align: center;
+  padding-bottom: 20px;
+  margin-bottom:10px;
+}
 .robots h2 {
   font-size: 2em;
   text-align: center;
