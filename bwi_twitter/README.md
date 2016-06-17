@@ -39,6 +39,12 @@ sudo update-alternatives --config gcc
 
 This is based on the askubuntu answer: http://askubuntu.com/a/581497
 
+To install curlpp:
+
+```bash
+sudo apt-get install libcurlpp-dev
+```
+
 Configuration Files
 ---
 
