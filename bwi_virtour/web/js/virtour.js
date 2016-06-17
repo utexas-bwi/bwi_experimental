@@ -54,11 +54,88 @@ var locations = [{
   name: "Shiqi's Office",
   value: "l3_420"
 },{
+  name: "Jivko's Office",
+  value: "l3_432"
+},{
   name: "Peter's Office",
   value: "l3_415"
 },{
   name: "Lab",
   value: "l3_414b"
+}];
+
+var doors = [{
+  name: "d3_404",
+  value: "d3_404"
+},{
+  name: "d3_400",
+  value: "d3_400"
+},{
+  name: "d3_508",
+  value: "d3_508"
+},{
+  name: "d3_402",
+  value: "d3_402"
+},{
+  name: "d3_500",
+  value: "d3_500"
+},{
+  name: "d3_502",
+  value: "d3_502"
+},{
+  name: "d3_elev_east",
+  value: "d3_elev_east"
+},{
+  name: "d3_430",
+  value: "d3_430"
+},{
+  name: "d3_422",
+  value: "d3_422"
+},{
+  name: "d3_420",
+  value: "d3_420"
+},{
+  name: "d3_414a2",
+  value: "d3_414a2"
+},{
+  name: "d3_414a3",
+  value: "d3_414a3"
+},{
+  name: "d3_414a1",
+  value: "d3_414a1"
+},{
+  name: "d3_416",
+  value: "d3_416"
+},{
+  name: "d3_516",
+  value: "d3_516"
+},{
+  name: "d3_418",
+  value: "d3_418"
+},{
+  name: "d3_512",
+  value: "d3_512"
+},{
+  name: "d3_510",
+  value: "d3_510"
+},{
+  name: "d3_elev_west",
+  value: "d3_elev_west"
+},{
+  name: "d3_414b3",
+  value: "d3_414b3"
+},{
+  name: "d3_414b2",
+  value: "d3_414b2"
+},{
+  name: "d3_414b1",
+  value: "d3_414b1"
+},{
+  name: "d3_432",
+  value: "d3_432"
+},{
+  name: "d3_436",
+  value: "d3_436"
 }];
 
 
@@ -153,6 +230,12 @@ function SegBotConnection(ipaddr, rosbridgeport, mjpegserverport) {
 function populateLocations() {
   $(locations).each(function(i, val) {
     $('#locationSelect').append($('<option>', {
+      value: val.value,
+      text: val.name
+    }));
+  });
+  $(doors).each(function(i, val) {
+    $('#doorSelect').append($('<option>', {
       value: val.value,
       text: val.name
     }));
@@ -572,7 +655,6 @@ $(".robots").on("click", ".robot", function() {
 
   // get topics
   getTopics();
-
 
   // set up topic for controlling servo
   servo1Cmd = new ROSLIB.Topic({
