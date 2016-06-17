@@ -539,7 +539,7 @@ function clearBeforeUnload() {
   window.onbeforeunload = null;
 }
 
-$(".robot").click(function() {
+$(".robots").on("click", ".robot", function() {
   var botname = $(this).attr("robot");
   segbot = segbots[botname];
   //segbot = segbots['localhost']; /* TODO: DEBUG ONLY */
