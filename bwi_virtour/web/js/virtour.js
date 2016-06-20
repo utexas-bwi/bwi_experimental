@@ -23,6 +23,7 @@ var topicsClient = null;
 var goToLocationClient = null;
 var goBesideLocationClient = null;
 var rotateClient = null;
+var pauseClient = null;
 var requestTourClient = null;
 var getTourStateClient = null;
 var pingTourClient = null;
@@ -353,6 +354,14 @@ function rotateRight() {
   requestRotate(0.2);
 }
 
+function pauseRobot() {
+  requestPause(true);
+}
+
+function resumeRobot() {
+  requestPause(false);
+}
+
 function turnLeft() {
   servo1Pos += 0.2;
   servo1Pos = servo1Pos > 1.0 ? 1.0 : servo1Pos;
@@ -457,6 +466,16 @@ function requestRotate(rotateDelta) {
   rotateClient.callService(request, function(result) {
     log('Result for requestRotate service call on '
       + rotateClient.name + ': ' + result.result);
+  });
+}
+
+function requestPause(pause) {
+  log('requesting: ' + (pause ? "stop operations" : "resume operations"));
+  var type = pause ? 0 : 1; // 0 - pause, 1 - resume
+  var request = new ROSLIB.ServiceRequest({ type : type});
+  pauseClient.callService(request, function(result) {
+    log('Result for requestPause service call on '
+      + pauseClient.name + ': ' + result.result);
   });
 }
 
@@ -696,6 +715,13 @@ $(".robots").on("click", ".robot", function() {
     serviceType : 'bwi_virtour/Rotate'
   });
 
+  // set up service client for requesting pausing
+  pauseClient = new ROSLIB.Service({
+    ros : segbot.ros,
+    name : '/scav_control',
+    serviceType: 'bwi_msgs/ScavHunt'
+  });
+
   // set up service client for requesting tours
   requestTourClient = new ROSLIB.Service({
     ros : segbot.ros,
@@ -763,6 +789,8 @@ $(".turnCenter").click(function() {turnCenter();});
 $(".labimage").click(function() {showMap();});
 $(".rotateRight").click(function() {rotateRight();});
 $(".rotateLeft").click(function() {rotateLeft();});
+$(".pauseBtn").click(function() {pauseRobot();});
+$(".resumeBtn").click(function() {resumeRobot();});
 
 $(".getTourStatus").click(function() {
   getTourState();
