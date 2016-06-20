@@ -206,7 +206,7 @@ function createSegbot(name, ipaddr, rosbridgeport, mjpegserverport) {
   var rf = '<div class="col-md-3">';
   var rm = '<div class="robot module ' + color + '" robot="' + name + '">';
   //var im = '<img class="img-circle" src="./image/' + name + '.jpg"/>';
-  var im = '<img class="img-circle" src="./image/calculon_square.jpg"/>';
+  var im = '<img class="img-circle" src="./image/' + name + '.jpg"/>';
   var nm = '<h2>' + name + '</h2>';
   var ed = '</div>';
 
@@ -784,9 +784,17 @@ $(".viewScavengerHunt").click(function() {
 
 // add callback handlers for navigate form
 $(".navigateBtn").click(function() {
-  var location = $("#locationSelect").val();
-  log("Requesting navigation to " + location);
-  requestLocation(location);
+  var place = $("#locationSelect").val();
+  var door = $("#doorSelect").val();
+
+  var dest = (place == "") ? door : place;
+  if (dest == "") {
+    alert("Please enter a destination");
+    return;
+  }
+
+  log("Requesting navigation to " + dest);
+  requestLocation(dest);
   $(".map-modal").modal("hide");
 });
 
