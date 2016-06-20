@@ -797,7 +797,7 @@ $(".navigateBtn").click(function() {
 
   var dest = (place == "") ? door : place;
   if (dest == "") {
-    alert("Please enter a destination");
+    alert("Please select a destination");
     return;
   }
 
