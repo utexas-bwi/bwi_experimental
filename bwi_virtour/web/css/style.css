@@ -70,22 +70,46 @@ body {
 .controllingIframe{
   position:relative;
 }
+.pauseControl{
+  width: 140px;
+  height: 60px;
+  position: absolute;
+  left: 0px;
+  top: 555px;
+  background-color: rgba(55,55,55,0.5);
+}
+.pauseControl p{
+  text-align: center;
+}
+.pauseControl .pauseBtn{
+  position: absolute;
+  top: 20px;
+  left: 17px;
+}
+.pauseControl .resumeBtn{
+  position: absolute;
+  top: 20px;
+  right: 17px;
+}
 .rotateControl{
   width: 140px;
-  height: 40px;
+  height: 60px;
   position: absolute;
   left: 0px;
   top: 625px;
   background-color: rgba(55,55,55,0.5);
 }
+.rotateControl p{
+  text-align: center;
+}
 .rotateControl .rotateLeft{
   position: absolute;
-  top: 2px;
+  top: 20px;
   left: 17px;
 }
 .rotateControl .rotateRight{
   position: absolute;
-  top: 2px;
+  top: 20px;
   right: 17px;
 }
 .servoControl{

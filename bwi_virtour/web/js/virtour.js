@@ -577,6 +577,7 @@ function showControls() {
     $(".servoControl").fadeIn();
   }
   $(".rotateControl").fadeIn();
+  $(".pauseControl").fadeIn();
   $(".locationForm").fadeIn();
   $(".navigateBtn").fadeIn();
 }
@@ -584,6 +585,7 @@ function showControls() {
 function hideControls() {
   $(".servoControl").hide();
   $(".rotateControl").hide();
+  $(".pauseControl").hide();
   $(".locationForm").hide();
   $(".navigateBtn").hide();
 }
