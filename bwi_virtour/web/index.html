@@ -82,7 +82,7 @@
       </div> <!-- .control -->
 
       <div class="map">
-        <div class="modal fade map-modal" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+        <div class="modal fade map-modal" tabindex="-1" role="dialog">
           <div class="modal-dialog modal-lg">
             <div class="modal-content">
               <div class="modal-header">
@@ -93,33 +93,39 @@
                 <h4 class="modal-title">Location Map</h4>
                 <h5>Select next tour location</h5>
               </div> <!-- modal-header -->
+
               <div class="modal-body">
                 <div class="map-image">
-                  <!-- <img class="modal-img img-rounded pos-map" src="./image/labmap.jpg"> -->
-                    <img class="modal-img img-rounded pos-map" src="./image/3ne.png">
-                    <img class="pos-marker" src="./image/marker.png">
-                </div>
+                  <img class="modal-img img-rounded pos-map" src="./image/3ne.png">
+                  <img class="pos-marker" src="./image/marker.png">
+                </div> <!-- map-image -->
 
-                <div class="locationForm form-group">
-                  <label for="locationSelect" class="col-sm-2 control-label">Go to room</label>
-                  <div class="col-sm-10">
-                    <select id="locationSelect" name="locationSelect" class="form-control">
-                    </select>
-                  </div>
-                  <label for="doorSelect" class="col-sm-2 control-label">Go beside door</label>
-                  <div class="col-sm-10">
-                    <select id="doorSelect" name="doorSelect" class="form-control">
-                    </select>
-                  </div>
-                </div>
-
-                <br>
+                <div class="locationForm">
+                  <div class="form-group">
+                    <label for="locationSelect" class="col-sm-2 control-label">Go to room</label>
+                    <div class="col-sm-10">
+                      <select id="locationSelect" name="locationSelect" class="form-control">
+                        <option selected value></option>
+                      </select>
+                    </div> <!-- col -->
+                  </div> <!-- form-group -->
+                  <div class="form-group">
+                    <label for="doorSelect" class="col-sm-2 control-label">Go beside door</label>
+                    <div class="col-sm-10">
+                      <select id="doorSelect" name="doorSelect" class="form-control">
+                        <option selected value></option>
+                      </select> <!-- col -->
+                    </div>
+                  </div> <!-- form-group -->
+                </div> <!-- locationForm -->
               </div> <!-- modal-body -->
+
               <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                 <button type="button" class="btn btn-primary navigateBtn">Navigate</button>
               </div> <!-- modal-footer -->
-            </div>
+
+            </div> <!-- modal content -->
           </div> <!-- modal-dialog -->
         </div> <!-- modal -->
       </div> <!-- .map -->

@@ -178,7 +178,7 @@ function createIdentity() {
 function createSegbots() {
   segbots["localhost"] = createSegbot("localhost", "127.0.0.1", ROSBRIDGEPORT, MJPEGSERVERPORT);
 
-  var server = "http://nixons-head.csres.utexas.edu:7979/hostsjson";
+  var server = "http://nixons-head.csres.utexas.edu:7979/hostsalivejson";
   if (server == "") {
     error("Will not be able to dynamically load robot's IP addresses","Error: No DNS server set");
     return;
