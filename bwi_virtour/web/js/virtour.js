@@ -782,6 +782,14 @@ $(".viewScavengerHunt").click(function() {
   viewScavengerHunt();
 });
 
+$("#locationSelect").change(function() {
+  $("#doorSelect").val("");
+});
+
+$("#doorSelect").change(function() {
+  $("#locationSelect").val("");
+});
+
 // add callback handlers for navigate form
 $(".navigateBtn").click(function() {
   var place = $("#locationSelect").val();
