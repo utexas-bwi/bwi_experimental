@@ -21,6 +21,7 @@ var pingInterval = 5000; // ms
 var moveBaseAction = null;
 var topicsClient = null;
 var goToLocationClient = null;
+var goBesideLocationClient = null;
 var rotateClient = null;
 var requestTourClient = null;
 var getTourStateClient = null;
@@ -31,6 +32,7 @@ var tourState = { tourAllowed: false, tourInProgress: false, tourDuration: 0,
 var tourStateFresh = false;
 var topics = null;
 var servosEnabled = false;
+var curr_color = 0;
 
 // Scavenger Hunt Statuses
 var FINISHED = "<span class=\"glyphicon glyphicon-ok\"></span> Done";
@@ -52,11 +54,88 @@ var locations = [{
   name: "Shiqi's Office",
   value: "l3_420"
 },{
+  name: "Jivko's Office",
+  value: "l3_432"
+},{
   name: "Peter's Office",
   value: "l3_415"
 },{
   name: "Lab",
   value: "l3_414b"
+}];
+
+var doors = [{
+  name: "d3_404",
+  value: "d3_404"
+},{
+  name: "d3_400",
+  value: "d3_400"
+},{
+  name: "d3_508",
+  value: "d3_508"
+},{
+  name: "d3_402",
+  value: "d3_402"
+},{
+  name: "d3_500",
+  value: "d3_500"
+},{
+  name: "d3_502",
+  value: "d3_502"
+},{
+  name: "d3_elev_east",
+  value: "d3_elev_east"
+},{
+  name: "d3_430",
+  value: "d3_430"
+},{
+  name: "d3_422",
+  value: "d3_422"
+},{
+  name: "d3_420",
+  value: "d3_420"
+},{
+  name: "d3_414a2",
+  value: "d3_414a2"
+},{
+  name: "d3_414a3",
+  value: "d3_414a3"
+},{
+  name: "d3_414a1",
+  value: "d3_414a1"
+},{
+  name: "d3_416",
+  value: "d3_416"
+},{
+  name: "d3_516",
+  value: "d3_516"
+},{
+  name: "d3_418",
+  value: "d3_418"
+},{
+  name: "d3_512",
+  value: "d3_512"
+},{
+  name: "d3_510",
+  value: "d3_510"
+},{
+  name: "d3_elev_west",
+  value: "d3_elev_west"
+},{
+  name: "d3_414b3",
+  value: "d3_414b3"
+},{
+  name: "d3_414b2",
+  value: "d3_414b2"
+},{
+  name: "d3_414b1",
+  value: "d3_414b1"
+},{
+  name: "d3_432",
+  value: "d3_432"
+},{
+  name: "d3_436",
+  value: "d3_436"
 }];
 
 
@@ -120,6 +199,22 @@ function createSegbot(name, ipaddr, rosbridgeport, mjpegserverport) {
   bot.rosbridgeport = rosbridgeport;
   bot.mjpegserverport = mjpegserverport;
   log("Created segbot: " + name + "(" + ipaddr + ":" + rosbridgeport + ")");
+
+  var colors = ["orange", "green", "yellow", "red"];
+  var color = colors[curr_color];
+  curr_color = (curr_color + 1) % colors.length;
+
+  var rf = '<div class="col-md-3">';
+  var rm = '<div class="robot module ' + color + '" robot="' + name + '">';
+  //var im = '<img class="img-circle" src="./image/' + name + '.jpg"/>';
+  var im = '<img class="img-circle" src="./image/calculon_square.jpg"/>';
+  var nm = '<h2>' + name + '</h2>';
+  var ed = '</div>';
+
+  var robotdiv = rf + rm + im + nm + ed + ed;
+
+  $(".robot_links").append(robotdiv);
+
   return bot;
 }
 
@@ -136,6 +231,12 @@ function SegBotConnection(ipaddr, rosbridgeport, mjpegserverport) {
 function populateLocations() {
   $(locations).each(function(i, val) {
     $('#locationSelect').append($('<option>', {
+      value: val.value,
+      text: val.name
+    }));
+  });
+  $(doors).each(function(i, val) {
+    $('#doorSelect').append($('<option>', {
       value: val.value,
       text: val.name
     }));
@@ -176,7 +277,7 @@ function subscribeScavengerHuntListener(ros) {
   var listener = new ROSLIB.Topic({
     ros : ros,
     name : '/scav_hunt_status',
-    messageType : 'bwi_scavenger/ScavStatus'
+    messageType : 'bwi_msgs/ScavStatus'
   });
   log("Added scavenger hunt listener");
 
@@ -193,6 +294,11 @@ function viewScavengerHunt() {
 function updateScavengerHuntStatus(msg) {
   log("updated scavengerHuntStatus");
 
+<<<<<<< HEAD
+=======
+  $(".scavengerhunt-table tbody").html("");
+  
+>>>>>>> master
   for (var i = 0; i < msg.names.length; i++) {
     name = msg.names[i];
     switch (msg.statuses[i]) {
@@ -203,7 +309,6 @@ function updateScavengerHuntStatus(msg) {
       case 3:
         stat = TODO;break;
     }
-    $(".scavengerhunt-table tbody").html("");
     $(".scavengerhunt-table > tbody:last").append('<tr><td>' + name + '</td><td>' + stat + '</td></tr>');
   }
 }
@@ -331,6 +436,25 @@ function requestLocation(locationStr) {
   });
 }
 
+function requestBesideLocation(locationStr) {
+  log('requesting goBesideLocation: ' + locationStr);
+  var request = new ROSLIB.ServiceRequest({ location: locationStr, user: identity});
+  goBesideLocationClient.callService(request, function(result) {
+    log('Result for requesBesidetLocation service call on '
+      + goToLocationClient.name + ': ' + result.result);
+    if (result.result == 1) { //success
+      alert("success");
+    } else if (result.result == -1) { // terminated
+      alert("terminated");
+    } else if (result.result == -2) { // preempted
+      alert("preempted");
+    } else if (result.result == -3) { // aborted
+      alert("aborted");
+    } else {
+    }
+  });
+}
+
 function requestRotate(rotateDelta) {
   log('requesting rotate: ' + rotateDelta);
   var request = new ROSLIB.ServiceRequest({ rotateDelta: rotateDelta, user: identity});
@@ -352,6 +476,11 @@ function getTopics() {
   var request = new ROSLIB.ServiceRequest();
   topicsClient.callService(request, function(result) {
     topics = result.topics;
+
+    // enable or disable scavenger hunt
+    if (!topicAvailable("/scav_hunt_status")) {
+      $(".scavengerHunt").hide();
+    }
   });
 }
 
@@ -497,7 +626,7 @@ function clearBeforeUnload() {
   window.onbeforeunload = null;
 }
 
-$(".robot").click(function() {
+$(".robots").on("click", ".robot", function() {
   var botname = $(this).attr("robot");
   segbot = segbots[botname];
   //segbot = segbots['localhost']; /* TODO: DEBUG ONLY */
@@ -531,11 +660,6 @@ $(".robot").click(function() {
   // get topics
   getTopics();
 
-  // enable or disable scavenger hunt
-  if (!topicAvailable("/scav_hunt_status")) {
-    $(".scavengerHunt").hide();
-  }
-
   // set up topic for controlling servo
   servo1Cmd = new ROSLIB.Topic({
     ros : segbot.ros,
@@ -560,6 +684,11 @@ $(".robot").click(function() {
     ros : segbot.ros,
     name : '/go_to_location',
     serviceType : 'bwi_virtour/GoToLocation'
+  });
+  goBesideLocationClient = new ROSLIB.Service({
+    ros : segbot.ros,
+    name : '/go_beside_location',
+    serviceType : 'bwi_virtour/GoBesideLocation'
   });
 
   // set up service client for sending location commands
