@@ -50,9 +50,6 @@ var map_height = 573;
 var map_marker_offset = 15; //half of image width
 
 var locations = [{
-  name: "Matteo's Office",
-  value: "l3_418"
-},{
   name: "Shiqi's Office",
   value: "l3_420"
 },{
@@ -67,77 +64,26 @@ var locations = [{
 }];
 
 var doors = [{
-  name: "d3_404",
-  value: "d3_404"
-},{
-  name: "d3_400",
-  value: "d3_400"
-},{
-  name: "d3_508",
-  value: "d3_508"
-},{
-  name: "d3_402",
-  value: "d3_402"
-},{
-  name: "d3_500",
-  value: "d3_500"
-},{
-  name: "d3_502",
-  value: "d3_502"
-},{
-  name: "d3_elev_east",
-  value: "d3_elev_east"
-},{
-  name: "d3_430",
-  value: "d3_430"
-},{
-  name: "d3_422",
-  value: "d3_422"
-},{
-  name: "d3_420",
-  value: "d3_420"
-},{
-  name: "d3_414a2",
-  value: "d3_414a2"
-},{
-  name: "d3_414a3",
-  value: "d3_414a3"
-},{
-  name: "d3_414a1",
-  value: "d3_414a1"
-},{
-  name: "d3_416",
-  value: "d3_416"
-},{
-  name: "d3_516",
-  value: "d3_516"
-},{
-  name: "d3_418",
-  value: "d3_418"
-},{
-  name: "d3_512",
-  value: "d3_512"
-},{
-  name: "d3_510",
-  value: "d3_510"
-},{
-  name: "d3_elev_west",
-  value: "d3_elev_west"
-},{
-  name: "d3_414b3",
-  value: "d3_414b3"
-},{
-  name: "d3_414b2",
-  value: "d3_414b2"
-},{
-  name: "d3_414b1",
-  value: "d3_414b1"
-},{
-  name: "d3_432",
+  name: "d1",
   value: "d3_432"
 },{
-  name: "d3_436",
-  value: "d3_436"
+  name: "d2",
+  value: "d3_414b2"
+},{
+  name: "d3",
+  value: "d3_320"
+},{
+  name: "d4",
+  value: "d3_414a2"
+},{
+  name: "d5",
+  value: "d3_508",
+},{
+  name: "d6",
+  value: "d3_512",
+},{
+  name: "d7",
+  value: "d3_414b1"
 }];
 
 
