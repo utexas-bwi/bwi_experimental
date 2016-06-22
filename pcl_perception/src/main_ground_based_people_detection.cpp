@@ -499,7 +499,7 @@ int main (int argc, char** argv)
 	
 	//either calinrate floor or use existing calibration
 	ground_coeffs.resize(4);
-	if (calibrate_plane){
+	if (true){
 		calibrate_floor();
 	}
 	else {
