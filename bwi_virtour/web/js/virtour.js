@@ -292,8 +292,6 @@ function viewScavengerHunt() {
 }
 
 function updateScavengerHuntStatus(msg) {
-  log("updated scavengerHuntStatus");
-
   $(".scavengerhunt-table tbody").html("");
   
   for (var i = 0; i < msg.names.length; i++) {
@@ -346,12 +344,20 @@ function publishTopic(ros) {
 
 function rotateLeft() {
   log("Rotate left");
-  requestRotate(-0.2);
+  if (robot_v3) {
+    requestRotate(0.4); // v3 rotation is defined differently, also is slower
+  } else {
+    requestRotate(-0.2);
+  }
 }
 
 function rotateRight() {
   log("Rotate right");
-  requestRotate(0.2);
+  if (robot_v3) {
+    requestRotate(-0.4); // v3 rotation is defined differently, also is slower
+  } else {
+    requestRotate(0.2);
+  }
 }
 
 function pauseRobot() {
@@ -559,11 +565,9 @@ function requestTour() {
 }
 
 function pingTour() {
-  log('pinging tour');
   var request = new ROSLIB.ServiceRequest({ user: identity });
   pingTourClient.callService(request, function(result) {
     if (result.result > 0) {
-      log('ping success');
     } else if (result.result == ERROR_NOTOURALLOWED) {
       alert("ping failed: no tour allowed");
     } else if (result.result == ERROR_TOURINPROGRESS) {
@@ -762,6 +766,8 @@ $(".robots").on("click", ".robot", function() {
   // enable or disable servos
   servosEnabled = topicAvailable("/servo0_status") && topicAvailable("/servo1_status");
 
+  // check if it's a v2 or v3
+  robot_v3 = topicAvailable("/velodyne_points");
 
   // set up video streaming
   var videoTopic = "";
@@ -832,7 +838,11 @@ $(".navigateBtn").click(function() {
   }
 
   log("Requesting navigation to " + dest);
-  requestLocation(dest);
+  if (place == "") { // if a door selected
+    requestBesideLocation(dest);
+  } else { // if a place selected
+    requestLocation(dest);
+  }
   $(".map-modal").modal("hide");
 });
 
