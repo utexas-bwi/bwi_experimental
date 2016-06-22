@@ -310,12 +310,10 @@ function updateScavengerHuntStatus(msg) {
 }
 
 function updatePosition(x, y){
-  log("robot.x = " + x + " robot.y = " + y);
   xp = 100 * ((x - map_origin_x) / map_res - map_marker_offset) / map_width;
   yp = 100 * ((y - map_origin_y) / map_res - map_marker_offset) / map_height;
   yp = 100 - yp;
   yp = yp - 10;
-  log("robot.xp = " + xp + " robot.yp = " + yp);
   //yp = yp - 15; // offset for height of image and for css position
   $(".pos-marker").css("left", xp + "%");
   $(".pos-marker").css("top", yp + "%");
@@ -511,7 +509,6 @@ function topicAvailable(topic) {
 }
 
 function getTourState() {
-  log('getting tour state');
   var request = new ROSLIB.ServiceRequest();
   getTourStateClient.callService(request, function(result) {
 
@@ -540,8 +537,6 @@ function getTourState() {
       $(".leaderControl").height(20);
       $(".leaderControl").css("top", "750px");
     }
-
-    log(tourState);
   });
 }
 
@@ -549,7 +544,6 @@ function requestTour() {
   log('requesting tour');
   var request = new ROSLIB.ServiceRequest({ user: identity });
   requestTourClient.callService(request, function(result) {
-    log(result);
     if (result.result > 0) { //success
       leader = true;
       showControls();
@@ -832,18 +826,15 @@ $(".navigateBtn").click(function() {
   var place = $("#locationSelect").val();
   var door = $("#doorSelect").val();
 
-  var dest = (place == "") ? door : place;
-  if (dest == "") {
-    alert("Please select a destination");
+  if (place == "" && door == "") { // if nothing is selected
+    alert("Please select a location");
     return;
+  } else if (place == "") { // if a door is selected
+    requestBesideLocation(door);
+  } else { // a place is selected
+    requestLocation(place); 
   }
 
-  log("Requesting navigation to " + dest);
-  if (place == "") { // if a door selected
-    requestBesideLocation(dest);
-  } else { // if a place selected
-    requestLocation(dest);
-  }
   $(".map-modal").modal("hide");
 });
 
