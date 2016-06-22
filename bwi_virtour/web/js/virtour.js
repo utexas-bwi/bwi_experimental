@@ -33,6 +33,7 @@ var tourState = { tourAllowed: false, tourInProgress: false, tourDuration: 0,
 var tourStateFresh = false;
 var topics = null;
 var servosEnabled = false;
+var robot_v3 = false;
 var curr_color = 0;
 
 // Scavenger Hunt Statuses
