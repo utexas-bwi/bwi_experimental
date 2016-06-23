@@ -234,12 +234,16 @@ function subscribeScavengerHuntListener(ros) {
 }
 
 function viewScavengerHunt() {
-  log("view scavenger hunt");
   $(".scavengerhunt-modal").modal();
+}
+
+function viewCertificates() {
+  $(".certificates-modal").modal();
 }
 
 function updateScavengerHuntStatus(msg) {
   $(".scavengerhunt-table tbody").html("");
+  $(".certificates-table tbody").html("");
   
   for (var i = 0; i < msg.names.length; i++) {
     name = msg.names[i];
@@ -252,6 +256,16 @@ function updateScavengerHuntStatus(msg) {
         stat = TODO;break;
     }
     $(".scavengerhunt-table > tbody:last").append('<tr><td>' + name + '</td><td>' + stat + '</td></tr>');
+    if (stat == FINISHED) {
+      path = msg.certificates[i];
+      console.log("path" + path);
+      cert_html  = '<tr><td>' + name + '</td>';
+      cert_html += '<td>';
+      cert_html += '<a href="' + path + '" data-lightbox="cert' + i + '">';
+      cert_html += '<img class="img-thumbnail cert-img" src="' + path + '" alt="' + name + '"/></a>';
+      cert_html += '</td>';
+      $(".certificates-table > tbody:last").append(cert_html);
+    }
   }
 }
 
@@ -757,6 +771,10 @@ $(".leaveTour").click(function() {
 
 $(".viewScavengerHunt").click(function() {
   viewScavengerHunt();
+});
+
+$(".viewCertificates").click(function() {
+  viewCertificates();
 });
 
 $("#locationSelect").change(function() {
