@@ -237,10 +237,6 @@ function viewScavengerHunt() {
   $(".scavengerhunt-modal").modal();
 }
 
-function viewCertificates() {
-  $(".certificates-modal").modal();
-}
-
 function updateScavengerHuntStatus(msg) {
   $(".scavengerhunt-table tbody").html("");
   $(".certificates-table tbody").html("");
@@ -255,17 +251,19 @@ function updateScavengerHuntStatus(msg) {
       case 3:
         stat = TODO;break;
     }
-    $(".scavengerhunt-table > tbody:last").append('<tr><td>' + name + '</td><td>' + stat + '</td></tr>');
+    a_html  = '<tr>';
+    a_html += '<td>' + name + '</td>';
+    a_html += '<td>' + stat + '</td>';
     if (stat == FINISHED) {
       path = msg.certificates[i];
-      console.log("path" + path);
-      cert_html  = '<tr><td>' + name + '</td>';
-      cert_html += '<td>';
-      cert_html += '<a href="' + path + '" data-lightbox="cert' + i + '">';
-      cert_html += '<img class="img-thumbnail cert-img" src="' + path + '" alt="' + name + '"/></a>';
-      cert_html += '</td>';
-      $(".certificates-table > tbody:last").append(cert_html);
+      a_html += '<td>';
+      a_html += '<a href="' + path + '" data-lightbox="cert' + i + '">';
+      a_html += '<img class="img-thumbnail cert-img" src="' + path + '" alt="' + name + '"/></a>';
+      a_html += '</td>';
     }
+    a_html += '</tr>';
+    //$(".scavengerhunt-table > tbody:last").append('<tr><td>' + name + '</td><td>' + stat + '</td></tr>');
+    $(".scavengerhunt-table > tbody:last").append(a_html);
   }
 }
 
@@ -771,10 +769,6 @@ $(".leaveTour").click(function() {
 
 $(".viewScavengerHunt").click(function() {
   viewScavengerHunt();
-});
-
-$(".viewCertificates").click(function() {
-  viewCertificates();
 });
 
 $("#locationSelect").change(function() {

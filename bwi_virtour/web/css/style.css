@@ -147,11 +147,6 @@ body {
 }
 .viewScavengerHunt{
   position: absolute;
-  top: 35px;
-  right: 0px;
-}
-.viewCertificates{
-  position: absolute;
   right: 0px;
 }
 .leaderControl{
@@ -203,7 +198,7 @@ body {
   */
 }
 
-.map-modal, .error-modal, .scavengerhunt-modal, .certificates-modal{
+.map-modal, .error-modal, .scavengerhunt-modal {
   color: black;
 }
 
@@ -212,8 +207,9 @@ body {
 }
 
 .cert-img {
-  width: 50px;
-  height: 50px;
+  width: 40px;
+  height: 40px;
+  display: block;
 }
 
 /*** COLORS ***/
