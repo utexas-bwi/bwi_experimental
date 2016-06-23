@@ -91,7 +91,7 @@ void sig_handler(int sig)
 void 
 cloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
 {
-  sensor_frame_id = input.header.frame_id;
+        sensor_frame_id = input->header.frame_id;
 	cloud_mutex.lock (); 
 	
 	//convert to PCL format
