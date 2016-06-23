@@ -78,8 +78,6 @@ PointCloudT::Ptr cloud (new PointCloudT);
 PointCloudT::Ptr person_cloud (new PointCloudT);
 sensor_msgs::PointCloud2 person_cloud_ros;
 
-std::string sensor_frame_id; 
-
 void sig_handler(int sig)
 {
   g_caught_sigint = true;
@@ -91,7 +89,6 @@ void sig_handler(int sig)
 void 
 cloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
 {
-        sensor_frame_id = input->header.frame_id;
 	cloud_mutex.lock (); 
 	
 	//convert to PCL format
@@ -134,8 +131,7 @@ int main (int argc, char** argv)
 	string param_sensor_frame_id;
 	nh.param<std::string>(std::string("background_person_detector/sensor_frame_id"), 
 							param_sensor_frame_id, 
-							//"/nav_kinect_rgb_optical_frame");
-              sensor_frame_id); 
+							"/nav_kinect_rgb_optical_frame");
 	
 	
 	//nh.getParam("background_person_detector/rgbd_topic", data_topic);
