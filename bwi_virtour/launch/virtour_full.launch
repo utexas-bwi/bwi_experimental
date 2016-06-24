@@ -9,6 +9,7 @@
   </node>
   <node name="go_to_location_service_node" pkg="bwi_virtour" type="go_to_location_service_node" />
   <node name="rotate_service_node" pkg="bwi_virtour" type="rotate_service_node" />
+  <node name="serveCertificates" pkg="bwi_virtour" type="servceCertificates.sh" />
 </launch>
 <!-- for pointgrey and servo camera -->
 
