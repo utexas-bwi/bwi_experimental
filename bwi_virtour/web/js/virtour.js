@@ -255,7 +255,9 @@ function updateScavengerHuntStatus(msg) {
     a_html += '<td>' + name + '</td>';
     a_html += '<td>' + stat + '</td>';
     if (stat == FINISHED) {
-      path = msg.certificates[i];
+      path = "http://" + segbot.ipaddr + ":8000/"
+      file = msg.certificates[i];
+      path += file;
       a_html += '<td>';
       a_html += '<a href="' + path + '" data-lightbox="cert' + i + '">';
       a_html += '<img class="img-thumbnail cert-img" src="' + path + '" alt="' + name + '"/></a>';
