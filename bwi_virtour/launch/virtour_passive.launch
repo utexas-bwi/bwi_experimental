@@ -6,5 +6,5 @@
   <node name="tour_manager" pkg="bwi_virtour" type="tour_manager">
      <param name="tour_enabled" value="false" />
   </node>
-  <node name="serveCertificates" pkg="bwi_virtour" type="servceCertificates.sh" />
+  <node name="serveCertificates" pkg="bwi_virtour" type="serveCertificates.sh" />
 </launch>
