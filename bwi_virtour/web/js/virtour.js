@@ -304,7 +304,7 @@ function publishTopic(ros) {
 function rotateLeft() {
   log("Rotate left");
   if (robot_v3) {
-    requestRotate(0.4); // v3 rotation is defined differently, also is slower
+    requestRotate(-0.4); // v3 rotation is defined differently, also is slower
   } else {
     requestRotate(-0.2);
   }
@@ -313,7 +313,7 @@ function rotateLeft() {
 function rotateRight() {
   log("Rotate right");
   if (robot_v3) {
-    requestRotate(-0.4); // v3 rotation is defined differently, also is slower
+    requestRotate(0.4); // v3 rotation is defined differently, also is slower
   } else {
     requestRotate(0.2);
   }
@@ -737,7 +737,7 @@ $(".robots").on("click", ".robot", function() {
   var videoSource = "http://" + segbot.ipaddr + ":" + segbot.mjpegserverport
                       + "/stream?topic=" + videoTopic;
   log("Loading video from: " + videoSource);
-  $(".controllingIframe").append("<img width=\"100%\" height=\"800\" src=\"" + videoSource + "\">");
+  $(".controllingIframe").append("<img width=\"100%\" height=\"100%\" src=\"" + videoSource + "\">");
 
 });
 
