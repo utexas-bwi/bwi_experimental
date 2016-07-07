@@ -1,11 +1,14 @@
 // Constants
 var ROSBRIDGEPORT = 9090;
 var MJPEGSERVERPORT = 8080;
+var IMAGESERVERPORT = 8000;
 var ERROR_NOTOURALLOWED = -2;
 var ERROR_TOURINPROGRESS = -3;
 var ERROR_NOTTOURLEADER = -4;
 var ERROR_NOTOURINPROGRESS = -5;
 
+// Settings
+var VIDEO_QUALITY = 30;
 
 // Globals
 var segbots = {};
@@ -255,7 +258,7 @@ function updateScavengerHuntStatus(msg) {
     a_html += '<td>' + name + '</td>';
     a_html += '<td>' + stat + '</td>';
     if (stat == FINISHED) {
-      path = "http://" + segbot.ipaddr + ":8000/"
+      path = "http://" + segbot.ipaddr + ":" + IMAGESERVERPORT + "/"
       file = msg.certificates[i];
       path += file;
       a_html += '<td>';
@@ -735,7 +738,7 @@ $(".robots").on("click", ".robot", function() {
     log("Using /nav_kinect/rgb/image_raw for video source");
   }
   var videoSource = "http://" + segbot.ipaddr + ":" + segbot.mjpegserverport
-                      + "/stream?topic=" + videoTopic;
+                      + "/stream?topic=" + videoTopic + "&quality=" + VIDEO_QUALITY;
   log("Loading video from: " + videoSource);
   $(".controllingIframe").append("<img width=\"100%\" height=\"100%\" src=\"" + videoSource + "\">");
 
