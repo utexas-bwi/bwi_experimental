@@ -60,7 +60,7 @@ var locations = [{
   value: "l3_432"
 },{
   name: "Peter's Office",
-  value: "l3_415"
+  value: "l3_508"
 },{
   name: "Lab",
   value: "l3_414b"
@@ -74,7 +74,7 @@ var doors = [{
   value: "d3_414b2"
 },{
   name: "d3",
-  value: "d3_320"
+  value: "d3_420"
 },{
   name: "d4",
   value: "d3_414a2"
