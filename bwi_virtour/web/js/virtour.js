@@ -127,8 +127,8 @@ function createIdentity() {
 }
 
 function createSegbots() {
-  segbots["localhost"] = createSegbot("localhost", "127.0.0.1", ROSBRIDGEPORT, MJPEGSERVERPORT);
-  segbots["hypnotoad"] = createSegbot("hypnotoad", "hypnotoad.csres.utexas.edu", ROSBRIDGEPORT, MJPEGSERVERPORT);
+  //segbots["localhost"] = createSegbot("localhost", "127.0.0.1", ROSBRIDGEPORT, MJPEGSERVERPORT);
+  //segbots["hypnotoad"] = createSegbot("hypnotoad", "hypnotoad.csres.utexas.edu", ROSBRIDGEPORT, MJPEGSERVERPORT);
 
   var server = "http://nixons-head.csres.utexas.edu:7979/hostsalivejson";
   if (server == "") {
