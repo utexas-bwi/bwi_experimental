@@ -56,7 +56,7 @@ bool visualize = false;
 bool calibrate_plane = false;
 
 const std::string data_topic = "nav_kinect/depth_registered/points"; 
-const std::string classifier_location = "/home/bwi/catkin_ws/src/bwi_experimental/pcl_perception/data/classifier.yaml";
+const std::string classifier_location = ros::package::getPath("pcl_perception") + "/classifier.yaml";
 const std::string node_name = "segbot_people_detector";
 
 //true if Ctrl-C is pressed
@@ -159,7 +159,17 @@ int main (int argc, char** argv)
 
 	//load ground plane coeffs
 	ground_coeffs.resize(4);
-	string plane_coefs_location = ros::package::getPath("pcl_perception")+"/data/ground_plane_avg.txt";
+        std::string ground_plane_file, path_to_package, path; 
+
+        if (false == ros::param::has("~ground_plane_file")) {
+            ROS_ERROR("ground_plane_file parameter needs to be set");
+            ros::shutdown(); 
+        } 
+        else {
+            ros::param::get("~ground_plane_file", ground_plane_file); 
+        }
+
+	string plane_coefs_location = ros::package::getPath("pcl_perception")+"/data/"+ground_plane_file;
 	ground_coeffs = load_vector_from_file(plane_coefs_location.c_str(),4);
 
 	

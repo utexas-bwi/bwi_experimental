@@ -1,11 +1,14 @@
 // Constants
 var ROSBRIDGEPORT = 9090;
 var MJPEGSERVERPORT = 8080;
+var IMAGESERVERPORT = 8000;
 var ERROR_NOTOURALLOWED = -2;
 var ERROR_TOURINPROGRESS = -3;
 var ERROR_NOTTOURLEADER = -4;
 var ERROR_NOTOURINPROGRESS = -5;
 
+// Settings
+var VIDEO_QUALITY = 30;
 
 // Globals
 var segbots = {};
@@ -23,6 +26,7 @@ var topicsClient = null;
 var goToLocationClient = null;
 var goBesideLocationClient = null;
 var rotateClient = null;
+var pauseClient = null;
 var requestTourClient = null;
 var getTourStateClient = null;
 var pingTourClient = null;
@@ -32,6 +36,7 @@ var tourState = { tourAllowed: false, tourInProgress: false, tourDuration: 0,
 var tourStateFresh = false;
 var topics = null;
 var servosEnabled = false;
+var robot_v3 = false;
 var curr_color = 0;
 
 // Scavenger Hunt Statuses
@@ -48,9 +53,6 @@ var map_height = 573;
 var map_marker_offset = 15; //half of image width
 
 var locations = [{
-  name: "Matteo's Office",
-  value: "l3_418"
-},{
   name: "Shiqi's Office",
   value: "l3_420"
 },{
@@ -58,84 +60,33 @@ var locations = [{
   value: "l3_432"
 },{
   name: "Peter's Office",
-  value: "l3_415"
+  value: "l3_508"
 },{
   name: "Lab",
   value: "l3_414b"
 }];
 
 var doors = [{
-  name: "d3_404",
-  value: "d3_404"
-},{
-  name: "d3_400",
-  value: "d3_400"
-},{
-  name: "d3_508",
-  value: "d3_508"
-},{
-  name: "d3_402",
-  value: "d3_402"
-},{
-  name: "d3_500",
-  value: "d3_500"
-},{
-  name: "d3_502",
-  value: "d3_502"
-},{
-  name: "d3_elev_east",
-  value: "d3_elev_east"
-},{
-  name: "d3_430",
-  value: "d3_430"
-},{
-  name: "d3_422",
-  value: "d3_422"
-},{
-  name: "d3_420",
-  value: "d3_420"
-},{
-  name: "d3_414a2",
-  value: "d3_414a2"
-},{
-  name: "d3_414a3",
-  value: "d3_414a3"
-},{
-  name: "d3_414a1",
-  value: "d3_414a1"
-},{
-  name: "d3_416",
-  value: "d3_416"
-},{
-  name: "d3_516",
-  value: "d3_516"
-},{
-  name: "d3_418",
-  value: "d3_418"
-},{
-  name: "d3_512",
-  value: "d3_512"
-},{
-  name: "d3_510",
-  value: "d3_510"
-},{
-  name: "d3_elev_west",
-  value: "d3_elev_west"
-},{
-  name: "d3_414b3",
-  value: "d3_414b3"
-},{
-  name: "d3_414b2",
-  value: "d3_414b2"
-},{
-  name: "d3_414b1",
-  value: "d3_414b1"
-},{
-  name: "d3_432",
+  name: "d1",
   value: "d3_432"
 },{
-  name: "d3_436",
-  value: "d3_436"
+  name: "d2",
+  value: "d3_414b2"
+},{
+  name: "d3",
+  value: "d3_420"
+},{
+  name: "d4",
+  value: "d3_414a2"
+},{
+  name: "d5",
+  value: "d3_508",
+},{
+  name: "d6",
+  value: "d3_512",
+},{
+  name: "d7",
+  value: "d3_414b1"
 }];
 
 
@@ -176,7 +127,8 @@ function createIdentity() {
 }
 
 function createSegbots() {
-  segbots["localhost"] = createSegbot("localhost", "127.0.0.1", ROSBRIDGEPORT, MJPEGSERVERPORT);
+  //segbots["localhost"] = createSegbot("localhost", "127.0.0.1", ROSBRIDGEPORT, MJPEGSERVERPORT);
+  //segbots["hypnotoad"] = createSegbot("hypnotoad", "hypnotoad.csres.utexas.edu", ROSBRIDGEPORT, MJPEGSERVERPORT);
 
   var server = "http://nixons-head.csres.utexas.edu:7979/hostsalivejson";
   if (server == "") {
@@ -207,7 +159,7 @@ function createSegbot(name, ipaddr, rosbridgeport, mjpegserverport) {
   var rf = '<div class="col-md-3">';
   var rm = '<div class="robot module ' + color + '" robot="' + name + '">';
   //var im = '<img class="img-circle" src="./image/' + name + '.jpg"/>';
-  var im = '<img class="img-circle" src="./image/calculon_square.jpg"/>';
+  var im = '<img class="img-circle" src="./image/' + name + '.jpg"/>';
   var nm = '<h2>' + name + '</h2>';
   var ed = '</div>';
 
@@ -287,16 +239,13 @@ function subscribeScavengerHuntListener(ros) {
 }
 
 function viewScavengerHunt() {
-  log("view scavenger hunt");
   $(".scavengerhunt-modal").modal();
 }
 
 function updateScavengerHuntStatus(msg) {
-  log("updated scavengerHuntStatus");
-
   $(".scavengerhunt-table tbody").html("");
-
-
+  $(".certificates-table tbody").html("");
+  
   for (var i = 0; i < msg.names.length; i++) {
     name = msg.names[i];
     switch (msg.statuses[i]) {
@@ -307,17 +256,29 @@ function updateScavengerHuntStatus(msg) {
       case 3:
         stat = TODO;break;
     }
-    $(".scavengerhunt-table > tbody:last").append('<tr><td>' + name + '</td><td>' + stat + '</td></tr>');
+    a_html  = '<tr>';
+    a_html += '<td>' + name + '</td>';
+    a_html += '<td>' + stat + '</td>';
+    if (stat == FINISHED) {
+      path = "http://" + segbot.ipaddr + ":" + IMAGESERVERPORT + "/"
+      file = msg.certificates[i];
+      path += file;
+      a_html += '<td>';
+      a_html += '<a href="' + path + '" data-lightbox="cert' + i + '">';
+      a_html += '<img class="img-thumbnail cert-img" src="' + path + '" alt="' + name + '"/></a>';
+      a_html += '</td>';
+    }
+    a_html += '</tr>';
+    //$(".scavengerhunt-table > tbody:last").append('<tr><td>' + name + '</td><td>' + stat + '</td></tr>');
+    $(".scavengerhunt-table > tbody:last").append(a_html);
   }
 }
 
 function updatePosition(x, y){
-  log("robot.x = " + x + " robot.y = " + y);
   xp = 100 * ((x - map_origin_x) / map_res - map_marker_offset) / map_width;
   yp = 100 * ((y - map_origin_y) / map_res - map_marker_offset) / map_height;
   yp = 100 - yp;
   yp = yp - 10;
-  log("robot.xp = " + xp + " robot.yp = " + yp);
   //yp = yp - 15; // offset for height of image and for css position
   $(".pos-marker").css("left", xp + "%");
   $(".pos-marker").css("top", yp + "%");
@@ -347,12 +308,28 @@ function publishTopic(ros) {
 
 function rotateLeft() {
   log("Rotate left");
-  requestRotate(-0.2);
+  if (robot_v3) {
+    requestRotate(-0.4); // v3 rotation is defined differently, also is slower
+  } else {
+    requestRotate(-0.2);
+  }
 }
 
 function rotateRight() {
   log("Rotate right");
-  requestRotate(0.2);
+  if (robot_v3) {
+    requestRotate(0.4); // v3 rotation is defined differently, also is slower
+  } else {
+    requestRotate(0.2);
+  }
+}
+
+function pauseRobot() {
+  requestPause(true);
+}
+
+function resumeRobot() {
+  requestPause(false);
 }
 
 function turnLeft() {
@@ -462,6 +439,16 @@ function requestRotate(rotateDelta) {
   });
 }
 
+function requestPause(pause) {
+  log('requesting: ' + (pause ? "stop operations" : "resume operations"));
+  var type = pause ? 0 : 1; // 0 - pause, 1 - resume
+  var request = new ROSLIB.ServiceRequest({ type : type});
+  pauseClient.callService(request, function(result) {
+    log('Result for requestPause service call on '
+      + pauseClient.name + ': ' + result.result);
+  });
+}
+
 function getUUID() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
         var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
@@ -487,7 +474,6 @@ function topicAvailable(topic) {
 }
 
 function getTourState() {
-  log('getting tour state');
   var request = new ROSLIB.ServiceRequest();
   getTourStateClient.callService(request, function(result) {
 
@@ -516,8 +502,6 @@ function getTourState() {
       $(".leaderControl").height(20);
       $(".leaderControl").css("top", "750px");
     }
-
-    log(tourState);
   });
 }
 
@@ -525,7 +509,6 @@ function requestTour() {
   log('requesting tour');
   var request = new ROSLIB.ServiceRequest({ user: identity });
   requestTourClient.callService(request, function(result) {
-    log(result);
     if (result.result > 0) { //success
       leader = true;
       showControls();
@@ -542,11 +525,9 @@ function requestTour() {
 }
 
 function pingTour() {
-  log('pinging tour');
   var request = new ROSLIB.ServiceRequest({ user: identity });
   pingTourClient.callService(request, function(result) {
     if (result.result > 0) {
-      log('ping success');
     } else if (result.result == ERROR_NOTOURALLOWED) {
       alert("ping failed: no tour allowed");
     } else if (result.result == ERROR_TOURINPROGRESS) {
@@ -579,6 +560,7 @@ function showControls() {
     $(".servoControl").fadeIn();
   }
   $(".rotateControl").fadeIn();
+  $(".pauseControl").fadeIn();
   $(".locationForm").fadeIn();
   $(".navigateBtn").fadeIn();
 }
@@ -586,6 +568,7 @@ function showControls() {
 function hideControls() {
   $(".servoControl").hide();
   $(".rotateControl").hide();
+  $(".pauseControl").hide();
   $(".locationForm").hide();
   $(".navigateBtn").hide();
 }
@@ -696,6 +679,13 @@ $(".robots").on("click", ".robot", function() {
     serviceType : 'bwi_virtour/Rotate'
   });
 
+  // set up service client for requesting pausing
+  pauseClient = new ROSLIB.Service({
+    ros : segbot.ros,
+    name : '/scav_control',
+    serviceType: 'bwi_msgs/ScavHunt'
+  });
+
   // set up service client for requesting tours
   requestTourClient = new ROSLIB.Service({
     ros : segbot.ros,
@@ -736,6 +726,8 @@ $(".robots").on("click", ".robot", function() {
   // enable or disable servos
   servosEnabled = topicAvailable("/servo0_status") && topicAvailable("/servo1_status");
 
+  // check if it's a v2 or v3
+  robot_v3 = topicAvailable("/velodyne_points");
 
   // set up video streaming
   var videoTopic = "";
@@ -748,9 +740,9 @@ $(".robots").on("click", ".robot", function() {
     log("Using /nav_kinect/rgb/image_raw for video source");
   }
   var videoSource = "http://" + segbot.ipaddr + ":" + segbot.mjpegserverport
-                      + "/stream?topic=" + videoTopic;
+                      + "/stream?topic=" + videoTopic + "&quality=" + VIDEO_QUALITY;
   log("Loading video from: " + videoSource);
-  $(".controllingIframe").append("<img width=\"100%\" height=\"800\" src=\"" + videoSource + "\">");
+  $(".controllingIframe").append("<img width=\"100%\" height=\"100%\" src=\"" + videoSource + "\">");
 
 });
 
@@ -763,6 +755,8 @@ $(".turnCenter").click(function() {turnCenter();});
 $(".labimage").click(function() {showMap();});
 $(".rotateRight").click(function() {rotateRight();});
 $(".rotateLeft").click(function() {rotateLeft();});
+$(".pauseBtn").click(function() {pauseRobot();});
+$(".resumeBtn").click(function() {resumeRobot();});
 
 $(".getTourStatus").click(function() {
   getTourState();
@@ -784,11 +778,28 @@ $(".viewScavengerHunt").click(function() {
   viewScavengerHunt();
 });
 
+$("#locationSelect").change(function() {
+  $("#doorSelect").val("");
+});
+
+$("#doorSelect").change(function() {
+  $("#locationSelect").val("");
+});
+
 // add callback handlers for navigate form
 $(".navigateBtn").click(function() {
-  var location = $("#locationSelect").val();
-  log("Requesting navigation to " + location);
-  requestLocation(location);
+  var place = $("#locationSelect").val();
+  var door = $("#doorSelect").val();
+
+  if (place == "" && door == "") { // if nothing is selected
+    alert("Please select a location");
+    return;
+  } else if (place == "") { // if a door is selected
+    requestBesideLocation(door);
+  } else { // a place is selected
+    requestLocation(place);
+  }
+
   $(".map-modal").modal("hide");
 });
 

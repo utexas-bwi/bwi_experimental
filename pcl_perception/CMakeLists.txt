@@ -129,8 +129,8 @@ include_directories(
 #target_link_libraries(segbot_odom_calibration_test ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 
 
-#add_executable(main_ground_based_people_detection src/main_ground_based_people_detection.cpp)
-#target_link_libraries(main_ground_based_people_detection ${catkin_LIBRARIES} ${PCL_LIBRARIES})
+add_executable(main_ground_based_people_detection src/main_ground_based_people_detection.cpp)
+target_link_libraries(main_ground_based_people_detection ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 
 
 #add_executable(general_perception src/general_perception.cpp)
