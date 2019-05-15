@@ -1,0 +1,9 @@
+<launch>
+	<include file="$(find audio_capture)/launch/capture.launch"/>
+	<node 
+		name="fft_publisher"
+		pkg="elevators"
+		type="fft_node"
+		args="false"
+		/>
+</launch>

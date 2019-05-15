@@ -1,0 +1,10 @@
+<launch>
+	<include file="$(find elevators)/launch/fft_launch.launch"/>
+	<include file="$(find segbot_sensors)/launch/ptgrey/usbcam.launch"/>
+	<node 
+		name="elevator_sensors"
+		pkg="elevators"
+		type="elevator_node"
+    args="/home/fri/brian_ws/src/elevators/data/config/paper_settings.cfg"
+		/>
+</launch>
